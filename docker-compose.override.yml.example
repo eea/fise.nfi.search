@@ -1,0 +1,7 @@
+version: '2'
+
+services:
+  app:
+    volumes:
+    - .:/var/local/nfi-search
+    entrypoint: ["/usr/bin/tail", "-f", "/dev/null"]

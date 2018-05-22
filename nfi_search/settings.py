@@ -39,6 +39,7 @@ INSTALLED_APPS = [
     'django.contrib.sessions',
     'django.contrib.messages',
     'django.contrib.staticfiles',
+    'django_elasticsearch_dsl',
     'rest_framework',
 ]
 
@@ -79,7 +80,7 @@ WSGI_APPLICATION = 'nfi_search.wsgi.application'
 DATABASES = {
     'default': {
         'ENGINE': 'django.db.backends.postgresql',
-        'HOST': env('POSTGRES_HOST', 'localhost'),
+        'HOST': env('POSTGRES_HOST', 'postgres'),
         'NAME': env('POSTGRES_DBNAME', 'nfi'),
         'USER': env('POSTGRES_DBUSER', 'nfi'),
         'PASSWORD': env('POSTGRES_DBPASS', 'nfi'),
@@ -129,3 +130,10 @@ USE_TZ = True
 # https://docs.djangoproject.com/en/1.11/howto/static-files/
 
 STATIC_URL = '/static/'
+
+ELASTICSEARCH_DSL = {
+    'default': {
+        'hosts': env('ELASTICSEARCH_HOST'),
+        'http_auth': env('ELASTICSEARCH_AUTH'),
+    },
+}
