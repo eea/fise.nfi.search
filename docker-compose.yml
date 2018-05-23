@@ -2,26 +2,27 @@ version: '2'
 
 services:
   app:
-    image: eeacms/nfi-search
-    container_name: nfi_search_app
+    image: eeacms/fise.nfi.search:latest
+    container_name: nfi.app
+    environment:
+      - TZ=Europe/Copenhagen
     env_file:
-    - docker/postgres.env
-    - docker/app.env
+      - docker/postgres.env
+      - docker/app.env
     depends_on:
-    - postgres
+      - postgres
     ports:
-    - 8000:8000
+      - 8000:8000
 
   postgres:
-    image: eeacms/postgres:9.6
-    container_name: nfi_search_postgres
+    image: eeacms/postgres:latest
+    container_name: nfi.db
+    environment:
+      - TZ=Europe/Copenhagen
     env_file:
-    - docker/postgres.env
-    labels:
-      io.rancher.container.pull_image: always
-      io.rancher.scheduler.affinity:host_label_ne: frontend=yes
+      - docker/postgres.env
     volumes:
-    - postgresdata:/var/lib/postgresql/data
+      - postgresdata:/var/lib/postgresql/data
 
 volumes:
   postgresdata:

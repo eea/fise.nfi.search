@@ -3,5 +3,5 @@ version: '2'
 services:
   app:
     volumes:
-    - .:/var/local/nfi-search
+    - .:/var/local/fise.nfi.search
     entrypoint: ["/usr/bin/tail", "-f", "/dev/null"]
