@@ -1,4 +1,4 @@
-# nfi-search
+# NFI search
 
 [![Travis](https://travis-ci.org/eea/fise.nfi.search.svg?branch=master)](
 https://travis-ci.org/eea/fise.nfi.search)

@@ -2,7 +2,7 @@ FROM python:3.6-slim
 
 ARG REQUIREMENTS_FILE=requirements.dep.txt
 
-ENV PROJ_DIR=/var/local/nfi-search
+ENV PROJ_DIR=/var/local/fise.nfi.search
 
 RUN runDeps="vim netcat libpq-dev" \
     && apt-get update -y \
