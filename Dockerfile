@@ -10,7 +10,7 @@ RUN runDeps="vim netcat libpq-dev" \
     && rm -vrf /var/lib/apt/lists/*
 
 RUN mkdir -p $PROJ_DIR
-COPY requirements.txt $REQUIREMENTS_FILE $PROJ_DIR
+COPY requirements.txt $REQUIREMENTS_FILE $PROJ_DIR/
 WORKDIR $PROJ_DIR
 
 RUN pip install --no-cache-dir -r $REQUIREMENTS_FILE
