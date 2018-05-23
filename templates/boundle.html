@@ -1,0 +1,14 @@
+
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <title>FISE</title>
+    {% load render_bundle from webpack_loader %}
+</head>
+<body>
+  {% csrf_token %}
+	 <div id="app"></div>
+  {% render_bundle 'app' %}
+</body>
+</html>
