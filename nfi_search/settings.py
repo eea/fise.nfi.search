@@ -41,6 +41,7 @@ INSTALLED_APPS = [
     'django.contrib.staticfiles',
     'django_elasticsearch_dsl',
     'rest_framework',
+    'search',
 ]
 
 MIDDLEWARE = [
