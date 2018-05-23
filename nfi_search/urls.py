@@ -15,7 +15,15 @@ Including another URLconf
 """
 from django.conf.urls import url
 from django.contrib import admin
+from .spabundle import spabundle
 
 urlpatterns = [
     url(r'^admin/', admin.site.urls),
+]
+
+
+
+# Add the SPA catch-all route last
+urlpatterns += [
+    url(r'^', spabundle, name='spa'),
 ]

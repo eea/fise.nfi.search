@@ -110,3 +110,6 @@ venv.bak/
 docker-compose.override.yml
 docker/app.env
 docker/postgres.env
+
+
+/node_modules/
