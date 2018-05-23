@@ -2,6 +2,7 @@
   <div class="hello">
     <h1>{{ msg }}</h1>
     <h2>Essential Links</h2>
+    <b-btn variant="primary">test</b-btn>
     <ul>
       <li>
         <a
