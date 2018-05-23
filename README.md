@@ -14,3 +14,4 @@ Install VUE app
 
 1. install dependencies: yarn add
 2. run project: npm run dev
+3. add package: yarn add <package name>
