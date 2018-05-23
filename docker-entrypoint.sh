@@ -16,11 +16,12 @@ if [ -z "$TIMEOUT" ]; then
 fi
 
 if [ -z "$1" ]; then
-    exec gunicorn nfi_search.wsgi:application \
-         --name search \
-         --bind 0.0.0.0:8000 \
-         --workers 3 \
-         --timeout $TIMEOUT \
-         --access-logfile - \
-         --error-logfile -
+    exec gunicorn -e SCRIPT_NAME=$SCRIPT_NAME \
+                  nfi_search.wsgi:application \
+                  --name search \
+                  --bind 0.0.0.0:8000 \
+                  --workers 3 \
+                  --timeout $TIMEOUT \
+                  --access-logfile - \
+                  --error-logfile -
 fi
