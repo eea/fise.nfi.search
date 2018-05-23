@@ -2,7 +2,7 @@ version: '2'
 
 services:
   app:
-    image: nfi-search
+    image: eeacms/nfi-search
     container_name: nfi_search_app
     env_file:
     - docker/postgres.env
@@ -13,32 +13,16 @@ services:
     - 8000:8000
 
   postgres:
-    image: eeacms/postgres:9.5s
+    image: eeacms/postgres:9.6
     container_name: nfi_search_postgres
     env_file:
     - docker/postgres.env
+    labels:
+      io.rancher.container.pull_image: always
+      io.rancher.scheduler.affinity:host_label_ne: frontend=yes
     volumes:
     - postgresdata:/var/lib/postgresql/data
 
-  elasticsearch:
-    image: docker.elastic.co/elasticsearch/elasticsearch:5.4.1
-    container_name: nfi_search_elasticsearch
-    environment:
-      - cluster.name=docker-cluster
-      - bootstrap.memory_lock=true
-      - "ES_JAVA_OPTS=-Xms512m -Xmx512m"
-    ulimits:
-      memlock:
-        soft: -1
-        hard: -1
-    mem_limit: 1g
-    volumes:
-      - esdata:/usr/share/elasticsearch/data
-    ports:
-      - 9200:9200
-
 volumes:
   postgresdata:
-    driver: local
-  esdata:
     driver: local
