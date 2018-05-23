@@ -9,9 +9,41 @@ Import, store and search National Forests Information documents coming from diff
 
 The documents are provided in standardized format like spreadsheets, in different languages. They are indexed by metadata and content in order to be searched and filtered by different pre-established criteria.
 
+### Prerequisites
 
-Install VUE app
+* Install [Docker](https://docs.docker.com/engine/installation/)
+* Install [Docker Compose](https://docs.docker.com/compose/install/)
 
-1. install dependencies: yarn add
-2. run project: npm run dev
-3. add package: yarn add "package name"
+### Installing the application
+1. Get the source code:
+
+        git clone git@github.com:eea/fise.nfi.search.git
+        cd copernicus-insitu-db
+
+1. Customize env files and `docker-compose.override.yml`:
+
+        cp docker/app.env.example docker/app.env
+        vim docker/app.env
+        cp docker/postgres.env.example docker/postgres.env
+        vim docker/postgres.env
+        cp docker-compose.override.yml.example docker-compose.override.yml
+        vim docker-compose.yml
+        
+1. Start application stack:
+
+        docker-compose up -d
+        
+
+### Install VUE app
+
+1. Install dependencies:
+
+        yarn add
+
+1. Run project: 
+        
+        npm run dev
+
+1. Add package: 
+        
+        yarn add "package name"
