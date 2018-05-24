@@ -3,10 +3,10 @@ require('./check-versions')()
 
 process.env.NODE_ENV = 'production'
 
-const ora = require('ora')
-const rm = require('rimraf')
-const path = require('path')
-const chalk = require('chalk')
+const ora = require('ora') //Elegant terminal spinner
+const rm = require('rimraf') //UNIX command rm -rf for node
+const path = require('path') //provides utilities for working with file and directory paths
+const chalk = require('chalk') //Terminal string styling done right
 const webpack = require('webpack')
 const config = require('./conf.js')
 const webpackConfig = require('./webpack.prod.conf')
@@ -22,7 +22,7 @@ rm(path.join(config.build.assetsRoot, config.build.assetsSubDirectory), err => {
     process.stdout.write(stats.toString({
       colors: true,
       modules: false,
-      children: false, // If you are using ts-loader, setting this to true will make TypeScript errors show up during build.
+      children: false,
       chunks: false,
       chunkModules: false
     }) + '\n\n')
