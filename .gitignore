@@ -111,5 +111,6 @@ docker-compose.override.yml
 docker/app.env
 docker/postgres.env
 
-
+#Node
 /node_modules/
+webpack-stats.json
