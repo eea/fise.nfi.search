@@ -57,22 +57,6 @@ MIDDLEWARE = [
 
 ROOT_URLCONF = 'nfi_search.urls'
 
-TEMPLATES = [
-    {
-        'BACKEND': 'django.template.backends.django.DjangoTemplates',
-        'DIRS': [],
-        'APP_DIRS': True,
-        'OPTIONS': {
-            'context_processors': [
-                'django.template.context_processors.debug',
-                'django.template.context_processors.request',
-                'django.contrib.auth.context_processors.auth',
-                'django.contrib.messages.context_processors.messages',
-            ],
-        },
-    },
-]
-
 WSGI_APPLICATION = 'nfi_search.wsgi.application'
 
 
@@ -131,12 +115,14 @@ USE_TZ = True
 # Static files (CSS, JavaScript, Images)
 # https://docs.djangoproject.com/en/1.11/howto/static-files/
 
+ROOT_DIR = BASE_DIR
+STATIC_ROOT = os.path.join(ROOT_DIR, 'static')
 STATIC_URL = '/static/'
+
 
 STATICFILES_DIRS = (
     os.path.join(BASE_DIR, 'assets'),
 )
-
 
 WEBPACK_LOADER = {
     'DEFAULT': {
@@ -149,9 +135,13 @@ WEBPACK_LOADER = {
     }
 }
 
+_WEBPACK_DIST_DIR = os.path.join(os.path.join(ROOT_DIR, 'frontend'), 'dist')
 
-# ROOT_DIR = BASE_DIR
-
+_WEBPACK_BUILD_DIR = os.path.join(_WEBPACK_DIST_DIR, 'build')
+if os.path.isdir(_WEBPACK_BUILD_DIR):
+    STATICFILES_DIRS = (
+        _WEBPACK_BUILD_DIR,
+    )
 
 TEMPLATES = [
     {
