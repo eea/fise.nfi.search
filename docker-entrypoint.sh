@@ -26,7 +26,6 @@ fi
 case "$1" in
     manage)
         exec python manage.py "$1"
-        ;;
     run)
         if [ "x$DEBUG" = 'xyes' ]; then
             exec python manage.py runserver 0.0.0.0:${GUNICORN_PORT:-8000}
@@ -39,6 +38,5 @@ case "$1" in
                         --timeout $TIMEOUT \
                         --access-logfile - \
                         --error-logfile -
-            ;;
-    *)
+        fi
 esac
