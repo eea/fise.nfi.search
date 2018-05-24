@@ -7,7 +7,6 @@ class DCountry(models.Model):
     code = models.TextField()
 
     class Meta:
-        managed = False
         db_table = 'd_country'
 
 
@@ -16,7 +15,6 @@ class DResourceType(models.Model):
     name = models.TextField(unique=True)
 
     class Meta:
-        managed = False
         db_table = 'd_resource_type'
 
 
@@ -25,7 +23,6 @@ class DDataSet(models.Model):
     name = models.TextField(unique=True)
 
     class Meta:
-        managed = False
         db_table = 'd_data_set'
 
 
@@ -34,7 +31,6 @@ class DLanguage(models.Model):
     name = models.TextField(unique=True)
 
     class Meta:
-        managed = False
         db_table = 'd_language'
 
 
@@ -43,7 +39,6 @@ class DTopicCategory(models.Model):
     name = models.TextField(unique=True)
 
     class Meta:
-        managed = False
         db_table = 'd_topic_category'
 
 
@@ -52,7 +47,6 @@ class DDataSource(models.Model):
     name = models.TextField(unique=True)
 
     class Meta:
-        managed = False
         db_table = 'd_data_source'
 
 
@@ -61,7 +55,6 @@ class DDataType(models.Model):
     name = models.TextField(unique=True)
 
     class Meta:
-        managed = False
         db_table = 'd_data_type'
 
 
@@ -71,7 +64,6 @@ class DInfoLevel(models.Model):
     description = models.TextField()
 
     class Meta:
-        managed = False
         db_table = 'd_info_level'
 
 
@@ -80,7 +72,6 @@ class DKeyword(models.Model):
     name = models.TextField(unique=True)
 
     class Meta:
-        managed = False
         db_table = 'd_keyword'
 
 
@@ -91,7 +82,6 @@ class DNutsLevel(models.Model):
     level = models.IntegerField(blank=True, null=True)
 
     class Meta:
-        managed = False
         db_table = 'd_nuts_level'
 
 
@@ -101,7 +91,6 @@ class DFileType(models.Model):
     media_type = models.TextField()
 
     class Meta:
-        managed = False
         db_table = 'd_file_type'
 
 
@@ -112,7 +101,6 @@ class Organization(models.Model):
     email = models.TextField(blank=True, null=True)
 
     class Meta:
-        managed = False
         db_table = 'organization'
 
 
@@ -151,7 +139,6 @@ class Document(models.Model):
     additional_info = models.TextField(blank=True, null=True)
 
     class Meta:
-        managed = False
         db_table = 'document'
 
 
@@ -166,7 +153,6 @@ class File(models.Model):
                                   blank=True, null=True)
 
     class Meta:
-        managed = False
         db_table = 'file'
 
 
@@ -177,7 +163,6 @@ class DocumentKeyword(models.Model):
                                 db_column='id_keyword')
 
     class Meta:
-        managed = False
         db_table = 'document_keyword'
         unique_together = (('document', 'keyword'),)
 
@@ -189,7 +174,6 @@ class DocumentNutsLevel(models.Model):
                                    db_column='id_nuts_level')
 
     class Meta:
-        managed = False
         db_table = 'document_nuts_level'
         unique_together = (('document', 'nuts_level'),)
 
@@ -201,7 +185,6 @@ class FileLanguage(models.Model):
                                  db_column='id_language')
 
     class Meta:
-        managed = False
         db_table = 'file_language'
         unique_together = (('file', 'language'),)
 
@@ -222,7 +205,6 @@ class GeographicBounds(models.Model):
     spatial_resolution = models.TextField(blank=True, null=True)
 
     class Meta:
-        managed = False
         db_table = 'geographic_bounds'
 
 
@@ -266,5 +248,4 @@ class CountryData(models.Model):
     int_be_comments = models.TextField(blank=True, null=True)
 
     class Meta:
-        managed = False
         db_table = 'country_data'

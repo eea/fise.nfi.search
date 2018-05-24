@@ -16,6 +16,7 @@ if [ -z "$TIMEOUT" ]; then
 fi
 
 if [ -z "$1" ]; then
+    python manage.py migrate &&
     exec gunicorn -e SCRIPT_NAME=$SCRIPT_NAME \
                   nfi_search.wsgi:application \
                   --name search \
