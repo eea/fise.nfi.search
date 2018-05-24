@@ -1,14 +1,14 @@
-#!/bin/bash
+#!/bin/sh
 
 set -e
 
-if [ -z "$POSTGRES_ADDR" ]; then
-    POSTGRES_ADDR="postgres"
+if [ -z "$POSTGRES_HOST" ]; then
+    POSTGRES_HOST="postgres"
 fi
 
-while ! nc -z $POSTGRES_ADDR 5432; do
-  echo "Waiting for PostgreSQL server at '$POSTGRES_ADDR' to accept connections..."
-  sleep 3s
+while ! nc -z $POSTGRES_HOST 5432; do
+  echo "Waiting for PostgreSQL server at '$POSTGRES_HOST' to accept connections on port 5432..."
+  sleep 1s
 done
 
 if [ -z "$TIMEOUT" ]; then
@@ -38,5 +38,6 @@ case "$1" in
                         --timeout $TIMEOUT \
                         --access-logfile - \
                         --error-logfile -
-        fi
+            ;;
+    *)
 esac
