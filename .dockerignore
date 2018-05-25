@@ -1,0 +1,7 @@
+.git*
+docker-compose*
+Dockerfile
+.travis.yml
+.cache
+docs
+docker
