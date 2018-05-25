@@ -29,6 +29,7 @@ WORKDIR $APP_HOME
 RUN pip install --no-cache-dir -r $REQUIREMENTS_FILE
 COPY --from=npm_builder $APP_HOME/frontend/dist/build/ $APP_HOME/static/
 COPY . $APP_HOME
+RUN rm -rf $APP_HOME/frontend package.json postcss.config.js yarn.lock
 
 ENTRYPOINT ["./docker-entrypoint.sh"]
 CMD ["run"]

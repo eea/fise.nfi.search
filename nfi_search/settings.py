@@ -119,11 +119,6 @@ ROOT_DIR = BASE_DIR
 STATIC_ROOT = os.path.join(ROOT_DIR, 'static')
 STATIC_URL = '/static/'
 
-
-STATICFILES_DIRS = (
-    os.path.join(BASE_DIR, 'frontend/assets'),
-)
-
 WEBPACK_LOADER = {
     'DEFAULT': {
         'CACHE': not DEBUG,
