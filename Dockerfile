@@ -28,6 +28,7 @@ COPY requirements.txt $REQUIREMENTS_FILE $APP_HOME/
 WORKDIR $APP_HOME
 RUN pip install --no-cache-dir -r $REQUIREMENTS_FILE
 COPY --from=npm_builder $APP_HOME/frontend/dist/build/ $APP_HOME/static/
+COPY --from=npm_builder $APP_HOME/webpack-stats.json $APP_HOME
 COPY . $APP_HOME
 RUN rm -rf $APP_HOME/frontend package.json postcss.config.js yarn.lock
 
