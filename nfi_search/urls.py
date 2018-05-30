@@ -23,7 +23,6 @@ urlpatterns = [
 ]
 
 
-
 # Add the SPA catch-all route last
 urlpatterns += [
     url(r'^', spabundle, name='spa'),
