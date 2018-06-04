@@ -9,6 +9,9 @@ class DCountry(models.Model):
         db_table = 'd_country'
         verbose_name_plural = 'DCountries'
 
+    def __str__(self):
+        return self.name
+
 
 class DResourceType(models.Model):
     name = models.CharField(max_length=256, unique=True)
@@ -16,6 +19,9 @@ class DResourceType(models.Model):
     class Meta:
         db_table = 'd_resource_type'
         verbose_name_plural = 'DResourceTypes'
+
+    def __str__(self):
+        return self.name
 
 
 class DDataSet(models.Model):
@@ -25,6 +31,9 @@ class DDataSet(models.Model):
         db_table = 'd_data_set'
         verbose_name_plural = 'DDataSets'
 
+    def __str__(self):
+        return self.name
+
 
 class DLanguage(models.Model):
     name = models.CharField(max_length=256, unique=True)
@@ -32,6 +41,9 @@ class DLanguage(models.Model):
     class Meta:
         db_table = 'd_language'
         verbose_name_plural = 'DLanguages'
+
+    def __str__(self):
+        return self.name
 
 
 class DTopicCategory(models.Model):
@@ -41,6 +53,9 @@ class DTopicCategory(models.Model):
         db_table = 'd_topic_category'
         verbose_name_plural = 'DTopicCategories'
 
+    def __str__(self):
+        return self.name
+
 
 class DDataSource(models.Model):
     name = models.CharField(max_length=256, unique=True)
@@ -49,6 +64,9 @@ class DDataSource(models.Model):
         db_table = 'd_data_source'
         verbose_name_plural = 'DDataSources'
 
+    def __str__(self):
+        return self.name
+
 
 class DDataType(models.Model):
     name = models.CharField(max_length=256, unique=True)
@@ -56,6 +74,9 @@ class DDataType(models.Model):
     class Meta:
         db_table = 'd_data_type'
         verbose_name_plural = 'DDataTypes'
+
+    def __str__(self):
+        return self.name
 
 
 class DInfoLevel(models.Model):
@@ -66,6 +87,9 @@ class DInfoLevel(models.Model):
         db_table = 'd_info_level'
         verbose_name_plural = 'DInfoLevels'
 
+    def __str__(self):
+        return self.name
+
 
 class DKeyword(models.Model):
     name = models.CharField(max_length=256, unique=True)
@@ -73,6 +97,9 @@ class DKeyword(models.Model):
     class Meta:
         db_table = 'd_keyword'
         verbose_name_plural = 'DKeywords'
+
+    def __str__(self):
+        return self.name
 
 
 class DNutsLevel(models.Model):
@@ -84,6 +111,9 @@ class DNutsLevel(models.Model):
         db_table = 'd_nuts_level'
         verbose_name_plural = 'DNutsLevels'
 
+    def __str__(self):
+        return self.name
+
 
 class DFileType(models.Model):
     name = models.CharField(max_length=256, unique=True)
@@ -93,6 +123,9 @@ class DFileType(models.Model):
         db_table = 'd_file_type'
         verbose_name_plural = 'DFileTypes'
 
+    def __str__(self):
+        return self.name
+
 
 class Organization(models.Model):
     name = models.CharField(max_length=256, blank=True, null=True)
@@ -101,6 +134,9 @@ class Organization(models.Model):
 
     class Meta:
         db_table = 'organization'
+
+    def __str__(self):
+        return self.name
 
 
 class Document(models.Model):
@@ -124,6 +160,9 @@ class Document(models.Model):
     class Meta:
         db_table = 'document'
 
+    def __str__(self):
+        return self.title
+
 
 class File(models.Model):
     document = models.ForeignKey(Document, blank=True, null=True)
@@ -133,6 +172,9 @@ class File(models.Model):
 
     class Meta:
         db_table = 'file'
+
+    def __str__(self):
+        return self.external_link
 
 
 class DocumentKeyword(models.Model):
@@ -144,6 +186,9 @@ class DocumentKeyword(models.Model):
         unique_together = (('document', 'keyword'),)
         verbose_name_plural = 'DocumentKeywords'
 
+    def __str__(self):
+        return '{} - {}'.format(self.document.title, self.keyword.name)
+
 
 class DocumentNutsLevel(models.Model):
     document = models.ForeignKey(Document, primary_key=True)
@@ -154,6 +199,9 @@ class DocumentNutsLevel(models.Model):
         unique_together = (('document', 'nuts_level'),)
         verbose_name_plural = 'DocumentNutsLevels'
 
+    def __str__(self):
+        return '{} - {}'.format(self.document.title, self.nuts_level.name)
+
 
 class FileLanguage(models.Model):
     file = models.ForeignKey(File, primary_key=True)
@@ -163,6 +211,9 @@ class FileLanguage(models.Model):
         db_table = 'file_language'
         unique_together = (('file', 'language'),)
         verbose_name_plural = 'FileLanguages'
+
+    def __str__(self):
+        return '{} - {}'.format(self.file.external_link, self.language.name)
 
 
 class GeographicBounds(models.Model):
@@ -181,6 +232,12 @@ class GeographicBounds(models.Model):
     class Meta:
         db_table = 'geographic_bounds'
         verbose_name_plural = 'GeographicBounds'
+
+    def __str__(self):
+        return '{} - N:{}, E:{}, S:{}, W:{}'.format(
+            self.document.title, self.bound_north, self.bound_east,
+            self.bound_south, self.bound_west
+        )
 
 
 class CountryData(models.Model):
