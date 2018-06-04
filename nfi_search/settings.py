@@ -164,3 +164,6 @@ ELASTICSEARCH_DSL = {
         'http_auth': env('ELASTICSEARCH_AUTH'),
     },
 }
+
+MAX_RESULT_WINDOW = 10000  # This is ElasticSearch's default, but we define it
+# here explicitly to minimize refactoring in case we ever change it.

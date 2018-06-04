@@ -47,3 +47,14 @@ The documents are provided in standardized format like spreadsheets, in differen
 1. Add package: 
         
         yarn add "package name"
+
+## Ubuntu elasticsearch container error:
+* If your host runs ubuntu your elasticsearch container may fail to run with the error "bootstrap checks failed".
+  This happens because max map count is set under the value __262144__
+* You can fix this temporarily(till you restart your machine) by running:
+
+        sudo sysctl -w vm.max_map_count=262144
+* You can fix this permanently by modifying your max_map_count file:
+
+        sudo vim /proc/sys/vm/max_map_count
+  Change the value from the file with 262144 and save

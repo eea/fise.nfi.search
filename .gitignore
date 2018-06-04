@@ -114,3 +114,6 @@ docker/postgres.env
 #Node
 /node_modules/
 webpack-stats.json
+
+#Database
+*.sql
