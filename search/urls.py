@@ -1,8 +1,7 @@
-
-from django.conf.urls import url, include
-
-from .views import hello_world
+from django.conf.urls import url
+from .views import SearchView
 
 
 urlpatterns = [
-    url(r'^demo/', hello_world, name='hello_world')]
+    url(r'^search/', SearchView.as_view({'get': 'list'}), name='search'),
+]
