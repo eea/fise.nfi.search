@@ -128,9 +128,9 @@ class DFileType(models.Model):
 
 
 class Organization(models.Model):
-    name = models.CharField(max_length=256, blank=True, null=True)
-    responsible_person = models.CharField(max_length=256, blank=True, null=True)
-    email = models.CharField(max_length=256, blank=True, null=True)
+    name = models.TextField(blank=True, null=True)
+    responsible_person = models.TextField(blank=True, null=True)
+    email = models.TextField(blank=True, null=True)
 
     class Meta:
         db_table = 'organization'
