@@ -17,6 +17,7 @@ from ._metadata import (
     update_keywords,
     update_languages,
     update_organizations,
+    update_file_types,
 )
 
 defusedxml.defuse_stdlib()
@@ -75,6 +76,10 @@ class Command(BaseCommand):
         new = update_organizations(records)
         if new > 0:
             self.stdout.write(f'Added {new} organizations')
+
+        new = update_file_types(records)
+        if new > 0:
+            self.stdout.write(f'Added {new} file types')
 
     def handle(self, *args, **options):
         start_row = options['startrow']

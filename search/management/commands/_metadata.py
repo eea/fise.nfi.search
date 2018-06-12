@@ -14,6 +14,7 @@ from search.models import (
     DKeyword,
     DLanguage,
     Organization,
+    DFileType,
 )
 
 
@@ -222,3 +223,15 @@ def update_organizations(records):
             Organization.objects.create(name=o[0], email=o[1])
             new += 1
     return new
+
+
+def update_file_types(records):
+    data = set()
+    for r in records:
+        ext = r.resource_locator_internal.split('.')[-1].strip().lower()
+        if ext:
+            data.add(ext)
+
+    existing = [o.name for o in DFileType.objects.only('name').filter(name__in=data)]
+    data = [d for d in data if d not in existing]
+    return _update_data(DFileType, 'name', data)
