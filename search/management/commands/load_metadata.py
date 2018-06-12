@@ -15,6 +15,8 @@ from ._metadata import (
     update_data_sources,
     update_nuts_levels,
     update_keywords,
+    update_languages,
+    update_organizations,
 )
 
 defusedxml.defuse_stdlib()
@@ -65,6 +67,14 @@ class Command(BaseCommand):
         new = update_keywords(records)
         if new > 0:
             self.stdout.write(f'Added {new} keywords')
+
+        new = update_languages(records)
+        if new > 0:
+            self.stdout.write(f'Added {new} languages')
+
+        new = update_organizations(records)
+        if new > 0:
+            self.stdout.write(f'Added {new} organizations')
 
     def handle(self, *args, **options):
         start_row = options['startrow']

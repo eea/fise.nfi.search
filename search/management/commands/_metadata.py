@@ -12,6 +12,8 @@ from search.models import (
     DDataSource,
     DNutsLevel,
     DKeyword,
+    DLanguage,
+    Organization,
 )
 
 
@@ -32,7 +34,11 @@ def float_or_none(value):
 
 
 def comma_string_to_list(value):
-    return [e.strip() for e in value.split(',') if e.strip()]
+    """
+    Splits `value` on commas and `and`s.
+    """
+    data = [e.strip() for e in value.split(',') if e.strip()]
+    return [e.strip() for tok in data for e in tok.split(' and ') if e.strip()]
 
 
 @attr.s
@@ -53,11 +59,11 @@ class MetadataRecord:
     resource_locator_internal = attr.ib()
     resource_locator_internal2 = attr.ib()
     resource_locator_external = attr.ib()
-    responsible_organisation = attr.ib()
-    organisation_email = attr.ib()
+    responsible_organization = attr.ib()
+    organization_email = attr.ib()
     resource_title = attr.ib()
     resource_description = attr.ib()
-    language = attr.ib()
+    languages = attr.ib(converter=comma_string_to_list)
     year_published = attr.ib(converter=int_or_none)
     year_data_collection_start = attr.ib(converter=int_or_none)
     year_data_collection_end = attr.ib(converter=int_or_none)
@@ -190,3 +196,29 @@ def update_keywords(records):
     existing = [o.name for o in DKeyword.objects.only('name').filter(name__in=data)]
     data = [d for d in data if d not in existing]
     return _update_data(DKeyword, 'name', data)
+
+
+def update_languages(records):
+    data = set([lang for r in records for lang in r.languages])
+    existing = [o.name for o in DLanguage.objects.only('name').filter(name__in=data)]
+    data = [d for d in data if d not in existing]
+    return _update_data(DLanguage, 'name', data)
+
+
+def update_organizations(records):
+    # Organization.responsible_person is not populated, as the Excel data
+    # seems to include that in the email column, with no consistent format.
+    orgs = set(
+        [
+            (r.responsible_organization.strip(), r.organization_email.strip())
+            for r in records
+            if r.responsible_organization.strip()
+        ]
+    )
+
+    new = 0
+    for o in orgs:
+        if not Organization.objects.filter(name=o[0], email=o[1]).exists():
+            Organization.objects.create(name=o[0], email=o[1])
+            new += 1
+    return new
