@@ -11,6 +11,7 @@ from search.models import (
     DTopicCategory,
     DDataSource,
     DNutsLevel,
+    DKeyword,
 )
 
 
@@ -71,8 +72,8 @@ class MetadataRecord:
     forest_management_ha = attr.ib()
     afforestation_ha = attr.ib()
     felling_ha = attr.ib()
-    additional_info = attr.ib()
-    keywords = attr.ib()
+    additional_info = attr.ib(converter=comma_string_to_list)
+    keywords = attr.ib(converter=comma_string_to_list)
     metadata = attr.ib()
     metadata_location = attr.ib()
     geographic_bounding_box_north = attr.ib(converter=float_or_none)
@@ -93,6 +94,7 @@ MetadataColumns = IntEnum(
 
 
 def update_countries(records):
+    """Countries are a peculiar import case, as they come with ids in the metadata files."""
     countries = {
         r.country_id: r.country.strip()
         for r in records
@@ -108,50 +110,83 @@ def update_countries(records):
     return DCountry.objects.count() - orig_count
 
 
-def _update_data(model, target_field_name, rec_field_name, records):
-    data = set([getattr(r, rec_field_name).strip() for r in records if getattr(r, rec_field_name).strip()])
+def _prepare_data(model, target_field_name, rec_field_name, records):
+    """Prepares a list of unique, non-existing field values from a list of `MetadataRecords`"""
+    data = set(
+        [
+            getattr(r, rec_field_name).strip()
+            for r in records
+            if getattr(r, rec_field_name).strip()
+        ]
+    )
     filter_clause = {f'{target_field_name}__in': data}
     existing = [
-        getattr(o, target_field_name) for o in model.objects.only(target_field_name).filter(**filter_clause)
+        getattr(o, target_field_name)
+        for o in model.objects.only(target_field_name).filter(**filter_clause)
     ]
     data = [d for d in data if d not in existing]
+    return data
+
+
+def _update_data(model, field_name, data):
+    """
+    Bulk-inserts `data` into `model`'s field `field_name`
+    Returns:
+        The number of objects inserted.
+    """
     orig_count = model.objects.count()
-    objs = [model(**{target_field_name: d}) for d in data]
+    objs = [model(**{field_name: d}) for d in data]
     model.objects.bulk_create(objs, batch_size=100)
     return model.objects.count() - orig_count
 
 
 def update_data_types(records):
-    return _update_data(DDataType, 'name', 'data_type', records)
+    data = _prepare_data(DDataType, 'name', 'data_type', records)
+    return _update_data(DDataType, 'name', data)
 
 
 def update_data_sets(records):
-    return _update_data(DDataSet, 'name', 'data_set', records)
+    data = _prepare_data(DDataSet, 'name', 'data_set', records)
+    return _update_data(DDataSet, 'name', data)
 
 
 def update_resource_types(records):
-    return _update_data(DResourceType, 'name', 'resource_type', records)
+    data = _prepare_data(DResourceType, 'name', 'resource_type', records)
+    return _update_data(DResourceType, 'name', data)
 
 
 def update_info_levels(records):
-    return _update_data(DInfoLevel, 'name', 'resource_type', records)
+    data = _prepare_data(DInfoLevel, 'name', 'info_level', records)
+    return _update_data(DInfoLevel, 'name', data)
 
 
 def update_topic_categories(records):
-    return _update_data(DTopicCategory, 'name', 'topic_category', records)
+    data = _prepare_data(DTopicCategory, 'name', 'topic_category', records)
+    return _update_data(DTopicCategory, 'name', data)
 
 
 def update_data_sources(records):
-    return _update_data(DDataSource, 'name', 'data_source', records)
+    data = _prepare_data(DDataSource, 'name', 'data_source', records)
+    return _update_data(DDataSource, 'name', data)
 
 
 def update_nuts_levels(records):
     data = set([level for r in records for level in r.nuts_levels])
-    existing = [
-        DNutsLevel.name for o in DNutsLevel.objects.only('name').filter(name__in=data)
-    ]
+    existing = [o.name for o in DNutsLevel.objects.only('name').filter(name__in=data)]
     data = [d for d in data if d not in existing]
-    orig_count = DNutsLevel.objects.count()
-    objs = [DNutsLevel(name=d) for d in data]
-    DNutsLevel.objects.bulk_create(objs, batch_size=100)
-    return DNutsLevel.objects.count() - orig_count
+    return _update_data(DNutsLevel, 'name', data)
+
+
+def update_keywords(records):
+    """
+    The keyword-specific columns are ignored, and keywords are extracted
+    from the concatenated keyword columns ('KEYWORDS' and 'ADDITIONAL_INFO').
+    """
+    data = set(
+        [w for r in records for w in r.keywords] +
+        [w for r in records for w in r.additional_info]
+    )
+
+    existing = [o.name for o in DKeyword.objects.only('name').filter(name__in=data)]
+    data = [d for d in data if d not in existing]
+    return _update_data(DKeyword, 'name', data)
