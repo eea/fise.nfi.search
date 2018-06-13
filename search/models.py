@@ -140,6 +140,8 @@ class Organization(models.Model):
 
 
 class Document(models.Model):
+    created = models.DateTimeField(auto_now_add=True)
+    updated = models.DateTimeField(auto_now=True)
     title = models.CharField(max_length=256)
     description = models.TextField(blank=True, null=True)
     parent = models.ForeignKey('self', blank=True, null=True)
@@ -149,12 +151,18 @@ class Document(models.Model):
     resource_type = models.ForeignKey(DResourceType, blank=True, null=True)
     info_level = models.ForeignKey(DInfoLevel, blank=True, null=True)
     topic_category = models.ForeignKey(DTopicCategory, blank=True, null=True)
+    keywords = models.ManyToManyField(
+        DKeyword, related_name='documents', db_table='document_keyword'
+    )
     data_source = models.ForeignKey(DDataSource, blank=True, null=True)
     organization = models.ForeignKey(Organization, blank=True, null=True)
     published_year = models.IntegerField(blank=True, null=True)
     data_collection_start_year = models.IntegerField(blank=True, null=True)
     data_collection_end_year = models.IntegerField(blank=True, null=True)
     next_update_year = models.IntegerField(blank=True, null=True)
+    nuts_levels = models.ManyToManyField(
+        DNutsLevel, related_name='documents', db_table='document_nuts_level'
+    )
     additional_info = models.TextField(blank=True, null=True)
 
     class Meta:
@@ -169,6 +177,9 @@ class File(models.Model):
     external_link = models.TextField(blank=True, null=True)
     file_size = models.IntegerField(blank=True, null=True)
     file_type = models.ForeignKey(DFileType, blank=True, null=True)
+    languages = models.ManyToManyField(
+        DLanguage, related_name='files', db_table='file_language'
+    )
 
     class Meta:
         db_table = 'file'
@@ -177,55 +188,20 @@ class File(models.Model):
         return self.external_link
 
 
-class DocumentKeyword(models.Model):
-    document = models.ForeignKey(Document, primary_key=True)
-    keyword = models.ForeignKey(DKeyword)
-
-    class Meta:
-        db_table = 'document_keyword'
-        unique_together = (('document', 'keyword'),)
-        verbose_name_plural = 'DocumentKeywords'
-
-    def __str__(self):
-        return '{} - {}'.format(self.document.title, self.keyword.name)
-
-
-class DocumentNutsLevel(models.Model):
-    document = models.ForeignKey(Document, primary_key=True)
-    nuts_level = models.ForeignKey(DNutsLevel)
-
-    class Meta:
-        db_table = 'document_nuts_level'
-        unique_together = (('document', 'nuts_level'),)
-        verbose_name_plural = 'DocumentNutsLevels'
-
-    def __str__(self):
-        return '{} - {}'.format(self.document.title, self.nuts_level.name)
-
-
-class FileLanguage(models.Model):
-    file = models.ForeignKey(File, primary_key=True)
-    language = models.ForeignKey(DLanguage)
-
-    class Meta:
-        db_table = 'file_language'
-        unique_together = (('file', 'language'),)
-        verbose_name_plural = 'FileLanguages'
-
-    def __str__(self):
-        return '{} - {}'.format(self.file.external_link, self.language.name)
-
-
 class GeographicBounds(models.Model):
     document = models.ForeignKey(Document, blank=True, null=True)
-    bound_north = models.DecimalField(max_digits=15, decimal_places=6,
-                                      blank=True, null=True)
-    bound_east = models.DecimalField(max_digits=15, decimal_places=6,
-                                     blank=True, null=True)
-    bound_south = models.DecimalField(max_digits=15, decimal_places=6,
-                                      blank=True, null=True)
-    bound_west = models.DecimalField(max_digits=15, decimal_places=6,
-                                     blank=True, null=True)
+    bound_north = models.DecimalField(
+        max_digits=15, decimal_places=6, blank=True, null=True
+    )
+    bound_east = models.DecimalField(
+        max_digits=15, decimal_places=6, blank=True, null=True
+    )
+    bound_south = models.DecimalField(
+        max_digits=15, decimal_places=6, blank=True, null=True
+    )
+    bound_west = models.DecimalField(
+        max_digits=15, decimal_places=6, blank=True, null=True
+    )
     projection = models.TextField(blank=True, null=True)
     spatial_resolution = models.TextField(blank=True, null=True)
 
@@ -235,8 +211,11 @@ class GeographicBounds(models.Model):
 
     def __str__(self):
         return '{} - N:{}, E:{}, S:{}, W:{}'.format(
-            self.document.title, self.bound_north, self.bound_east,
-            self.bound_south, self.bound_west
+            self.document.title,
+            self.bound_north,
+            self.bound_east,
+            self.bound_south,
+            self.bound_west,
         )
 
 
