@@ -101,5 +101,7 @@ class Command(BaseCommand):
                         f'Processed {len(records)} rows from sheet "{sheet.name}"'
                     )
                 )
+        # Disallow XML with <!ENTITY> declarations inside the DTD
+        # (https://github.com/python-excel/xlrd/issues/173)
         except defusedxml.EntitiesForbidden:
             self.stdout.write(self.style.ERROR('Please use a xlsx file without XEE'))
