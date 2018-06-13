@@ -1,24 +1,16 @@
 from django.core.management.base import BaseCommand
+from django.apps import apps
 import defusedxml
 import attr
 from xlrd import open_workbook
 
-from ._metadata import (
+from search.metadata import (
     MetadataRecord,
     MetadataColumns,
-    update_countries,
-    update_data_types,
-    update_data_sets,
-    update_resource_types,
-    update_info_levels,
-    update_topic_categories,
-    update_data_sources,
-    update_nuts_levels,
-    update_keywords,
-    update_languages,
-    update_organizations,
-    update_file_types,
 )
+
+from search.models import Document
+
 
 defusedxml.defuse_stdlib()
 
@@ -31,58 +23,27 @@ class Command(BaseCommand):
         parser.add_argument('file')
         parser.add_argument('-s', '--startrow', type=int, default=1)
         parser.add_argument('-e', '--endrow', type=int)
+        parser.add_argument('-i', '--ignore-errors', type=bool, default=False)
 
     def update_dictionaries(self, records):
-        new = update_countries(records)
-        if new > 0:
-            self.stdout.write(f'Added {new} countries')
+        self.stdout.write('Updating dictionaries ...')
+        dictionary_fields = [
+            f for f in attr.fields(MetadataRecord)
+            if 'dictionary_cls' in f.metadata
+        ]
 
-        new = update_data_types(records)
-        if new > 0:
-            self.stdout.write(f'Added {new} data types')
-
-        new = update_data_sets(records)
-        if new > 0:
-            self.stdout.write(f'Added {new} data sets')
-
-        new = update_resource_types(records)
-        if new > 0:
-            self.stdout.write(f'Added {new} resource types')
-
-        new = update_info_levels(records)
-        if new > 0:
-            self.stdout.write(f'Added {new} info levels')
-
-        new = update_topic_categories(records)
-        if new > 0:
-            self.stdout.write(f'Added {new} topic categories')
-
-        new = update_data_sources(records)
-        if new > 0:
-            self.stdout.write(f'Added {new} data sources')
-
-        new = update_nuts_levels(records)
-        if new > 0:
-            self.stdout.write(f'Added {new} NUTS levels')
-
-        new = update_keywords(records)
-        if new > 0:
-            self.stdout.write(f'Added {new} keywords')
-
-        new = update_languages(records)
-        if new > 0:
-            self.stdout.write(f'Added {new} languages')
-
-        new = update_organizations(records)
-        if new > 0:
-            self.stdout.write(f'Added {new} organizations')
-
-        new = update_file_types(records)
-        if new > 0:
-            self.stdout.write(f'Added {new} file types')
+        for field in dictionary_fields:
+            model = apps.get_model('search', field.metadata['dictionary_cls'])
+            self.stdout.write(f'  {field.name: <30} ', ending='')
+            new = model.update_from_metadata(records)
+            if new > 0:
+                self.stdout.write(f'{new: >8} added.')
+            else:
+                self.stdout.write('{0: >15}'.format('no new values.'))
 
     def handle(self, *args, **options):
         start_row = options['startrow']
+        ignore_errors = options['ignore_errors']
         try:
             with open_workbook(options['file'], on_demand=True) as book:
                 sheet = book.sheet_by_index(0)
@@ -93,9 +54,15 @@ class Command(BaseCommand):
                         field.name: sheet.cell_value(rowno, MetadataColumns[field.name])
                         for field in attr.fields(MetadataRecord)
                     }
-                    records.append(MetadataRecord(**data))
+                    rec = MetadataRecord(**data)
+                    if rec.is_valid():
+                        records.append(rec)
+                    elif not ignore_errors:
+                        break
 
                 self.update_dictionaries(records)
+                # self.stdout.write('Importing metadata records ... ')
+                # Document.save_metadata_records(records)
                 self.stdout.write(
                     self.style.SUCCESS(
                         f'Processed {len(records)} rows from sheet "{sheet.name}"'

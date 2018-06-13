@@ -1,4 +1,15 @@
 from django.db import models
+import attr
+
+from .metadata import prepare_data, update_data
+
+
+class DictionaryMixin:
+
+    @classmethod
+    def update_from_metadata(cls, records):
+        data = prepare_data(cls, 'name', cls.metadata_field, records)
+        return update_data(cls, 'name', data)
 
 
 class DCountry(models.Model):
@@ -12,9 +23,28 @@ class DCountry(models.Model):
     def __str__(self):
         return self.name
 
+    @classmethod
+    def update_from_metadata(cls, records):
+        """Countries are a peculiar import case, as they come with ids in the metadata."""
+        countries = {
+            r.country_id: r.country.strip()
+            for r in records
+            if r.country_id and r.country.strip()
+        }
+        existing = cls.objects.filter(id__in=countries.keys())
+        for c in existing:
+            countries.pop(c.pk, None)
 
-class DResourceType(models.Model):
+        orig_count = cls.objects.count()
+        objs = [cls(id=id, name=name) for id, name in countries.items()]
+        cls.objects.bulk_create(objs, batch_size=100)
+        return cls.objects.count() - orig_count
+
+
+class DResourceType(DictionaryMixin, models.Model):
     name = models.CharField(max_length=256, unique=True)
+
+    metadata_field = 'resource_type'
 
     class Meta:
         db_table = 'd_resource_type'
@@ -24,8 +54,10 @@ class DResourceType(models.Model):
         return self.name
 
 
-class DDataSet(models.Model):
+class DDataSet(DictionaryMixin, models.Model):
     name = models.CharField(max_length=256, unique=True)
+
+    metadata_field = 'data_set'
 
     class Meta:
         db_table = 'd_data_set'
@@ -45,9 +77,18 @@ class DLanguage(models.Model):
     def __str__(self):
         return self.name
 
+    @classmethod
+    def update_from_metadata(cls, records):
+        data = set([lang for r in records for lang in r.languages])
+        existing = [o.name for o in cls.objects.only('name').filter(name__in=data)]
+        data = [d for d in data if d not in existing]
+        return update_data(cls, 'name', data)
 
-class DTopicCategory(models.Model):
+
+class DTopicCategory(DictionaryMixin, models.Model):
     name = models.CharField(max_length=256, unique=True)
+
+    metadata_field = 'topic_category'
 
     class Meta:
         db_table = 'd_topic_category'
@@ -57,8 +98,10 @@ class DTopicCategory(models.Model):
         return self.name
 
 
-class DDataSource(models.Model):
+class DDataSource(DictionaryMixin, models.Model):
     name = models.CharField(max_length=256, unique=True)
+
+    metadata_field = 'data_source'
 
     class Meta:
         db_table = 'd_data_source'
@@ -68,8 +111,10 @@ class DDataSource(models.Model):
         return self.name
 
 
-class DDataType(models.Model):
+class DDataType(DictionaryMixin, models.Model):
     name = models.CharField(max_length=256, unique=True)
+
+    metadata_field = 'data_type'
 
     class Meta:
         db_table = 'd_data_type'
@@ -79,9 +124,11 @@ class DDataType(models.Model):
         return self.name
 
 
-class DInfoLevel(models.Model):
+class DInfoLevel(DictionaryMixin, models.Model):
     name = models.CharField(max_length=256, unique=True)
     description = models.TextField()
+
+    metadata_field = 'info_level'
 
     class Meta:
         db_table = 'd_info_level'
@@ -101,6 +148,21 @@ class DKeyword(models.Model):
     def __str__(self):
         return self.name
 
+    @classmethod
+    def update_from_metadata(cls, records):
+        """
+        The keyword-specific columns are ignored, and keywords are extracted
+        from the concatenated keyword columns ('KEYWORDS' and 'ADDITIONAL_INFO').
+        """
+        data = set(
+            [w for r in records for w in r.keywords] +
+            [w for r in records for w in r.additional_info]
+        )
+
+        existing = [o.name for o in cls.objects.only('name').filter(name__in=data)]
+        data = [d for d in data if d not in existing]
+        return update_data(cls, 'name', data)
+
 
 class DNutsLevel(models.Model):
     name = models.CharField(max_length=256, unique=True)
@@ -114,6 +176,13 @@ class DNutsLevel(models.Model):
     def __str__(self):
         return self.name
 
+    @classmethod
+    def update_from_metadata(cls, records):
+        data = set([level for r in records for level in r.nuts_levels])
+        existing = [o.name for o in cls.objects.only('name').filter(name__in=data)]
+        data = [d for d in data if d not in existing]
+        return update_data(cls, 'name', data)
+
 
 class DFileType(models.Model):
     name = models.CharField(max_length=256, unique=True)
@@ -126,6 +195,18 @@ class DFileType(models.Model):
     def __str__(self):
         return self.name
 
+    @classmethod
+    def update_from_metadata(cls, records):
+        data = set()
+        for r in records:
+            ext = r.resource_locator_internal.split('.')[-1].strip().lower()
+            if ext:
+                data.add(ext)
+
+        existing = [o.name for o in cls.objects.only('name').filter(name__in=data)]
+        data = [d for d in data if d not in existing]
+        return update_data(cls, 'name', data)
+
 
 class Organization(models.Model):
     name = models.TextField(blank=True, null=True)
@@ -137,6 +218,25 @@ class Organization(models.Model):
 
     def __str__(self):
         return self.name
+
+    @classmethod
+    def update_from_metadata(cls, records):
+        # Organization.responsible_person is not populated, as the Excel data
+        # seems to include that in the email column, with no consistent format.
+        orgs = set(
+            [
+                (r.responsible_organization.strip(), r.organization_email.strip())
+                for r in records
+                if r.responsible_organization.strip()
+            ]
+        )
+
+        new = 0
+        for o in orgs:
+            if not cls.objects.filter(name=o[0], email=o[1]).exists():
+                cls.objects.create(name=o[0], email=o[1])
+                new += 1
+        return new
 
 
 class Document(models.Model):
@@ -163,6 +263,7 @@ class Document(models.Model):
     nuts_levels = models.ManyToManyField(
         DNutsLevel, related_name='documents', db_table='document_nuts_level'
     )
+    # TODO: Discuss dropping this, as terms here are conflated with keywords contents
     additional_info = models.TextField(blank=True, null=True)
 
     class Meta:
@@ -170,6 +271,63 @@ class Document(models.Model):
 
     def __str__(self):
         return self.title
+
+    @classmethod
+    def save_metadata_record(cls, rec_id, records, processed_ids=None):
+        processed_ids = processed_ids or []
+        if rec_id not in processed_ids:
+            rec = records[rec_id]
+            parent = None
+            if rec.parent_id is not None and rec.parent_id not in processed_ids:
+                parent, processed_ids = cls.save_metadata_record(rec.parent_id, records, processed_ids)
+
+            doc = attr.asdict(rec)
+            doc = {field: value for field, value in doc.items() if field in rec.relevant_fields}
+
+            # Prepare FK relations
+            doc['parent'] = parent
+            fk_rels = {
+                'country': (DCountry, 'name'),
+                'data_type': (DDataType, 'name'),
+                'data_set': (DDataSet, 'name'),
+                'resource_type': (DResourceType, 'name'),
+                'info_level': (DInfoLevel, 'name'),
+                'topic_category': (DTopicCategory, 'name'),
+                'data_source': (DDataSource, 'name'),
+            }
+            for field_name, model_details in fk_rels.items():
+                model, filter_field = model_details
+                try:
+                    doc[field_name] = model.objects.get(**{filter_field: doc[field_name]})
+                except model.DoesNotExist:
+                    print(f'row={rec_id} field={field_name} not found in {model.__class__.__name__}')
+                    return None, processed_ids
+
+            # Pop off M2M raw data before creating doc (M2M needs id)
+            nuts_levels = doc.pop('nuts_levels', [])
+            keywords = doc.pop('keywords', [])
+            additional_info = doc.pop('additional_info', [])
+            doc = Document.objects.create(**doc)
+
+            # Add M2M relations
+            nuts_levels = DNutsLevel.objects.filter(name__in=nuts_levels)
+            keywords = DKeyword.objects.filter(name__in=set(keywords + additional_info))
+            doc.nuts_levels = nuts_levels
+            doc.keywords = keywords
+            doc.save()
+
+            processed_ids.append(rec_id)
+            return doc, processed_ids
+
+        return None, processed_ids
+
+    @classmethod
+    def save_metadata_records(cls, records):
+        """Creates `Document`s from a list of `MetadataRecord`s"""
+        records = {r.id: r for r in records}
+        processed_ids = []
+        for rec_id, rec in records.items():
+            _, processed_ids = cls.save_metadata_record(rec_id, records, processed_ids)
 
 
 class File(models.Model):
