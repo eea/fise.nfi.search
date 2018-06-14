@@ -27,9 +27,9 @@ class DCountry(models.Model):
     def update_from_metadata(cls, records):
         """Countries are a peculiar import case, as they come with ids in the metadata."""
         countries = {
-            r.country_id: r.country.strip()
+            r.country_id: r.country
             for r in records
-            if r.country_id and r.country.strip()
+            if r.country_id is not None and r.country is not None
         }
         existing = cls.objects.filter(id__in=countries.keys())
         for c in existing:
@@ -199,9 +199,10 @@ class DFileType(models.Model):
     def update_from_metadata(cls, records):
         data = set()
         for r in records:
-            ext = r.resource_locator_internal.split('.')[-1].strip().lower()
-            if ext:
-                data.add(ext)
+            if r.resource_locator_internal is not None:
+                ext = r.resource_locator_internal.split('.')[-1].strip().lower()
+                if ext:
+                    data.add(ext)
 
         existing = [o.name for o in cls.objects.only('name').filter(name__in=data)]
         data = [d for d in data if d not in existing]
@@ -225,9 +226,9 @@ class Organization(models.Model):
         # seems to include that in the email column, with no consistent format.
         orgs = set(
             [
-                (r.responsible_organization.strip(), r.organization_email.strip())
+                (r.organization, r.organization_email)
                 for r in records
-                if r.responsible_organization.strip()
+                if r.organization is not None
             ]
         )
 
@@ -279,34 +280,64 @@ class Document(models.Model):
             rec = records[rec_id]
             parent = None
             if rec.parent_id is not None and rec.parent_id not in processed_ids:
-                parent, processed_ids = cls.save_metadata_record(rec.parent_id, records, processed_ids)
+                parent, processed_ids = cls.save_metadata_record(
+                    rec.parent_id, records, processed_ids
+                )
 
             doc = attr.asdict(rec)
-            doc = {field: value for field, value in doc.items() if field in rec.relevant_fields}
+            doc = {
+                field: value
+                for field, value in doc.items()
+                if field in rec.relevant_fields()
+            }
 
             # Prepare FK relations
             doc['parent'] = parent
+
+            # Map dictionary relation name to a tuple of:
+            # <related model>, (<related model field 1>, <corresponding metadata field 1>, ...)
+            # The specified related model fields must be able to uniquely identify the related instance.
             fk_rels = {
-                'country': (DCountry, 'name'),
-                'data_type': (DDataType, 'name'),
-                'data_set': (DDataSet, 'name'),
-                'resource_type': (DResourceType, 'name'),
-                'info_level': (DInfoLevel, 'name'),
-                'topic_category': (DTopicCategory, 'name'),
-                'data_source': (DDataSource, 'name'),
+                'country': (DCountry, (('name', 'country'),)),
+                'data_type': (DDataType, (('name', 'data_type'),)),
+                'data_set': (DDataSet, (('name', 'data_set'),)),
+                'resource_type': (DResourceType, (('name', 'resource_type'),)),
+                'info_level': (DInfoLevel, (('name', 'info_level'),)),
+                'topic_category': (DTopicCategory, (('name', 'topic_category'),)),
+                'data_source': (DDataSource, (('name', 'data_source'),)),
+                'organization': (
+                    Organization,
+                    (('name', 'organization'), ('email', 'organization_email')),
+                ),
             }
-            for field_name, model_details in fk_rels.items():
-                model, filter_field = model_details
-                try:
-                    doc[field_name] = model.objects.get(**{filter_field: doc[field_name]})
-                except model.DoesNotExist:
-                    print(f'row={rec_id} field={field_name} not found in {model.__class__.__name__}')
-                    return None, processed_ids
+
+            for relation, details in fk_rels.items():
+                model, field_pairs = details
+                relation_filter = {p[0]: doc[p[1]] for p in field_pairs}
+                if any(relation_filter.values()):
+                    try:
+                        doc[relation] = model.objects.get(**relation_filter)
+                    except model.DoesNotExist:
+                        print(
+                            f'row={rec_id} {relation_filter} not found in {model.__name__}'
+                        )
+                        return None, processed_ids
+                else:
+                    doc.pop(relation, None)
+
+            # Remove non-Document fields (e.g. 'organization_email')
+            discard_fields = [p[1] for v in fk_rels.values() for p in v[1] if p[1] not in fk_rels.keys()]
+            for f in discard_fields:
+                doc.pop(f)
 
             # Pop off M2M raw data before creating doc (M2M needs id)
             nuts_levels = doc.pop('nuts_levels', [])
             keywords = doc.pop('keywords', [])
             additional_info = doc.pop('additional_info', [])
+            languages = doc.pop('languages', [])
+            geo_fields = ('bound_north', 'bound_east', 'bound_south', 'bound_west', 'projection', 'spatial_resolution')
+            geo_bounds = {field: doc.pop(field, None) for field in geo_fields}
+
             doc = Document.objects.create(**doc)
 
             # Add M2M relations
@@ -315,6 +346,11 @@ class Document(models.Model):
             doc.nuts_levels = nuts_levels
             doc.keywords = keywords
             doc.save()
+
+            # Create geo bounds if available
+            if any(v for v in geo_bounds.values()):
+                geo_bounds['document'] = doc
+                GeographicBounds.objects.create(**geo_bounds)
 
             processed_ids.append(rec_id)
             return doc, processed_ids
@@ -331,7 +367,7 @@ class Document(models.Model):
 
 
 class File(models.Model):
-    document = models.ForeignKey(Document, blank=True, null=True)
+    document = models.ForeignKey(Document, blank=True, null=True, related_name='file')
     external_link = models.TextField(blank=True, null=True)
     file_size = models.IntegerField(blank=True, null=True)
     file_type = models.ForeignKey(DFileType, blank=True, null=True)
@@ -347,7 +383,7 @@ class File(models.Model):
 
 
 class GeographicBounds(models.Model):
-    document = models.ForeignKey(Document, blank=True, null=True)
+    document = models.ForeignKey(Document, blank=True, null=True, related_name='geo_bounds')
     bound_north = models.DecimalField(
         max_digits=15, decimal_places=6, blank=True, null=True
     )

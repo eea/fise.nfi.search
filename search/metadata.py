@@ -3,6 +3,14 @@ from enum import IntEnum
 import attr
 
 
+NULL_SUROGATES = ('', 'N.A.')
+
+
+def strip_or_none(value):
+    stripped = value.strip()
+    return stripped if stripped not in NULL_SUROGATES else None
+
+
 def int_or_none(value):
     try:
         return int(value)
@@ -29,32 +37,61 @@ def comma_string_to_list(value):
 
 @attr.s
 class MetadataRecord:
-    id = attr.ib(converter=int_or_none)
-    country = attr.ib(metadata={'dictionary_cls': 'DCountry'})
-    country_id = attr.ib(converter=int_or_none)
-    data_type = attr.ib(metadata={'dictionary_cls': 'DDataType'})
-    data_set = attr.ib(metadata={'dictionary_cls': 'DDataSet'})
-    resource_type = attr.ib(metadata={'dictionary_cls': 'DResourceType'})
-    info_level = attr.ib(metadata={'dictionary_cls': 'DInfoLevel'})
-    topic_category = attr.ib(metadata={'dictionary_cls': 'DTopicCategory'})
-    data_source = attr.ib(metadata={'dictionary_cls': 'DDataSource'})
-    link_to_higher_information_level = attr.ib()
+    id = attr.ib(converter=int_or_none, metadata={'mandatory': True})
+    country = attr.ib(
+        converter=strip_or_none,
+        metadata={'dictionary_cls': 'DCountry', 'relevant': True, 'mandatory': True},
+    )
+    country_id = attr.ib(
+        converter=int_or_none, metadata={'relevant': True, 'mandatory': True}
+    )
+    data_type = attr.ib(
+        converter=strip_or_none, metadata={'dictionary_cls': 'DDataType', 'relevant': True}
+    )
+    data_set = attr.ib(
+        converter=strip_or_none, metadata={'dictionary_cls': 'DDataSet', 'relevant': True}
+    )
+    resource_type = attr.ib(
+        converter=strip_or_none, metadata={'dictionary_cls': 'DResourceType', 'relevant': True}
+    )
+    info_level = attr.ib(
+        converter=strip_or_none, metadata={'dictionary_cls': 'DInfoLevel', 'relevant': True}
+    )
+    topic_category = attr.ib(
+        converter=strip_or_none, metadata={'dictionary_cls': 'DTopicCategory', 'relevant': True}
+    )
+    data_source = attr.ib(
+        converter=strip_or_none, metadata={'dictionary_cls': 'DDataSource', 'relevant': True}
+    )
+    link_to_parent = attr.ib(converter=strip_or_none)
     parent_id = attr.ib(converter=int_or_none)
     sibling_ids = attr.ib(converter=int_or_none)
     children_ids = attr.ib(converter=int_or_none)
-    resource_locator_internal = attr.ib()
-    resource_locator_internal2 = attr.ib()
-    resource_locator_external = attr.ib()
-    responsible_organization = attr.ib(metadata={'dictionary_cls': 'Organization'})
-    organization_email = attr.ib()
-    resource_title = attr.ib()
-    resource_description = attr.ib()
-    languages = attr.ib(converter=comma_string_to_list, metadata={'dictionary_cls': 'DLanguage'})
-    published_year = attr.ib(converter=int_or_none)
-    data_collection_start_year = attr.ib(converter=int_or_none)
-    data_collection_end_year = attr.ib(converter=int_or_none)
-    next_update_year = attr.ib(converter=int_or_none)
-    nuts_levels = attr.ib(converter=comma_string_to_list, metadata={'dictionary_cls': 'DNutsLevel'})
+    resource_locator_internal = attr.ib(converter=strip_or_none)
+    resource_locator_internal2 = attr.ib(converter=strip_or_none)
+    resource_locator_external = attr.ib(converter=strip_or_none)
+    organization = attr.ib(
+        converter=strip_or_none, metadata={'dictionary_cls': 'Organization', 'relevant': True}
+    )
+    organization_email = attr.ib(converter=strip_or_none, metadata={'relevant': True})
+    title = attr.ib(converter=strip_or_none, metadata={'relevant': True})
+    description = attr.ib(converter=strip_or_none, metadata={'relevant': True})
+    languages = attr.ib(
+        converter=comma_string_to_list,
+        metadata={'dictionary_cls': 'DLanguage', 'relevant': True},
+    )
+    published_year = attr.ib(converter=int_or_none, metadata={'relevant': True})
+    data_collection_start_year = attr.ib(
+        converter=int_or_none, metadata={'relevant': True}
+    )
+    data_collection_end_year = attr.ib(
+        converter=int_or_none, metadata={'relevant': True}
+    )
+    next_update_year = attr.ib(converter=int_or_none, metadata={'relevant': True})
+    nuts_levels = attr.ib(
+        converter=comma_string_to_list,
+        metadata={'dictionary_cls': 'DNutsLevel', 'relevant': True},
+    )
     forest_ownership_ha = attr.ib()
     forest_types_ha = attr.ib()
     tree_species_ha = attr.ib()
@@ -64,55 +101,37 @@ class MetadataRecord:
     forest_management_ha = attr.ib()
     afforestation_ha = attr.ib()
     felling_ha = attr.ib()
-    additional_info = attr.ib(converter=comma_string_to_list)
-    keywords = attr.ib(converter=comma_string_to_list, metadata={'dictionary_cls': 'DKeyword'})
+    additional_info = attr.ib(converter=comma_string_to_list, metadata={'relevant': True})
+    keywords = attr.ib(
+        converter=comma_string_to_list,
+        metadata={'dictionary_cls': 'DKeyword', 'relevant': True},
+    )
     metadata = attr.ib()
     metadata_location = attr.ib()
-    geographic_bounding_box_north = attr.ib(converter=float_or_none)
-    geographic_bounding_box_east = attr.ib(converter=float_or_none)
-    geographic_bounding_box_south = attr.ib(converter=float_or_none)
-    geographic_bounding_box_west = attr.ib(converter=float_or_none)
-    projection = attr.ib()
-    spatial_resolution = attr.ib()
+    bound_north = attr.ib(converter=float_or_none, metadata={'relevant': True})
+    bound_east = attr.ib(converter=float_or_none, metadata={'relevant': True})
+    bound_south = attr.ib(converter=float_or_none, metadata={'relevant': True})
+    bound_west = attr.ib(converter=float_or_none, metadata={'relevant': True})
+    projection = attr.ib(converter=strip_or_none, metadata={'relevant': True})
+    spatial_resolution = attr.ib(converter=strip_or_none, metadata={'relevant': True})
     file_size = attr.ib()
     to_transfer_set_no = attr.ib()
     added_until_date = attr.ib()
 
-    relevant_fields = (
-        'country',
-        'country_id',
-        'data_type',
-        'data_set',
-        'resource_type',
-        'info_level',
-        'topic_category',
-        'data_source',
-        # 'organization_email',
-        # 'responsible_organization',
-        'published_year',
-        'data_collection_start_year',
-        'data_collection_end_year',
-        'next_update_year',
-        'nuts_levels',
-        'additional_info',
-        'keywords',
-        # 'geographic_bounding_box_north',
-        # 'geographic_bounding_box_east',
-        # 'geographic_bounding_box_south',
-        # 'geographic_bounding_box_west',
-        # 'projection',
-        # 'spatial_resolution',
-    )
-
-    # Mandatory fields must be non-empty for the record to be valid
-    # TODO: Decide what else should be required
-    mandatory_fields = ('id', 'country', 'country_id')
+    @classmethod
+    def relevant_fields(cls):
+        return [field.name for field in attr.fields(cls) if field.metadata.get('relevant', False)]
 
     def is_valid(self):
+        """
+        Validates the record if all fields that have `metadata['mandatory']` set to `True` are non-empty.
+        """
+        # TODO: Decide what else should be required
         return all(
             [
-                getattr(self, field_name) is not None
-                for field_name in self.mandatory_fields
+                getattr(self, field.name) is not None
+                for field in attr.fields(self.__class__)
+                if field.metadata.get('mandatory', False)
             ]
         )
 
@@ -127,9 +146,9 @@ def prepare_data(model, target_field_name, rec_field_name, records):
     """Prepares a list of unique, non-existing field values from a list of `MetadataRecords`"""
     data = set(
         [
-            getattr(r, rec_field_name).strip()
+            getattr(r, rec_field_name)
             for r in records
-            if getattr(r, rec_field_name).strip()
+            if getattr(r, rec_field_name) is not None
         ]
     )
     filter_clause = {f'{target_field_name}__in': data}

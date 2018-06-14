@@ -61,8 +61,8 @@ class Command(BaseCommand):
                         break
 
                 self.update_dictionaries(records)
-                # self.stdout.write('Importing metadata records ... ')
-                # Document.save_metadata_records(records)
+                self.stdout.write('Importing metadata records ... ')
+                Document.save_metadata_records(records)
                 self.stdout.write(
                     self.style.SUCCESS(
                         f'Processed {len(records)} rows from sheet "{sheet.name}"'
