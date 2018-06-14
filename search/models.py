@@ -368,6 +368,7 @@ class Document(models.Model):
 
 class File(models.Model):
     document = models.ForeignKey(Document, blank=True, null=True, related_name='file')
+    location = models.TextField(blank=True, null=True)
     external_link = models.TextField(blank=True, null=True)
     file_size = models.IntegerField(blank=True, null=True)
     file_type = models.ForeignKey(DFileType, blank=True, null=True)
