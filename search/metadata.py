@@ -67,9 +67,9 @@ class MetadataRecord:
     parent_id = attr.ib(converter=int_or_none)
     sibling_ids = attr.ib(converter=int_or_none)
     children_ids = attr.ib(converter=int_or_none)
-    resource_locator_internal = attr.ib(converter=strip_or_none)
+    resource_locator_internal = attr.ib(converter=strip_or_none, metadata={'relevant': True})
     resource_locator_internal2 = attr.ib(converter=strip_or_none)
-    resource_locator_external = attr.ib(converter=strip_or_none)
+    resource_locator_external = attr.ib(converter=strip_or_none, metadata={'relevant': True})
     organization = attr.ib(
         converter=strip_or_none, metadata={'dictionary_cls': 'Organization', 'relevant': True}
     )

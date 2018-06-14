@@ -334,6 +334,8 @@ class Document(models.Model):
             nuts_levels = doc.pop('nuts_levels', [])
             keywords = doc.pop('keywords', [])
             additional_info = doc.pop('additional_info', [])
+            location = doc.pop('resource_locator_internal', None)
+            external_link = doc.pop('resource_locator_external', None)
             languages = doc.pop('languages', [])
             geo_fields = ('bound_north', 'bound_east', 'bound_south', 'bound_west', 'projection', 'spatial_resolution')
             geo_bounds = {field: doc.pop(field, None) for field in geo_fields}
@@ -351,6 +353,14 @@ class Document(models.Model):
             if any(v for v in geo_bounds.values()):
                 geo_bounds['document'] = doc
                 GeographicBounds.objects.create(**geo_bounds)
+
+            # Create file and associate languages
+            if location is not None or external_link is not None:
+                file = File.objects.create(document=doc, location=location, external_link=external_link)
+                if languages:
+                    languages = DLanguage.objects.filter(name__in=languages)
+                    file.languages = languages
+                    file.save()
 
             processed_ids.append(rec_id)
             return doc, processed_ids
