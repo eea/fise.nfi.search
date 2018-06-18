@@ -162,8 +162,25 @@ ELASTICSEARCH_DSL = {
     'default': {
         'hosts': env('ELASTICSEARCH_HOST'),
         'http_auth': env('ELASTICSEARCH_AUTH'),
+        'timeout': env('ELASTICSEARCH_TIMEOUT', 10)
     },
 }
 
 MAX_RESULT_WINDOW = 10000  # This is ElasticSearch's default, but we define it
 # here explicitly to minimize refactoring in case we ever change it.
+
+
+# Imported files directory
+FILES_DIR = env('FILES_PATH', required=True)
+
+# Path of files to be imported
+IMPORT_FILES_DIR = env('IMPORT_FILES_PATH')
+
+# Root path of files in metadata
+METADATA_FILES_DIR = env('METADATA_FILES_PATH')
+
+
+TIKA_HOST = env('TIKA_HOST')
+TIKA_PORT = env('TIKA_PORT', default=9998)
+TIKA_URL = f'http://{TIKA_HOST}:{TIKA_PORT}'
+TIKA_TIMEOUT = env('TIKA_TIMEOUT', 10)

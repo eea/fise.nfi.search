@@ -1,7 +1,19 @@
+import shutil
+from pathlib import Path
+import logging
 from django.db import models
+from django.conf import settings
 import attr
-
+from elasticsearch.exceptions import ConnectionTimeout as ESConnectionTimeout
 from .metadata import prepare_data, update_data
+from .text import extract_text, TextExtractionTimeout, TextExtractionError
+
+
+log = logging.getLogger(__name__)
+
+
+class ImportFileNotFoundError(FileNotFoundError):
+    pass
 
 
 class DictionaryMixin:
@@ -243,8 +255,10 @@ class Organization(models.Model):
 class Document(models.Model):
     created = models.DateTimeField(auto_now_add=True)
     updated = models.DateTimeField(auto_now=True)
+    batch = models.UUIDField(blank=True, null=True)
     title = models.CharField(max_length=256)
     description = models.TextField(blank=True, null=True)
+    text = models.TextField(blank=True, null=True)
     parent = models.ForeignKey('self', blank=True, null=True)
     country = models.ForeignKey(DCountry, blank=True, null=True)
     data_type = models.ForeignKey(DDataType, blank=True, null=True)
@@ -274,14 +288,14 @@ class Document(models.Model):
         return self.title
 
     @classmethod
-    def save_metadata_record(cls, rec_id, records, processed_ids=None):
+    def save_metadata_record(cls, rec_id, records, processed_ids=None, batch=None, import_file=True):
         processed_ids = processed_ids or []
         if rec_id not in processed_ids:
             rec = records[rec_id]
             parent = None
             if rec.parent_id is not None and rec.parent_id not in processed_ids:
                 parent, processed_ids = cls.save_metadata_record(
-                    rec.parent_id, records, processed_ids
+                    rec.parent_id, records, processed_ids, batch, import_file
                 )
 
             doc = attr.asdict(rec)
@@ -340,6 +354,7 @@ class Document(models.Model):
             geo_fields = ('bound_north', 'bound_east', 'bound_south', 'bound_west', 'projection', 'spatial_resolution')
             geo_bounds = {field: doc.pop(field, None) for field in geo_fields}
 
+            doc['batch'] = batch
             doc = Document.objects.create(**doc)
 
             # Add M2M relations
@@ -361,6 +376,8 @@ class Document(models.Model):
                     languages = DLanguage.objects.filter(name__in=languages)
                     file.languages = languages
                     file.save()
+                if location is not None and import_file:
+                    file.import_file()
 
             processed_ids.append(rec_id)
             return doc, processed_ids
@@ -368,16 +385,25 @@ class Document(models.Model):
         return None, processed_ids
 
     @classmethod
-    def save_metadata_records(cls, records):
+    def save_metadata_records(cls, records, batch=None, import_files=True):
         """Creates `Document`s from a list of `MetadataRecord`s"""
         records = {r.id: r for r in records}
         processed_ids = []
         for rec_id, rec in records.items():
-            _, processed_ids = cls.save_metadata_record(rec_id, records, processed_ids)
+            _, processed_ids = cls.save_metadata_record(rec_id, records, processed_ids, batch=batch, import_file=import_files)
+
+    def populate_text(self, force=False):
+        if self.text is None or force:
+            if self.file is not None and self.file.location is not None:
+                self.text = self.file.get_text()
+                try:
+                    self.save()
+                except ESConnectionTimeout:
+                    log.error(f'ElasticSearch timeout while indexing text for document {self.pk}')
 
 
 class File(models.Model):
-    document = models.ForeignKey(Document, blank=True, null=True, related_name='file')
+    document = models.OneToOneField(Document, on_delete=models.CASCADE, related_name='file')
     location = models.TextField(blank=True, null=True)
     external_link = models.TextField(blank=True, null=True)
     file_size = models.IntegerField(blank=True, null=True)
@@ -391,6 +417,59 @@ class File(models.Model):
 
     def __str__(self):
         return self.external_link
+
+    def get_relative_path(self, meta_root_dir=None):
+        """File path relative to the metadata path."""
+        meta_root_dir = meta_root_dir or settings.METADATA_FILES_DIR
+        meta_path = Path(self.location)
+        return meta_path.relative_to(meta_root_dir)
+
+    def get_import_path(self, meta_root_dir=None, import_root_dir=None):
+        """File path in the import directory"""
+        import_root_dir = import_root_dir or settings.IMPORT_FILES_DIR
+        import_path = Path(import_root_dir)
+        return import_path / self.get_relative_path(meta_root_dir)
+
+    def get_path(self, root_dir=None, meta_root_dir=None):
+        """File path in the files storage directory"""
+        root_dir = root_dir or settings.FILES_DIR
+        root_path = Path(root_dir)
+        return root_path / self.get_relative_path(meta_root_dir)
+
+    def import_file(self, root_dir=None, meta_root_dir=None, import_root_dir=None):
+        """Copies the file from the import directory to the files storage dir."""
+        root_dir = root_dir or settings.FILES_DIR
+        root_path = Path(root_dir)
+        from_path = self.get_import_path(meta_root_dir, import_root_dir)
+        try:
+            from_path = from_path.resolve(strict=True)
+        except FileNotFoundError:
+            log.error(f'Import file not found: {from_path}')
+            return
+
+        rel_path = self.get_relative_path(meta_root_dir)
+        to_path = root_path / rel_path
+        to_dir = root_path.joinpath(*rel_path.parts[:-1])
+        to_dir.mkdir(parents=True, exist_ok=True)
+        print(f'Copy {from_path} to {to_path}')
+        shutil.copyfile(str(from_path), str(to_path))
+
+    def get_text(self):
+        """Sends the file to Tika and returns the extracted text."""
+        path = self.get_path()
+        try:
+            path = path.resolve(strict=True)
+        except FileNotFoundError:
+            log.error(f'Text extraction: file not found "{path}"')
+            return
+
+        with open(path, 'rb') as f:
+            try:
+                return extract_text(f)
+            except TextExtractionTimeout:
+                log.error(f'Text extraction timed out on {f.name}')
+            except TextExtractionError:
+                log.error(f'Text extraction failed on {f.name}')
 
 
 class GeographicBounds(models.Model):

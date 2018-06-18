@@ -31,6 +31,11 @@ class DocumentDoc(DocType):
         fielddata=True,
     )
 
+    text = fields.TextField(
+        analyzer='standard',
+        fielddata=True,
+    )
+
     country = fields.KeywordField(
         attr='country.name',
         normalizer=lowercase_normalizer
@@ -100,7 +105,7 @@ class DocumentDoc(DocType):
 
 class DocSearch(FacetedSearch):
     doc_types = [DocumentDoc]
-    fields = ['title', 'description']
+    fields = ['title', 'description', 'text']
     facets = {
         'country': TermsFacet(field='country'),
         'data_type': TermsFacet(field='data_type'),
@@ -113,3 +118,7 @@ class DocSearch(FacetedSearch):
         'keywords': TermsFacet(field='keywords.name'),
         'nuts_levels': TermsFacet(field='nuts_levels.name')
     }
+
+    def search(self):
+        s = super().search()
+        return s.source(['id', 'title'])

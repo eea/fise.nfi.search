@@ -1,3 +1,4 @@
+import uuid
 from django.core.management.base import BaseCommand
 from django.apps import apps
 import defusedxml
@@ -21,9 +22,8 @@ class Command(BaseCommand):
 
     def add_arguments(self, parser):
         parser.add_argument('file')
-        parser.add_argument('-s', '--startrow', type=int, default=1)
-        parser.add_argument('-e', '--endrow', type=int)
         parser.add_argument('-i', '--ignore-errors', type=bool, default=False)
+        parser.add_argument('-f', '--import-files', type=bool, default=True)
 
     def update_dictionaries(self, records):
         self.stdout.write('Updating dictionaries ...')
@@ -42,14 +42,14 @@ class Command(BaseCommand):
                 self.stdout.write('{0: >15}'.format('no new values.'))
 
     def handle(self, *args, **options):
-        start_row = options['startrow']
         ignore_errors = options['ignore_errors']
+        import_files = options['import_files']
+        batch = uuid.uuid4()
         try:
             with open_workbook(options['file'], on_demand=True) as book:
                 sheet = book.sheet_by_index(0)
-                end_row = options['endrow'] or sheet.nrows
                 records = []
-                for rowno in range(start_row, end_row):
+                for rowno in range(1, sheet.nrows):
                     data = {
                         field.name: sheet.cell_value(rowno, MetadataColumns[field.name])
                         for field in attr.fields(MetadataRecord)
@@ -62,7 +62,7 @@ class Command(BaseCommand):
 
                 self.update_dictionaries(records)
                 self.stdout.write('Importing metadata records ... ')
-                Document.save_metadata_records(records)
+                Document.save_metadata_records(records, batch=batch, import_files=import_files)
                 self.stdout.write(
                     self.style.SUCCESS(
                         f'Processed {len(records)} rows from sheet "{sheet.name}"'
