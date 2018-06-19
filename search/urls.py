@@ -1,7 +1,14 @@
-from django.conf.urls import url
-from .views import SearchView
+from rest_framework import routers
+from .routers import facets_router
 
 
-urlpatterns = [
-    url(r'^search/', SearchView.as_view({'get': 'list'}), name='search'),
-]
+class DefaultRouter(routers.DefaultRouter):
+    def extend(self, router):
+        self.registry.extend(router.registry)
+
+
+root = DefaultRouter()
+root.extend(facets_router)
+
+urlpatterns = root.urls
+
