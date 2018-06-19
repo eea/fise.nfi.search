@@ -121,4 +121,7 @@ class DocSearch(FacetedSearch):
 
     def search(self):
         s = super().search()
-        return s.source(['id', 'title'])
+        return s.source([
+            'id', 'title', 'description', 'country', 'data_type', 'data_set', 'data_source',
+            'info_level', 'topic_category', 'resource_type', 'keywords', 'nuts_levels',
+        ])
