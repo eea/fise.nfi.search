@@ -1,6 +1,6 @@
 from django.conf import settings
 from django_elasticsearch_dsl import DocType, Index, fields
-from elasticsearch_dsl.analysis import analyzer, normalizer
+from elasticsearch_dsl.analysis import analyzer, normalizer, char_filter
 from elasticsearch_dsl import tokenizer, FacetedSearch, TermsFacet
 from search.models import Document
 
@@ -13,6 +13,20 @@ lowercase_normalizer = normalizer(
     name_or_instance='lowercase_normalizer',
     char_filter=[],
     filter='lowercase',
+)
+
+no_digits_char_filter = char_filter(
+    name_or_instance='no_digits',
+    type='pattern_replace',
+    pattern='(\\d+)',
+    replace=''
+)
+
+no_digits_analyzer = analyzer(
+    name_or_instance='no_digits',
+    tokenizer='standard',
+    filter=['standard', 'lowercase', 'stop'],
+    char_filter=[no_digits_char_filter]
 )
 
 
@@ -32,7 +46,7 @@ class DocumentDoc(DocType):
     )
 
     text = fields.TextField(
-        analyzer='standard',
+        analyzer=no_digits_analyzer,
         fielddata=True,
     )
 
