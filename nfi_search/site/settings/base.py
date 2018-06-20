@@ -1,6 +1,10 @@
-import os
 from pathlib import Path
 from getenv import env
+
+
+def split_env(var, sep=',', default='', required=False):
+    value = env(var, default, required)
+    return [e.strip() for e in value.split(sep) if e.strip()]
 
 
 # <project>/nfi_search
@@ -17,7 +21,7 @@ SILENCED_SYSTEM_CHECKS = ["fields.W342"]
 # SECURITY WARNING: don't run with debug turned on in production!
 DEBUG = env('DEBUG', False)
 
-ALLOWED_HOSTS = ['localhost', '127.0.0.1', env('ALLOWED_HOSTS')]
+ALLOWED_HOSTS = ['localhost', '127.0.0.1', *split_env('ALLOWED_HOSTS')]
 
 # Application definition
 
@@ -45,7 +49,7 @@ MIDDLEWARE = [
 ]
 
 CORS_ALLOW_CREDENTIALS = True
-CORS_ORIGIN_WHITELIST = env('CORS_ORIGIN_WHITELIST', default='').split(',')
+CORS_ORIGIN_WHITELIST = split_env('CORS_ORIGIN_WHITELIST')
 
 ROOT_URLCONF = 'nfi_search.site.urls'
 
@@ -124,8 +128,6 @@ WEBPACK_LOADER = {
         # 'IGNORE': ['.+\.hot-update.js', '.+\.map']
     }
 }
-
-print(WEBPACK_LOADER)
 
 TEMPLATES = [
     {
