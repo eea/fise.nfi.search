@@ -1,8 +1,14 @@
 import os
+from pathlib import Path
 from getenv import env
 
-# Build paths inside the project like this: os.path.join(BASE_DIR, ...)
-BASE_DIR = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
+
+# <project>/nfi_search
+BASE_DIR = Path(__file__).resolve().parent.parent.parent
+
+# Project dir
+ROOT_DIR = BASE_DIR.parent
+
 
 # SECURITY WARNING: keep the secret key used in production secret!
 SECRET_KEY = env('SECRET_KEY', 'secret')
@@ -13,14 +19,10 @@ DEBUG = env('DEBUG', False)
 
 ALLOWED_HOSTS = ['localhost', '127.0.0.1', env('ALLOWED_HOSTS')]
 
-try:
-    from debug_toolbar.settings import PANELS_DEFAULTS as DEFAULT_DEBUG_TOOLBAR_PANELS
-except ImportError:
-    DEFAULT_DEBUG_TOOLBAR_PANELS = []
-
 # Application definition
 
 INSTALLED_APPS = [
+    'nfi_search.search.apps.Config',
     'django.contrib.admin',
     'django.contrib.auth',
     'django.contrib.contenttypes',
@@ -28,15 +30,11 @@ INSTALLED_APPS = [
     'django.contrib.messages',
     'django.contrib.staticfiles',
     'django_elasticsearch_dsl',
-    'debug_toolbar',
-    'elastic_panel',
     'webpack_loader',
     'rest_framework',
-    'search',
 ]
 
 MIDDLEWARE = [
-    'debug_toolbar.middleware.DebugToolbarMiddleware',
     'django.middleware.security.SecurityMiddleware',
     'django.contrib.sessions.middleware.SessionMiddleware',
     'django.middleware.common.CommonMiddleware',
@@ -46,17 +44,12 @@ MIDDLEWARE = [
     'django.middleware.clickjacking.XFrameOptionsMiddleware',
 ]
 
-DEBUG_TOOLBAR_CONFIG = {
-    'INTERCEPT_REDIRECTS': False,
-}
+CORS_ALLOW_CREDENTIALS = True
+CORS_ORIGIN_WHITELIST = env('CORS_ORIGIN_WHITELIST', default='').split(',')
 
-DEBUG_TOOLBAR_PANELS = DEFAULT_DEBUG_TOOLBAR_PANELS + [
-    'elastic_panel.panel.ElasticDebugPanel',
-]
+ROOT_URLCONF = 'nfi_search.site.urls'
 
-ROOT_URLCONF = 'nfi_search.urls'
-
-WSGI_APPLICATION = 'nfi_search.wsgi.application'
+WSGI_APPLICATION = 'nfi_search.site.wsgi.application'
 
 
 # Database
@@ -111,38 +104,33 @@ USE_L10N = True
 USE_TZ = True
 
 
-# Static files (CSS, JavaScript, Images)
-# https://docs.djangoproject.com/en/1.11/howto/static-files/
-
-ROOT_DIR = BASE_DIR
-STATIC_ROOT = os.path.join(ROOT_DIR, 'static')
+STATIC_ROOT = ROOT_DIR / 'static'
 STATIC_URL = '/static/'
+
+_WEBPACK_DIST_DIR = ROOT_DIR / 'frontend' / 'dist'
+
+_WEBPACK_BUILD_DIR = _WEBPACK_DIST_DIR / 'build'
+if _WEBPACK_BUILD_DIR.is_dir():
+    STATICFILES_DIRS = (_WEBPACK_BUILD_DIR,)
 
 WEBPACK_LOADER = {
     'DEFAULT': {
-        'CACHE': not DEBUG,
-        'BUNDLE_DIR_NAME': 'webpack_bundles/',  # must end with slash
-        'STATS_FILE': os.path.join(BASE_DIR, 'webpack-stats.json'),
-        'POLL_INTERVAL': 0.1,
-        'TIMEOUT': None,
-        'IGNORE': ['.+\.hot-update.js', '.+\.map']
+        # 'CACHE': not DEBUG,
+        # 'BUNDLE_DIR_NAME': 'webpack_bundles/',  # must end with slash
+        'BUNDLE_DIR_NAME': '',
+        'STATS_FILE': _WEBPACK_DIST_DIR / 'stats.json',
+        # 'POLL_INTERVAL': 0.1,
+        # 'TIMEOUT': None,
+        # 'IGNORE': ['.+\.hot-update.js', '.+\.map']
     }
 }
 
-_WEBPACK_DIST_DIR = os.path.join(os.path.join(ROOT_DIR, 'frontend'), 'dist')
-
-_WEBPACK_BUILD_DIR = os.path.join(_WEBPACK_DIST_DIR, 'build')
-if os.path.isdir(_WEBPACK_BUILD_DIR):
-    STATICFILES_DIRS = (
-        _WEBPACK_BUILD_DIR,
-    )
+print(WEBPACK_LOADER)
 
 TEMPLATES = [
     {
         'BACKEND': 'django.template.backends.django.DjangoTemplates',
-        'DIRS': [
-            os.path.join(BASE_DIR, 'templates'),
-        ],
+        'DIRS': [ROOT_DIR / 'templates'],
         'APP_DIRS': True,
         'OPTIONS': {
             'context_processors': [

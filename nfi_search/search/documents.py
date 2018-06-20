@@ -2,7 +2,7 @@ from django.conf import settings
 from django_elasticsearch_dsl import DocType, Index, fields
 from elasticsearch_dsl.analysis import analyzer, normalizer, char_filter
 from elasticsearch_dsl import tokenizer, FacetedSearch, TermsFacet
-from search.models import Document
+from .models import Document
 
 
 nfi = Index('nfi')

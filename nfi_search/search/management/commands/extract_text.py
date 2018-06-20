@@ -1,5 +1,5 @@
 from django.core.management.base import BaseCommand
-from search.models import Document
+from ...models import Document
 
 
 class Command(BaseCommand):

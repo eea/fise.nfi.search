@@ -259,18 +259,34 @@ class Document(models.Model):
     title = models.CharField(max_length=256)
     description = models.TextField(blank=True, null=True)
     text = models.TextField(blank=True, null=True)
-    parent = models.ForeignKey('self', blank=True, null=True)
-    country = models.ForeignKey(DCountry, blank=True, null=True)
-    data_type = models.ForeignKey(DDataType, blank=True, null=True)
-    data_set = models.ForeignKey(DDataSet, blank=True, null=True)
-    resource_type = models.ForeignKey(DResourceType, blank=True, null=True)
-    info_level = models.ForeignKey(DInfoLevel, blank=True, null=True)
-    topic_category = models.ForeignKey(DTopicCategory, blank=True, null=True)
+    parent = models.ForeignKey('self', blank=True, null=True, on_delete=models.CASCADE)
+    country = models.ForeignKey(
+        DCountry, blank=True, null=True, on_delete=models.SET_NULL
+    )
+    data_type = models.ForeignKey(
+        DDataType, blank=True, null=True, on_delete=models.SET_NULL
+    )
+    data_set = models.ForeignKey(
+        DDataSet, blank=True, null=True, on_delete=models.SET_NULL
+    )
+    resource_type = models.ForeignKey(
+        DResourceType, blank=True, null=True, on_delete=models.SET_NULL
+    )
+    info_level = models.ForeignKey(
+        DInfoLevel, blank=True, null=True, on_delete=models.SET_NULL
+    )
+    topic_category = models.ForeignKey(
+        DTopicCategory, blank=True, null=True, on_delete=models.SET_NULL
+    )
     keywords = models.ManyToManyField(
         DKeyword, related_name='documents', db_table='document_keyword'
     )
-    data_source = models.ForeignKey(DDataSource, blank=True, null=True)
-    organization = models.ForeignKey(Organization, blank=True, null=True)
+    data_source = models.ForeignKey(
+        DDataSource, blank=True, null=True, on_delete=models.SET_NULL
+    )
+    organization = models.ForeignKey(
+        Organization, blank=True, null=True, on_delete=models.SET_NULL
+    )
     published_year = models.IntegerField(blank=True, null=True)
     data_collection_start_year = models.IntegerField(blank=True, null=True)
     data_collection_end_year = models.IntegerField(blank=True, null=True)
@@ -288,7 +304,9 @@ class Document(models.Model):
         return self.title
 
     @classmethod
-    def save_metadata_record(cls, rec_id, records, processed_ids=None, batch=None, import_file=True):
+    def save_metadata_record(
+        cls, rec_id, records, processed_ids=None, batch=None, import_file=True
+    ):
         processed_ids = processed_ids or []
         if rec_id not in processed_ids:
             rec = records[rec_id]
@@ -336,11 +354,17 @@ class Document(models.Model):
                             f'row={rec_id} {relation_filter} not found in {model.__name__}'
                         )
                         return None, processed_ids
+
                 else:
                     doc.pop(relation, None)
 
             # Remove non-Document fields (e.g. 'organization_email')
-            discard_fields = [p[1] for v in fk_rels.values() for p in v[1] if p[1] not in fk_rels.keys()]
+            discard_fields = [
+                p[1]
+                for v in fk_rels.values()
+                for p in v[1]
+                if p[1] not in fk_rels.keys()
+            ]
             for f in discard_fields:
                 doc.pop(f)
 
@@ -351,7 +375,14 @@ class Document(models.Model):
             location = doc.pop('resource_locator_internal', None)
             external_link = doc.pop('resource_locator_external', None)
             languages = doc.pop('languages', [])
-            geo_fields = ('bound_north', 'bound_east', 'bound_south', 'bound_west', 'projection', 'spatial_resolution')
+            geo_fields = (
+                'bound_north',
+                'bound_east',
+                'bound_south',
+                'bound_west',
+                'projection',
+                'spatial_resolution',
+            )
             geo_bounds = {field: doc.pop(field, None) for field in geo_fields}
 
             doc['batch'] = batch
@@ -371,7 +402,9 @@ class Document(models.Model):
 
             # Create file and associate languages
             if location is not None or external_link is not None:
-                file = File.objects.create(document=doc, location=location, external_link=external_link)
+                file = File.objects.create(
+                    document=doc, location=location, external_link=external_link
+                )
                 if languages:
                     languages = DLanguage.objects.filter(name__in=languages)
                     file.languages = languages
@@ -390,7 +423,9 @@ class Document(models.Model):
         records = {r.id: r for r in records}
         processed_ids = []
         for rec_id, rec in records.items():
-            _, processed_ids = cls.save_metadata_record(rec_id, records, processed_ids, batch=batch, import_file=import_files)
+            _, processed_ids = cls.save_metadata_record(
+                rec_id, records, processed_ids, batch=batch, import_file=import_files
+            )
 
     def populate_text(self, force=False):
         if self.text is None or force:
@@ -399,15 +434,21 @@ class Document(models.Model):
                 try:
                     self.save()
                 except ESConnectionTimeout:
-                    log.error(f'ElasticSearch timeout while indexing text for document {self.pk}')
+                    log.error(
+                        f'ElasticSearch timeout while indexing text for document {self.pk}'
+                    )
 
 
 class File(models.Model):
-    document = models.OneToOneField(Document, on_delete=models.CASCADE, related_name='file')
+    document = models.OneToOneField(
+        Document, on_delete=models.CASCADE, related_name='file'
+    )
     location = models.TextField(blank=True, null=True)
     external_link = models.TextField(blank=True, null=True)
     file_size = models.IntegerField(blank=True, null=True)
-    file_type = models.ForeignKey(DFileType, blank=True, null=True)
+    file_type = models.ForeignKey(
+        DFileType, blank=True, null=True, on_delete=models.SET_NULL
+    )
     languages = models.ManyToManyField(
         DLanguage, related_name='files', db_table='file_language'
     )
@@ -466,6 +507,7 @@ class File(models.Model):
         with open(path, 'rb') as f:
             try:
                 return extract_text(f)
+
             except TextExtractionTimeout:
                 log.error(f'Text extraction timed out on {f.name}')
             except TextExtractionError:
@@ -473,7 +515,13 @@ class File(models.Model):
 
 
 class GeographicBounds(models.Model):
-    document = models.ForeignKey(Document, blank=True, null=True, related_name='geo_bounds')
+    document = models.ForeignKey(
+        Document,
+        blank=True,
+        null=True,
+        related_name='geo_bounds',
+        on_delete=models.CASCADE,
+    )
     bound_north = models.DecimalField(
         max_digits=15, decimal_places=6, blank=True, null=True
     )
@@ -504,7 +552,9 @@ class GeographicBounds(models.Model):
 
 
 class CountryData(models.Model):
-    country = models.ForeignKey('DCountry', blank=True, null=True)
+    country = models.ForeignKey(
+        'DCountry', blank=True, null=True, related_name='data', on_delete=models.CASCADE
+    )
     version_date = models.DateTimeField(blank=True, null=True)
     country_code = models.CharField(max_length=50, blank=True, null=True)
     country_name = models.CharField(max_length=256, blank=True, null=True)

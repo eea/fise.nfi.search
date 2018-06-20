@@ -1,7 +1,7 @@
 # Settings module for running tests
-# Use:  ./manage.py test --settings=nfi_search.testsettings
+# Use:  ./manage.py test --settings=nfi_search.settings.test
 
-from .settings import *
+from .base import *
 
 DATABASES = {
     'default': {

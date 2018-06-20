@@ -1,4 +1,3 @@
-from django.views.generic import ListView
 from rest_framework.viewsets import ReadOnlyModelViewSet
 from django_elasticsearch_dsl_drf.filter_backends import (
     FilteringFilterBackend,

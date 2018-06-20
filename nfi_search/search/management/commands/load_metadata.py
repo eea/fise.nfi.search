@@ -5,12 +5,12 @@ import defusedxml
 import attr
 from xlrd import open_workbook
 
-from search.metadata import (
+from ...metadata import (
     MetadataRecord,
     MetadataColumns,
 )
 
-from search.models import Document
+from ...models import Document
 
 
 defusedxml.defuse_stdlib()

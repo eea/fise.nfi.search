@@ -71,9 +71,9 @@ module.exports = {
     plugins: [
     new BundleTracker({
       // force this to do a full path match
-      // path: config.build.assetsRoot,
-      // filename: path.resolve(config.build.assetsRoot, '../stats.json'),
-      // indent: 2,
+      path: path.parse(config.build.assetsRoot).root,
+      filename: path.resolve(config.build.assetsRoot, '../stats.json'),
+      indent: 2,
     }),
   ],
 
