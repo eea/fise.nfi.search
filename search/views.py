@@ -79,7 +79,7 @@ class LanguageViewSet(ReadOnlyModelViewSet):
     serializer_class = LanguageSerializer
 
 
-class SearchView(BaseDocumentViewSet):
+class SearchViewSet(BaseDocumentViewSet):
     document = DocumentDoc
     serializer_class = DocumentDocSerializer
     lookup_field = 'id'
@@ -90,8 +90,9 @@ class SearchView(BaseDocumentViewSet):
     ]
     search_fields = (
         'title',
+        'description',
+        'text',
         'country',
-        'country_id',
         'data_type',
         'data_set',
         'resource_type',
