@@ -593,3 +593,35 @@ class CountryData(models.Model):
     class Meta:
         db_table = 'country_data'
         verbose_name_plural = 'CountryData'
+
+
+class GEMETConcept(models.Model):
+    broader = models.ForeignKey(
+        'self',
+        related_name='narrower',
+        null=True,
+        blank=True,
+        on_delete=models.SET_NULL,
+    )
+    related = models.ManyToManyField('self', blank=True)
+
+    class Meta:
+        db_table = 'gemet_concept'
+
+
+class GEMETConceptLanguage(models.Model):
+    code = models.CharField(max_length=2, primary_key=True)
+    name = models.CharField(max_length=60)
+
+    class Meta:
+        db_table = 'gemet_concept_language'
+
+
+class GEMETConceptName(models.Model):
+    concept = models.ForeignKey(GEMETConcept, related_name='names', on_delete=models.CASCADE)
+    language = models.ForeignKey(GEMETConceptLanguage, on_delete=models.CASCADE)
+    name = models.TextField()
+
+    class Meta:
+        db_table = 'gemet_concept_name'
+        unique_together = ('concept', 'language')

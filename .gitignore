@@ -117,3 +117,5 @@ webpack-stats.json
 
 #Database
 *.sql
+
+data/gemet

@@ -111,6 +111,8 @@ USE_TZ = True
 STATIC_ROOT = ROOT_DIR / 'static'
 STATIC_URL = '/static/'
 
+FIXTURE_DIRS = [ROOT_DIR / 'data' / 'fixtures']
+
 _WEBPACK_DIST_DIR = ROOT_DIR / 'frontend' / 'dist'
 
 _WEBPACK_BUILD_DIR = _WEBPACK_DIST_DIR / 'build'
