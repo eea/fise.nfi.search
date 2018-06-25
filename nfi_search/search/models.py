@@ -391,8 +391,8 @@ class Document(models.Model):
             # Add M2M relations
             nuts_levels = DNutsLevel.objects.filter(name__in=nuts_levels)
             keywords = DKeyword.objects.filter(name__in=set(keywords + additional_info))
-            doc.nuts_levels = nuts_levels
-            doc.keywords = keywords
+            doc.nuts_levels.set(nuts_levels)
+            doc.keywords.set(keywords)
             doc.save()
 
             # Create geo bounds if available
@@ -407,7 +407,7 @@ class Document(models.Model):
                 )
                 if languages:
                     languages = DLanguage.objects.filter(name__in=languages)
-                    file.languages = languages
+                    file.languages.set(languages)
                     file.save()
                 if location is not None and import_file:
                     file.import_file()
