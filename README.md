@@ -18,7 +18,7 @@ The documents are provided in standardized format like spreadsheets, in differen
 1. Get the source code:
 
         git clone git@github.com:eea/fise.nfi.search.git
-        cd copernicus-insitu-db
+        cd fise.nfi.search
 
 1. Customize env files and `docker-compose.override.yml`:
 
