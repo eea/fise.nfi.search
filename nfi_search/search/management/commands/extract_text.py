@@ -11,7 +11,11 @@ class Command(BaseCommand):
 
     def handle(self, *args, **options):
         force = options['force_refresh']
-        for d in Document.objects.filter(file__isnull=False, file__location__isnull=False):
+        for d in Document.objects.filter(
+                file__isnull=False,
+                file__location__isnull=False,
+                document__data_type__name__in=['Sample based']
+        ):
             self.stdout.write(f'Extracting text from {d.file.get_relative_path()} ... ')
             self.stdout.flush()
             d.populate_text(force=force)
