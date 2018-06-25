@@ -608,6 +608,45 @@ class GEMETConcept(models.Model):
     class Meta:
         db_table = 'gemet_concept'
 
+    @classmethod
+    def translation_synonyms(cls):
+        """
+        Returns list of autophrased synonyms/translations, e.g.::
+
+            deciduous_forest => floresta_caducifólia, pădure_de_foioase (, ...)
+
+        """
+        synonyms = []
+        for concept in cls.objects.all():
+            try:
+                en = concept.names.get(language='en')
+            except cls.DoesNotExist:
+                continue
+            en_syn = en.autophrased_name
+            non_en = concept.names.filter(~models.Q(language='en')).all()
+            if non_en:
+                non_en_syns = ', '.join([o.autophrased_name for o in non_en.all()])
+                synonyms.append(
+                    f'{en_syn} => {non_en_syns}'
+                )
+        return synonyms
+
+    @classmethod
+    def autophrased_synonyms(cls):
+        """
+        Returns list of autophrasing synonyms, .e.g::
+
+            deciduous_forest => deciduous forest
+
+        """
+        synonyms = []
+        for concept in cls.objects.all():
+            for name in concept.names.all():
+                if name.name != name.autophrased_name:
+                    synonyms.append(f'{name.name} => {name.autophrased_name}')
+
+        return synonyms
+
 
 class GEMETConceptLanguage(models.Model):
     code = models.CharField(max_length=2, primary_key=True)
@@ -625,3 +664,7 @@ class GEMETConceptName(models.Model):
     class Meta:
         db_table = 'gemet_concept_name'
         unique_together = ('concept', 'language')
+
+    @property
+    def autophrased_name(self):
+        return '_'.join(self.name.split(' '))
