@@ -642,8 +642,8 @@ class GEMETConcept(models.Model):
         synonyms = []
         for concept in cls.objects.all():
             for name in concept.names.all():
-                if name.name != name.autophrased_name:
-                    synonyms.append(f'{name.name} => {name.autophrased_name}')
+                if name.clean_name != name.autophrased_name:
+                    synonyms.append(f'{name.clean_name} => {name.autophrased_name}')
 
         return synonyms
 
@@ -666,5 +666,16 @@ class GEMETConceptName(models.Model):
         unique_together = ('concept', 'language')
 
     @property
+    def clean_name(self):
+        clean = self.name
+        # Break off a first enumeration/detailing/formatting marker
+        stops = ['.', ',', ';', ':' '?', '!', "'", '(', '[', '{', '<', '\\', '/', '\n']
+        for m in stops:
+            if m in clean:
+                clean = clean[:clean.index(m)].strip()
+
+        return clean.strip()
+
+    @property
     def autophrased_name(self):
-        return '_'.join(self.name.split(' '))
+        return '_'.join(self.clean_name.split(' '))
