@@ -3,11 +3,14 @@ from enum import IntEnum
 import attr
 
 
-NULL_SUROGATES = ('', 'N.A.')
+NULL_SUROGATES = ('', 'N.A.', 'n.a.')
 
 
 def strip_or_none(value):
-    stripped = value.strip()
+    try:
+        stripped = value.strip()
+    except AttributeError:
+        return None
     return stripped if stripped not in NULL_SUROGATES else None
 
 
@@ -29,10 +32,16 @@ def float_or_none(value):
 
 def comma_string_to_list(value):
     """
-    Splits `value` on commas and `and`s.
+    Splits `value` on commas and `and`s. Skips null surrogates.
     """
-    data = [e.strip() for e in value.split(',') if e.strip()]
-    return [e.strip() for tok in data for e in tok.split(' and ') if e.strip()]
+    if not isinstance(value, str):
+        return []
+    data = [
+        strip_or_none(f)
+        for e in value.split(',')
+        for f in e.split(' and ')
+    ]
+    return [e for e in data if e is not None]
 
 
 @attr.s
