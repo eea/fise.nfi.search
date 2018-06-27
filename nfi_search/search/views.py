@@ -133,6 +133,11 @@ class SearchViewSet(BaseDocumentViewSet):
         'description',
         # 'text',
     )
+    search_nested_fields = {
+        'keywords': ['name'],
+        'nuts_levels': ['name'],
+    }
+
     _facets = (
         'country',
         'data_type',
