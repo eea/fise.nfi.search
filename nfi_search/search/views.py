@@ -1,6 +1,7 @@
 from rest_framework.viewsets import ReadOnlyModelViewSet
 from django_elasticsearch_dsl_drf.filter_backends import (
     FilteringFilterBackend,
+    NestedFilteringFilterBackend,
     IdsFilterBackend,
     OrderingFilterBackend,
     DefaultOrderingFilterBackend,
@@ -11,6 +12,7 @@ from django_elasticsearch_dsl_drf.pagination import PageNumberPagination
 from django_elasticsearch_dsl_drf.views import BaseDocumentViewSet
 
 from .documents import DocumentDoc
+from .backends import NestedFacetedSearchFilterBackend
 from .serializers import (
     InfoLevelSerializer,
     CountrySerializer,
@@ -122,10 +124,12 @@ class SearchViewSet(BaseDocumentViewSet):
     lookup_field = 'id'
     filter_backends = [
         FilteringFilterBackend,
+        NestedFilteringFilterBackend,
         IdsFilterBackend,
         OrderingFilterBackend,
         DefaultOrderingFilterBackend,
         SearchFilterBackend,
+        NestedFacetedSearchFilterBackend,
         FacetedSearchFilterBackend,
     ]
     search_fields = (
@@ -133,12 +137,9 @@ class SearchViewSet(BaseDocumentViewSet):
         'description',
         # 'text',
     )
-    search_nested_fields = {
-        'keywords': ['name'],
-        'nuts_levels': ['name'],
-    }
 
-    _facets = (
+    # Facets for DocumentDoc's non-nested fields
+    facets = (
         'country',
         'data_type',
         'data_set',
@@ -147,9 +148,24 @@ class SearchViewSet(BaseDocumentViewSet):
         'topic_category',
         'resource_type',
     )
-    filter_fields = {f: f for f in _facets}
-    faceted_search_fields = {
-        field: {'field': field, 'enabled': True} for field in _facets
+
+    filter_fields = {f: f for f in facets}
+
+    nested_filter_fields = {
+        'keyword': {
+            'field': 'keywords.name',
+            'path': 'keywords'
+        },
+        'nuts_level': {
+            'field': 'nuts_levels.name',
+            'path': 'nuts_levels'
+        }
     }
-    ordering_fields = {f: f for f in _facets}
+
+    # Nested facets are added through the custom `NestedFacetedSearchFilterBackend`
+    faceted_search_fields = {
+        field: {'field': field, 'enabled': True} for field in facets
+    }
+
+    ordering_fields = {f: f for f in facets}
     ordering = ('title',)
