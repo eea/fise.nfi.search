@@ -93,7 +93,9 @@ AUTH_PASSWORD_VALIDATORS = [
 REST_FRAMEWORK = {
     'DEFAULT_RENDERER_CLASSES': (
         'rest_framework.renderers.JSONRenderer',
-    )
+    ),
+    'DEFAULT_PAGINATION_CLASS': 'rest_framework.pagination.PageNumberPagination',
+    'PAGE_SIZE': 20,
 }
 # Internationalization
 # https://docs.djangoproject.com/en/1.11/topics/i18n/
@@ -122,13 +124,13 @@ if _WEBPACK_BUILD_DIR.is_dir():
 
 WEBPACK_LOADER = {
     'DEFAULT': {
-        # 'CACHE': not DEBUG,
+        'CACHE': not DEBUG,
         # 'BUNDLE_DIR_NAME': 'webpack_bundles/',  # must end with slash
         'BUNDLE_DIR_NAME': '',
         'STATS_FILE': _WEBPACK_DIST_DIR / 'stats.json',
-        # 'POLL_INTERVAL': 0.1,
-        # 'TIMEOUT': None,
-        # 'IGNORE': ['.+\.hot-update.js', '.+\.map']
+        'POLL_INTERVAL': 0.1,
+        'TIMEOUT': None,
+        'IGNORE': ['.+\.hot-update.js', '.+\.map']
     }
 }
 

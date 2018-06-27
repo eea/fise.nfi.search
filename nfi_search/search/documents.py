@@ -1,7 +1,6 @@
 from django.conf import settings
 from django_elasticsearch_dsl import DocType, Index, fields
 from elasticsearch_dsl.analysis import analyzer, normalizer, char_filter
-from elasticsearch_dsl import tokenizer, FacetedSearch, TermsFacet
 from .models import Document
 
 
@@ -115,27 +114,3 @@ class DocumentDoc(DocType):
             'data_collection_end_year',
             'next_update_year',
         ]
-
-
-class DocSearch(FacetedSearch):
-    doc_types = [DocumentDoc]
-    fields = ['title', 'description', 'text']
-    facets = {
-        'country': TermsFacet(field='country'),
-        'data_type': TermsFacet(field='data_type'),
-        'data_set': TermsFacet(field='data_set'),
-        'data_source': TermsFacet(field='data_source'),
-        'info_level': TermsFacet(field='info_level'),
-        'topic_category': TermsFacet(field='topic_category'),
-        'resource_type': TermsFacet(field='resource_type'),
-        # TODO: Find a way to use nested facets
-        'keywords': TermsFacet(field='keywords.name'),
-        'nuts_levels': TermsFacet(field='nuts_levels.name')
-    }
-
-    def search(self):
-        s = super().search()
-        return s.source([
-            'id', 'title', 'description', 'country', 'data_type', 'data_set', 'data_source',
-            'info_level', 'topic_category', 'resource_type', 'keywords', 'nuts_levels',
-        ])
