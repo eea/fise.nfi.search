@@ -4,15 +4,12 @@ from django.conf.urls.static import static
 from django.contrib import admin
 from rest_framework.documentation import include_docs_urls
 from .spabundle import spabundle
-from ..search import urls as search_urls
-
-API_VERSION = '1'
 
 
 urlpatterns = [
     path('admin/', admin.site.urls),
-    path(f'api/{API_VERSION}/search/', include(('nfi_search.search.urls', 'search'), namespace='search')),
-    path(f'api/{API_VERSION}/docs', include_docs_urls(title='API Documentation', public=False)),
+    path(f'api/', include(('nfi_search.search.urls', 'nfi-search'), namespace='search')),
+    path(f'api/docs', include_docs_urls(title='API Documentation', public=False)),
   ] + static(settings.STATIC_URL, document_root=settings.STATIC_ROOT)
 
 
