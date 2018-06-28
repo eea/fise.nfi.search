@@ -10,7 +10,7 @@ from ...metadata import (
     MetadataColumns,
 )
 
-from ...models import Document
+from ...models import Document, DocumentImportBatch
 
 
 defusedxml.defuse_stdlib()
@@ -24,6 +24,7 @@ class Command(BaseCommand):
         parser.add_argument('file')
         parser.add_argument('-i', '--ignore-errors', type=bool, default=False)
         parser.add_argument('-f', '--import-files', type=bool, default=True)
+        parser.add_argument('-r', '--original-path-root', type=str)
 
     def update_dictionaries(self, records):
         self.stdout.write('Updating dictionaries ...')
@@ -44,7 +45,8 @@ class Command(BaseCommand):
     def handle(self, *args, **options):
         ignore_errors = options['ignore_errors']
         import_files = options['import_files']
-        batch = uuid.uuid4()
+        original_path_root = options['original_path_root']
+        import_batch = DocumentImportBatch.objects.create(original_path_root=original_path_root)
         try:
             with open_workbook(options['file'], on_demand=True) as book:
                 sheet = book.sheet_by_index(0)
@@ -62,7 +64,7 @@ class Command(BaseCommand):
 
                 self.update_dictionaries(records)
                 self.stdout.write('Importing metadata records ... ')
-                Document.save_metadata_records(records, batch=batch, import_files=import_files)
+                Document.save_metadata_records(records, import_batch=import_batch, import_files=import_files)
                 self.stdout.write(
                     self.style.SUCCESS(
                         f'Processed {len(records)} rows from sheet "{sheet.name}"'

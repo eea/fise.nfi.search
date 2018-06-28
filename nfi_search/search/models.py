@@ -1,12 +1,15 @@
 import shutil
 from pathlib import Path
 import logging
+from datetime import datetime as dt
+import pytz
 from django.db import models
 from django.conf import settings
 import attr
 from elasticsearch.exceptions import ConnectionTimeout as ESConnectionTimeout
 from .metadata import prepare_data, update_data
 from .text import extract_text, TextExtractionTimeout, TextExtractionError
+from .utils import id_to_alpha
 
 
 log = logging.getLogger(__name__)
@@ -252,10 +255,36 @@ class Organization(models.Model):
         return new
 
 
+class DocumentImportBatch(models.Model):
+    created = models.DateTimeField(auto_now_add=True)
+    path = models.CharField(max_length=200)
+    original_path_root = models.CharField(max_length=200)
+
+    class Meta:
+        db_table = 'document_batch'
+        verbose_name_plural = 'DocumentBatches'
+
+    @property
+    def absolute_path(self):
+        return Path(settings.FILES_DIR) / self.path
+
+    def ensure_path(self):
+        self.absolute_path.mkdir(parents=True, exist_ok=True)
+
+    def save(self, *args, **kwargs):
+        if self._state.adding:
+            d = dt.utcnow().replace(tzinfo=pytz.utc)
+            date_prefix = dt.strftime(d, '%Y%m%d')
+            suffix_id = int(dt.strftime(d, '%Y%m%d%H%M%S'))
+            self.path = f'{date_prefix}_{id_to_alpha(suffix_id)}'
+            self.ensure_path()
+        super().save(*args, **kwargs)
+
+
 class Document(models.Model):
     created = models.DateTimeField(auto_now_add=True)
     updated = models.DateTimeField(auto_now=True)
-    batch = models.UUIDField(blank=True, null=True)
+    import_batch = models.ForeignKey(DocumentImportBatch, blank=True, null=True, on_delete=models.CASCADE)
     title = models.CharField(max_length=256)
     description = models.TextField(blank=True, null=True)
     text = models.TextField(blank=True, null=True)
@@ -305,7 +334,7 @@ class Document(models.Model):
 
     @classmethod
     def save_metadata_record(
-        cls, rec_id, records, processed_ids=None, batch=None, import_file=True
+        cls, rec_id, records, processed_ids=None, import_batch=None, import_file=True
     ):
         processed_ids = processed_ids or []
         if rec_id not in processed_ids:
@@ -313,7 +342,7 @@ class Document(models.Model):
             parent = None
             if rec.parent_id is not None and rec.parent_id not in processed_ids:
                 parent, processed_ids = cls.save_metadata_record(
-                    rec.parent_id, records, processed_ids, batch, import_file
+                    rec.parent_id, records, processed_ids, import_batch, import_file
                 )
 
             doc = attr.asdict(rec)
@@ -385,8 +414,13 @@ class Document(models.Model):
             )
             geo_bounds = {field: doc.pop(field, None) for field in geo_fields}
 
-            doc['batch'] = batch
-            doc = Document.objects.create(**doc)
+            try:
+                doc = Document.objects.create(**doc)
+            except Exception:
+                log.error(f'Could not create document with metadata: {doc}')
+                raise
+
+            doc.import_batch = import_batch
 
             # Add M2M relations
             nuts_levels = DNutsLevel.objects.filter(name__in=nuts_levels)
@@ -403,7 +437,7 @@ class Document(models.Model):
             # Create file and associate languages
             if location is not None or external_link is not None:
                 file = File.objects.create(
-                    document=doc, location=location, external_link=external_link
+                    document=doc, original_path=location, external_link=external_link
                 )
                 if languages:
                     languages = DLanguage.objects.filter(name__in=languages)
@@ -418,18 +452,18 @@ class Document(models.Model):
         return None, processed_ids
 
     @classmethod
-    def save_metadata_records(cls, records, batch=None, import_files=True):
+    def save_metadata_records(cls, records, import_batch=None, import_files=True):
         """Creates `Document`s from a list of `MetadataRecord`s"""
         records = {r.id: r for r in records}
         processed_ids = []
         for rec_id, rec in records.items():
             _, processed_ids = cls.save_metadata_record(
-                rec_id, records, processed_ids, batch=batch, import_file=import_files
+                rec_id, records, processed_ids, import_batch=import_batch, import_file=import_files
             )
 
     def populate_text(self, force=False):
         if self.text is None or force:
-            if self.file is not None and self.file.location is not None:
+            if self.file is not None and self.file.path is not None:
                 self.text = self.file.get_text()
                 try:
                     self.save()
@@ -443,7 +477,8 @@ class File(models.Model):
     document = models.OneToOneField(
         Document, on_delete=models.CASCADE, related_name='file'
     )
-    location = models.TextField(blank=True, null=True)
+    path = models.TextField(blank=True, null=True)
+    original_path = models.TextField(blank=True, null=True)
     external_link = models.TextField(blank=True, null=True)
     file_size = models.IntegerField(blank=True, null=True)
     file_type = models.ForeignKey(
@@ -459,45 +494,49 @@ class File(models.Model):
     def __str__(self):
         return self.external_link
 
-    def get_relative_path(self, meta_root_dir=None):
+    @property
+    def absolute_path(self):
+        return Path(settings.FILES_DIR) / self.path
+
+    @property
+    def original_relative_path(self):
         """File path relative to the metadata path."""
-        meta_root_dir = meta_root_dir or settings.METADATA_FILES_DIR
-        meta_path = Path(self.location)
-        return meta_path.relative_to(meta_root_dir)
+        if self.original_path is not None and self.document.import_batch is not None:
+            return Path(self.original_path).relative_to(self.document.import_batch.original_path_root)
+        else:
+            return None
 
-    def get_import_path(self, meta_root_dir=None, import_root_dir=None):
-        """File path in the import directory"""
-        import_root_dir = import_root_dir or settings.IMPORT_FILES_DIR
-        import_path = Path(import_root_dir)
-        return import_path / self.get_relative_path(meta_root_dir)
+    def ensure_path(self):
+        """Absolute path in the files storage directory"""
+        path = Path(settings.FILES_DIR).joinpath(
+            *Path(self.path).parts[:-1]
+        )
+        path.mkdir(parents=True, exist_ok=True)
+        return path
 
-    def get_path(self, root_dir=None, meta_root_dir=None):
-        """File path in the files storage directory"""
-        root_dir = root_dir or settings.FILES_DIR
-        root_path = Path(root_dir)
-        return root_path / self.get_relative_path(meta_root_dir)
-
-    def import_file(self, root_dir=None, meta_root_dir=None, import_root_dir=None):
+    def import_file(self):
         """Copies the file from the import directory to the files storage dir."""
-        root_dir = root_dir or settings.FILES_DIR
-        root_path = Path(root_dir)
-        from_path = self.get_import_path(meta_root_dir, import_root_dir)
+        rel_path = self.original_relative_path
+        if rel_path is None:
+            log.error(f'Could not import file id={self.pk}: original path or prefix not found')
+
+        src_path = Path(settings.IMPORT_FILES_DIR) / self.original_relative_path
         try:
-            from_path = from_path.resolve(strict=True)
+            src_path = src_path.resolve(strict=True)
         except FileNotFoundError:
-            log.error(f'Import file not found: {from_path}')
+            log.error(f'Import file not found: {src_path}')
             return
 
-        rel_path = self.get_relative_path(meta_root_dir)
-        to_path = root_path / rel_path
-        to_dir = root_path.joinpath(*rel_path.parts[:-1])
-        to_dir.mkdir(parents=True, exist_ok=True)
-        print(f'Copy {from_path} to {to_path}')
-        shutil.copyfile(str(from_path), str(to_path))
+        self.path = f'{self.document.import_batch.path}/{self.original_relative_path}'
+        self.ensure_path()
+        dst_path = self.absolute_path
+        print(f'Copy {src_path} to {dst_path}')
+        shutil.copyfile(str(src_path), str(dst_path))
+        self.save()
 
     def get_text(self):
         """Sends the file to Tika and returns the extracted text."""
-        path = self.get_path()
+        path = self.absolute_path
         try:
             path = path.resolve(strict=True)
         except FileNotFoundError:
