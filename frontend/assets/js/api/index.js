@@ -1,41 +1,82 @@
-import axios from 'axios';
+/* eslint-disable */
+import { fetchFacets, fetchSearch } from './config';
 
-const logRequests = process.env.NODE_ENV === 'development';
-
-const BACKEND_HOST = 'localhost';
-const BACKEND_PORT = 8000;
-const _backend_host = process.env.BACKEND_HOST || BACKEND_HOST;
-const _backend_port = process.env.BACKEND_PORT && Number(process.env.BACKEND_PORT) || BACKEND_PORT;
-
-const apiURL = `http://${_backend_host}:${_backend_port}/api/0.1/`;
-
-const api = axios.create({
-  baseURL: apiURL,
-  withCredentials: true,
-});
-
-
-api.defaults.xsrfHeaderName = "X-CSRFTOKEN";
-api.defaults.xsrfCookieName = "csrftoken";
-
-function fetch(path) {
-  logRequests && console.log(`fetching ${path}...`);
-  return api.get(path);
+export function fetchCountries() {
+  return fetchFacets('country/');
 }
 
-function post(path, data) {
-  logRequests && console.log(`posting ${path} with data ${data}...`);
-  return api.post(path, data);
+export function fetchCountry(id) {
+  return fetchFacets(`country/${id}/`);
 }
 
-function update(path, data) {
-  logRequests && console.log(`patching ${path} with data ${data}...`);
-  return api.patch(path, data);
+export function fetchDataSets() {
+  return fetchFacets('data-set/');
 }
 
-function remove(path) {
-  logRequests && console.log(`removig ${path} ...`);
-  return api.delete(path);
+export function fetchDataSet() {
+  return fetchFacets(`data-set/${id}/`);
 }
 
-export { apiURL, api, fetch, post, update, remove };
+export function fetchDataTypes() {
+  return fetchFacets(`data-type/`);
+}
+
+export function fetchDataType(id) {
+  return fetchFacets(`data-type/${id}/`);
+}
+
+export function fetchInfoLevels() {
+  return fetchFacets(`info-level/`);
+}
+
+export function fetchInfoLevel(id) {
+  return fetchFacets(`info-level/${id}/`);
+}
+
+export function fetchKeywords() {
+  return fetchFacets(`keyword/`);
+}
+
+export function fetchKeyword(id) {
+  return fetchFacets(`keyword/${id}/`);
+}
+
+export function fetchLanguages() {
+  return fetchFacets(`language/`);
+}
+
+export function fetchLanguage(id) {
+  return fetchFacets(`language/${id}/`);
+}
+
+export function fetchNutsLevels() {
+  return fetchFacets(`nuts-level/`);
+}
+
+export function fetchNutsLevel(id) {
+  return fetchFacets(`nuts-level/${id}/`);
+}
+
+export function fetchResourceTypes() {
+  return fetchFacets(`resource-type/`);
+}
+
+export function fetchResourceType(id) {
+  return fetchFacets(`resource-type/${id}/`);
+}
+
+export function fetchTopicCategories() {
+  return fetchFacets(`topic-category/`);
+}
+
+export function fetchTopicCategory(id) {
+  return fetchFacets(`topic-category/${id}/`);
+}
+
+export function search(term) {
+  return fetchSearch(term);
+}
+
+export function searchId(id) {
+  return fetchSearch(`${id}/`);
+}
