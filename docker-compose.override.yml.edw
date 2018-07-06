@@ -1,0 +1,16 @@
+version: '2'
+
+services:
+
+  tika:
+    labels:
+      io.rancher.scheduler.affinity:host_label_ne: frontend=yes
+
+  app:
+    labels:
+      io.rancher.container.pull_image: always
+      io.rancher.scheduler.affinity:host_label_ne: frontend=yes
+
+volumes:
+  static-files:
+    driver: rancher-nfs

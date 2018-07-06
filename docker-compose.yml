@@ -1,6 +1,10 @@
 version: '2'
 
 services:
+
+  tika:
+    image: logicalspark/docker-tikaserver
+
   app:
     image: eeacms/fise.nfi.search:latest
     container_name: nfi.app
@@ -9,23 +13,11 @@ services:
     env_file:
       - docker/postgres.env
       - docker/app.env
-    depends_on:
-      - postgres
-    ports:
-      - 8000:8000
-
-  postgres:
-    image: eeacms/postgres:latest
-    container_name: nfi.db
-    environment:
-      - TZ=Europe/Copenhagen
-    env_file:
-      - docker/postgres.env
     volumes:
-      - postgresdata:/var/lib/postgresql/data
+      - static-files:/var/local/nfi_search/static_files
+    depends_on:
+      - tika
 
 volumes:
-  postgresdata:
-    driver: local
   static-files:
     driver: local
