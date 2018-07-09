@@ -1,4 +1,11 @@
+from pathlib import Path
+from django.conf import settings
+from django.views import static
+from rest_framework import status
 from rest_framework.viewsets import ReadOnlyModelViewSet
+from rest_framework.decorators import detail_route
+from rest_framework.renderers import StaticHTMLRenderer
+from rest_framework.response import Response
 from django_elasticsearch_dsl_drf.filter_backends import (
     FilteringFilterBackend,
     NestedFilteringFilterBackend,
@@ -24,6 +31,7 @@ from .serializers import (
     NUTSLevelSerializer,
     KeywordSerializer,
     LanguageSerializer,
+    DocSerializer,
 )
 
 from .models import (
@@ -36,6 +44,8 @@ from .models import (
     DNutsLevel,
     DKeyword,
     DLanguage,
+    Document,
+    DocumentFile,
 )
 
 
@@ -169,3 +179,39 @@ class SearchViewSet(BaseDocumentViewSet):
 
     ordering_fields = {f: f for f in facets}
     ordering = ('title',)
+
+
+class DocumentViewSet(ReadOnlyModelViewSet):
+    serializer_class = DocSerializer
+
+    def get_queryset(self):
+        return Document.objects.order_by('id').all()
+
+    @detail_route(methods=['get', 'head'], renderer_classes=(StaticHTMLRenderer,))
+    def download(self, request, pk):
+        doc_file = self.get_object().file
+        if doc_file is None:
+            Response(status=status.HTTP_404_NOT_FOUND)
+
+        file = doc_file.file
+        relpath = file.name
+
+        if relpath is None or relpath == '':
+            return Response(status=status.HTTP_404_NOT_FOUND)
+
+        if settings.DEBUG:
+            response = static.serve(
+                request,
+                path=relpath,
+                document_root=file.storage.location)
+        else:
+            # this does "X-Sendfile" on nginx, see
+            # https://www.nginx.com/resources/wiki/start/topics/examples/x-accel/
+            response = Response(
+                headers={
+                    'X-Accel-Redirect': file.storage.path(relpath)
+                }
+            )
+
+        response['Content-Disposition'] = f'attachment; filename={doc_file.name}'
+        return response
