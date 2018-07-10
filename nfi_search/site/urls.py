@@ -9,11 +9,14 @@ from .spabundle import spabundle
 urlpatterns = [
     path('admin/', admin.site.urls),
     path(f'api/', include(('nfi_search.search.urls', 'nfi-search'), namespace='search')),
-    path(f'api/docs', include_docs_urls(title='API Documentation', public=False)),
+    path(f'api-docs/', include_docs_urls(title='API Documentation', public=False)),
   ] + static(settings.STATIC_URL, document_root=settings.STATIC_ROOT)
 
 
 if settings.DEBUG:
+    urlpatterns.append(
+        path('api-browse/', include('rest_framework.urls'))
+    )
     try:
         import debug_toolbar
     except ImportError:

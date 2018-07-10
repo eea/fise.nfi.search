@@ -1,5 +1,7 @@
 import math
 import hashlib
+from django.conf import settings
+
 
 # Vowels removed to avoid accidental offensive words
 ALPHABET = 'bcdfghjklmnpqrstvwxyzBCDFGHJKLMNPQRSTVWXYZ'
@@ -68,3 +70,10 @@ def alpha_to_id(id_num, pad_to=False, alphabet=None, hash_key=None):
             out -= int(pow(base, pad_to))
 
     return out
+
+
+def fully_qualify_url(url):
+    if not url.startswith('/'):
+        url = f'/{url}'
+    proto = 'https' if settings.NFI_SEARCH_USE_TLS else 'http'
+    return f'{proto}://{settings.NFI_SEARCH_DOMAIN}{url}'

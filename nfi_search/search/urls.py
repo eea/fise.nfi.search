@@ -1,5 +1,5 @@
 from rest_framework import routers
-from .routers import facets_router, search_router
+from .routers import main_routers
 
 
 class DefaultRouter(routers.DefaultRouter):
@@ -8,8 +8,8 @@ class DefaultRouter(routers.DefaultRouter):
 
 
 root = DefaultRouter()
-root.extend(facets_router)
-root.extend(search_router)
+
+for router in main_routers:
+    root.extend(router)
 
 urlpatterns = root.urls
-

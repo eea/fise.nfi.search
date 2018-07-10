@@ -13,6 +13,7 @@ from .models import (
     DNutsLevel,
     DKeyword,
     DLanguage,
+    Document,
 )
 
 
@@ -70,10 +71,31 @@ class LanguageSerializer(ModelSerializer):
         fields = '__all__'
 
 
+class DocSerializer(ModelSerializer):
+    download_url = SerializerMethodField()
+
+    class Meta:
+        model = Document
+        # fields = "__all__"
+        fields = (
+            "id",
+            "title",
+            "download_url",
+        )
+
+    @staticmethod
+    def get_download_url(obj):
+        if not obj.file or not obj.file.file:
+            return None
+        else:
+            return obj.fq_download_url
+
+
 class DocumentDocSerializer(DocumentSerializer):
 
     nuts_levels = SerializerMethodField()
     keywords = SerializerMethodField()
+    download_url = SerializerMethodField()
 
     class Meta:
         document = DocumentDoc
@@ -103,3 +125,10 @@ class DocumentDocSerializer(DocumentSerializer):
             return [w.name for w in obj.keywords]
         else:
             return []
+
+    def get_download_url(self, obj):
+        doc = self.Meta.document._doc_type.model.objects.get(pk=obj.id)
+        if not doc.file or not doc.file.file:
+            return None
+
+        return doc.fq_download_url

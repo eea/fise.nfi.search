@@ -9,7 +9,8 @@ from .views import (
     NUTSLevelViewSet,
     KeywordViewSet,
     LanguageViewSet,
-    SearchViewSet
+    SearchViewSet,
+    DocumentViewSet,
 )
 
 
@@ -24,6 +25,19 @@ facets_router.register('facets/nuts-level', NUTSLevelViewSet, base_name='nuts-le
 facets_router.register('facets/keyword', KeywordViewSet, base_name='keyword')
 facets_router.register('facets/language', LanguageViewSet, base_name='language')
 
+docs_router = routers.SimpleRouter()
+docs_router.register(
+    'documents',
+    DocumentViewSet,
+    base_name='document'
+)
 
 search_router = routers.SimpleRouter()
 search_router.register('search', SearchViewSet, base_name='search')
+
+
+main_routers = (
+    facets_router,
+    docs_router,
+    search_router,
+)

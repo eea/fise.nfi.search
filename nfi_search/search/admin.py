@@ -2,7 +2,7 @@ from django.contrib import admin
 from .models import (
     DCountry, DDataSet, DLanguage, DResourceType,
     DTopicCategory, DDataSource, DDataType, DInfoLevel,
-    DKeyword, DNutsLevel, DFileType, Organization,  Document, File,
+    DKeyword, DNutsLevel, DFileType, Organization,  Document, DocumentFile,
     GeographicBounds, CountryData,
 )
 
@@ -72,8 +72,8 @@ class DocumentAdmin(admin.ModelAdmin):
     list_display = ['id', 'title', 'country']
 
 
-class FileAdmin(admin.ModelAdmin):
-    list_display = ['file_type', 'file_size', 'external_link']
+class DocumentFileAdmin(admin.ModelAdmin):
+    list_display = ['name', 'extension', 'size']
 
 
 class GeographicBoundsAdmin(admin.ModelAdmin):
@@ -98,6 +98,6 @@ admin.site.register(DNutsLevel, DNutsLevelAdmin)
 admin.site.register(DFileType, DFileTypeAdmin)
 admin.site.register(Organization, OrganizationAdmin)
 admin.site.register(Document, DocumentAdmin)
-admin.site.register(File, FileAdmin)
+admin.site.register(DocumentFile, DocumentFileAdmin)
 admin.site.register(GeographicBounds, GeographicBoundsAdmin)
 admin.site.register(CountryData, CountryDataAdmin)
