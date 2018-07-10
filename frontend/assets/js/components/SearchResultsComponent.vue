@@ -16,7 +16,10 @@
       <hr>
 
     <!-- search results -->
-    <list-custom :dataList="results"></list-custom>
+    <list-custom 
+      v-if="results.length > 0"
+      :dataList="results"
+    ></list-custom>
 
     <div v-if="!prestineForm && results.length === 0">
       No results found
@@ -25,7 +28,7 @@
 </template>
 
 <script>
-import { fetchCountries, search } from '../api';
+// import { search } from '../api';
 import ListCustom from './ListCustom';
 
 export default {
@@ -36,47 +39,47 @@ export default {
   },
 
   props: {
-    filterConfiguration: {},
+    results: {},
   },
 
   data() {
     return {
       searchTerm: '',
-      results: [],
+      // results: [],
       prestineForm: true,
     };
   },
 
   methods: {
     handleClicked() {
-      let searchQuery = this.searchTerm ? `?search=${this.searchTerm}&` : '?';
-      this.prestineForm = false;
+      // let searchQuery = this.searchTerm ? `?search=${this.searchTerm}&` : '?';
+      // this.prestineForm = false;
       
-      Object.keys(this.filterConfiguration).map(key => {
-        const filter = this.filterConfiguration[key];
+      // Object.keys(this.filterConfiguration).map(key => {
+      //   const filter = this.filterConfiguration[key];
 
-        if(Array.isArray(filter)) {
-          for (let i = 0; i < filter.length; i++) {
-            const element = filter[i];
-            searchQuery += `${key}=${element.name}&`;
-          }
-        } else if (filter){
-          searchQuery += `${key}=${filter.name}&`;
-        }
+      //   if(Array.isArray(filter)) {
+      //     for (let i = 0; i < filter.length; i++) {
+      //       const element = filter[i];
+      //       searchQuery += `${key}=${element.name}&`;
+      //     }
+      //   } else if (filter){
+      //     searchQuery += `${key}=${filter.name}&`;
+      //   }
+      // });
+
+      // search(searchQuery)
+      //   .then((response) => {
+      //     console.log(response);
+      //     this.results = response.data.results;
+      //   })
+      //   .catch((error) => {
+      //     console.log(error);
+      //   });
+      setTimeout(() => {
+        // will emit after the render updates the model
+        this.$emit("updated-search-term", this.searchTerm);
       });
-
-      search(searchQuery)
-        .then((response) => {
-          console.log(response);
-          this.results = response.data.results;
-        })
-        .catch((error) => {
-          console.log(error);
-        });
-    },
-
-    handleArrangeResults(ev) {
-
     },
   }
 };

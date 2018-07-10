@@ -2,12 +2,18 @@
   <div class="container-fluid">
     <div class="row flex-xl-nowrap2">
       <div class="bd-sidebar col-md-4 col-xl-4 col-12">
-        <searchFilters v-on:updated-filters="handleUpdatedFilter"></searchFilters>
+        <search-filters 
+          v-on:updated-filters="handleUpdatedFilter"
+          :facets="facets"
+        ></search-filters>
       </div>
       <div class="pb-md-3 pl-md-5 bd-content col-md-8 col-xl-8 col-12"> 
         <div class="container">
           <div class="bd-content">
-            <searchResults :filterConfiguration="filterConfiguration"></searchResults>
+            <search-results 
+              v-on:updated-search-term="handleUpdatedSearchTerm"
+              :results="results"
+            ></search-results>
           </div>
         </div>
       </div>
@@ -16,37 +22,71 @@
 </template>
 
 <script>
-import SearchResultsComponent from "./SearchResultsComponent";
-import SearchFiltersComponent from "./SearchFiltersComponent";
+import SearchResultsComponent from './SearchResultsComponent';
+import SearchFiltersComponent from './SearchFiltersComponent';
+import { search } from '../api';
 
-/**
- * TODO
- * + remove group and sort
- * + remove reaster/plot requests, show all sets
- * - update faces numbers and availability
- * - make searches on each facet
- * - insert debounce for requests
- * - implement design
- * - jsdocs
- */
+
 export default {
-  name: "SearchMainComponent",
+  name: 'SearchMainComponent',
 
   components: {
-    searchResults: SearchResultsComponent,
-    searchFilters: SearchFiltersComponent,
+    'search-results': SearchResultsComponent,
+    'search-filters': SearchFiltersComponent,
   },
 
   data() {
     return {
       filterConfiguration: {},
+      searchTerm: '',
+      facets: {},
+      results: [],
     };
   },
 
   methods: {
-    handleUpdatedFilter(ev) {
-      this.filterConfiguration = ev;
-      this.obj = 3
+    handleUpdatedFilter(val) {
+      this.filterConfiguration = val;
+
+      this.searchToUpdateFacets()
+        .then((response) => {
+          this.facets = response.data.facets;
+        })
+        .catch((error) => {
+          console.log(error);
+        });
+    },
+
+    handleUpdatedSearchTerm(val) {
+      this.searchTerm = val;
+
+      this.searchToUpdateFacets()
+        .then((response) => {
+          this.results = response.data.results;
+          this.facets = response.data.facets;
+        })
+        .catch((error) => {
+          console.log(error);
+        });
+    },
+
+    searchToUpdateFacets() {
+      let searchQuery = this.searchTerm ? `?search=${this.searchTerm}&` : '?';
+      
+      Object.keys(this.filterConfiguration).map(key => {
+        const filter = this.filterConfiguration[key];
+
+        if(Array.isArray(filter)) {
+          for (let i = 0; i < filter.length; i++) {
+            const element = filter[i];
+            searchQuery += `${key}=${element.name}&`;
+          }
+        } else if (filter){
+          searchQuery += `${key}=${filter.name}&`;
+        }
+      });
+
+      return search(searchQuery);
     },
   },
 };

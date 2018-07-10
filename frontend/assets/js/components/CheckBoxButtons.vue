@@ -5,7 +5,7 @@
     </div>
     <label 
       style="display:flex"
-      v-for="dataItem in dataList"
+      v-for="dataItem in myDataList"
       :key="componentName + dataItem.id"
     >
       <b-form-checkbox
@@ -14,6 +14,7 @@
         v-model="mySelectedList"
         :value="dataItem"
         v-on:change="handleClicked()"
+        lazy
       ></b-form-checkbox>
       <span>{{dataItem.name}}</span>
       <span class="badge badge-primary">{{dataItem.number}}</span>
@@ -31,10 +32,14 @@ export default {
     title: '',
   },
 
+  created() {
+    this.myDataList = JSON.parse(JSON.stringify(this.dataList));
+  },
+
   data() {
-    console.log(this.dataList);
     return {
-      mySelectedList: []
+      mySelectedList: [],
+      myDataList: [],
     };
   },
 
@@ -42,21 +47,35 @@ export default {
     handleClicked() {
       setTimeout(() => {
         // will emit after the render updates the model
-        console.log(this.mySelectedList)
-        this.$emit("selected-" + this.componentName, this.mySelectedList);
+        this.$emit('selected-' + this.componentName, this.mySelectedList);
       });
     }
   },
+
+  watch: {
+    dataList: function (val) {
+      for (const key in val) {
+        if (val.hasOwnProperty(key)) {
+          const newFacetCount = val[key].number;
+          this.myDataList[key] = Object.assign(this.myDataList[key], { number: newFacetCount });
+
+          if(this.mySelectedList[key]) {
+            this.mySelectedList[key] = Object.assign(this.mySelectedList[key], { number: newFacetCount })
+          }
+        }
+      }
+    },
+  }
 };
 </script>
 
 <style scoped>
 .btn-group {
-    position: relative;
-    display: -ms-inline-flexbox;
-    display: inline-flex;
-    vertical-align: middle;
-    flex-wrap: wrap;
+  position: relative;
+  display: -ms-inline-flexbox;
+  display: inline-flex;
+  vertical-align: middle;
+  flex-wrap: wrap;
 }
 
 .custom-control-inline {

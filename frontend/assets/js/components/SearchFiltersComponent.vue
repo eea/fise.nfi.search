@@ -13,39 +13,6 @@
       ></selectCustom>
     </div>
 
-    <!-- Select Data Type -->
-    <!-- <div v-if="dataTypes.length > 0">
-      <h4>Result type</h4>
-      <checkBoxButtons 
-        :dataList="dataTypes"
-        :componentName="'dataTypes'"
-        v-on:selected-dataTypes="handleSelectedDataTypes"
-      ></checkBoxButtons>
-    </div> -->
-    <!-- <p
-      v-for="dataItem in dataTypes"
-      :key="dataItem.id"
-    >{{dataItem.name}}
-    </p> -->
-
-    <!-- Select Data Sets -->
-    <!-- <b-row v-if="allDataSets.length > 0">
-      <b-col>
-        <checkBoxButtons 
-          :dataList="allDataSets.slice(1,3)" 
-          :componentName="'dataSets'"
-          v-on:selected-dataSets="handleSelectedDataSets"
-        ></checkBoxButtons>
-      </b-col>
-
-      <b-col>
-        <checkBoxButtons 
-          :dataList="allDataSets.slice(3,5)" 
-          :componentName="'dataSets'"
-          v-on:selected-dataSets="handleSelectedDataSets"
-        ></checkBoxButtons>
-      </b-col>
-    </b-row> -->
     <!-- Select Data Sets -->
     <b-row v-if="showDateSets">
       <b-col>
@@ -53,7 +20,7 @@
           :dataList="dataTypes[0].dataSets" 
           :componentName="'dataSets-0'"
           :title="dataTypes[0].name"
-          v-on:selected-dataSets-0="handleSelectedDataSets0"
+          v-on:selected-dataSets-0="handleSelectedDataSetsRaster"
         ></checkBoxButtons>
       </b-col>
 
@@ -62,13 +29,13 @@
           :dataList="dataTypes[1].dataSets" 
           :componentName="'dataSets-1'"
           :title="dataTypes[1].name"
-          v-on:selected-dataSets-1="handleSelectedDataSets1"
+          v-on:selected-dataSets-1="handleSelectedDataSetsSample"
         ></checkBoxButtons>
       </b-col>
     </b-row>
     
     <!-- Select Result Formats -->
-    <div v-if="(resourceTypes.length > 0)">
+    <div v-if="(resourceTypes != null)">
       <h4>Result format</h4>
       <checkBoxButtons 
         :dataList="resourceTypes" 
@@ -77,7 +44,6 @@
       ></checkBoxButtons>
     </div>
 
-    <!-- Select ranged years -->
   </div>
 </template>
 
@@ -99,18 +65,23 @@ export default {
 
   components: {
     checkBoxButtons: CheckBoxButtons,
-    selectCustom: SelectCustom
+    selectCustom: SelectCustom,
+  },
+
+  props: {
+    facets: {},
   },
 
   data() {
     return {
       countries: [],
-      resourceTypes: [],
-      dataTypes: [],
-      dataSets0: [],
-      dataSets1: [],
-      // allDataSets: [],
+      resourceTypes: null,
+      dataTypes: {},
+      selectedDataSetsSample: [],
+      selectedDataSetsRaster: [],
       showDateSets: false,
+      allSets: [],
+      allResourceTypes: [],
       selectedFilterOptions: {
         country: "",
         resource_type: [],
@@ -123,8 +94,6 @@ export default {
   created() {
     this.getCountries();
     this.getResourceType();
-    // this.getDataType();
-    // this.getAllDataSets();
     this.getTypesAndSets();
   },
 
@@ -136,29 +105,22 @@ export default {
       promiseParalel.push(fetchDataSets());
 
       Promise.all(promiseParalel).then(dataTypesResponse => {
-        // console.log(dataTypesResponse);
         let dataTypes = dataTypesResponse[0].data;
-        let allDataSets = dataTypesResponse[1].data;
+        this.allSets = dataTypesResponse[1].data;
+
         dataTypes.map(dataType => {
-          // console.log(dataType);
-          this.searchByTerms("data_type", dataType).then(response => {
-            // console.log(response);
-            // dataType.dataSets = response.data.facets.data_set;
-            dataType.dataSets = this.filterDataSets(
+          this.searchByTerms("data_type", dataType.name).then(response => {
+            dataType.dataSets = this.formatSets(
               response.data.facets.data_set,
-              allDataSets
+              this.allSets
             );
-            // console.log(dataType);
-            // console.log(this.filterDataSets(dataType.dataSets, allDataSets));
           });
         });
+        
         this.dataTypes = dataTypes.slice();
-          console.log(this.dataTypes);
         setTimeout(()=> {
           this.showDateSets = true;
-          // console.log(this.dataTypes);
         }, 1000);
-        // console.log(dataTypes);
       });
     },
 
@@ -175,73 +137,44 @@ export default {
     getResourceType() {
       fetchResourceTypes()
         .then(response => {
-          this.resourceTypes = response.data;
+          this.allResourceTypes = response.data;
+
+          this.searchByTerms().then(response => {
+            this.resourceTypes = this.formatSets(
+              response.data.facets.resource_type,
+              this.allResourceTypes
+            );
+          });
         })
         .catch(error => {
           console.log(error);
         });
     },
-
-    getDataType() {
-      fetchDataTypes()
-        .then(response => {
-          let dataTypes = response.data;
-          this.dataTypes = response.data;
-          // dataTypes.map(dataType => {
-          //   this.searchByTerms("data_type", dataType)
-          //     .then(responseDataSets => {
-          //       dataType.dataSets = response.data;
-          //       console.log("dataType", dataType);
-          //     })
-          //     .catch(error => {
-          //       console.log(error);
-          //     });
-          // });
-        })
-        .catch(error => {
-          console.log(error);
-        });
-    },
-
-    // getAllDataSets() {
-    //   fetchDataSets()
-    //     .then(response => {
-    //       this.allDataSets = response.data;
-    //       // this.getDataSetsForSelectedDataTypes();
-    //     })
-    //     .catch(error => {
-    //       console.log(error);
-    //     });
-    // },
 
     searchByTerms(termType, term) {
-      if (!termType) {
-        termType = "search";
-      }
-      return search(`?${termType}=${term.name}`);
+      const resultTermType = termType || '';
+      const resultTerm = term || '';
+      
+      return search(`?${resultTermType}=${resultTerm}`);
     },
 
     handleSelectedDataTypes(ev) {
       this.selectedFilterOptions.data_type = ev.slice();
-      // this.getDataSetsForSelectedDataTypes();
       this.emitSelectedFilter();
     },
 
-    handleSelectedDataSets0(ev) {
-      this.dataSets0 = ev.slice();
-      console.log(ev)
+    handleSelectedDataSetsRaster(ev) {
+      this.selectedDataSetsSample = ev.slice();
       this.handleSelectedDataSets();
     },
 
-    handleSelectedDataSets1(ev) {
-      this.dataSets1 = ev.slice();
-      console.log(ev)
+    handleSelectedDataSetsSample(ev) {
+      this.selectedDataSetsRaster = ev.slice();
       this.handleSelectedDataSets();
     },
 
     handleSelectedDataSets() {
-      this.selectedFilterOptions.data_set = [...this.dataSets0, ...this.dataSets1];
-      console.log(this.selectedFilterOptions.data_set)
+      this.selectedFilterOptions.data_set = [...this.selectedDataSetsSample, ...this.selectedDataSetsRaster];
       this.emitSelectedFilter();
     },
 
@@ -259,62 +192,59 @@ export default {
       this.$emit("updated-filters", this.selectedFilterOptions);
     },
 
-// NOT USED
-    // getDataSetsForSelectedDataTypes() {
-    //   let promiseParalel = [];
-    //   let usefulDataSets = {};
-    //   this.dataSets = [];
-
-    //   this.selectedFilterOptions.data_type.map(dataType => {
-    //     promiseParalel.push(this.searchByTerms("data_type", dataType));
-    //   });
-
-    //   Promise.all(promiseParalel).then(dataTypesResponse => {
-    //     dataTypesResponse.map(dataTypeSearchedResponse => {
-    //       usefulDataSets = Object.assign(
-    //         usefulDataSets,
-    //         dataTypeSearchedResponse.data.facets.data_set
-    //       );
-    //     });
-
-    //     this.dataSets = this.filterDataSets(usefulDataSets).slice();
-    //   });
-    // },
-
-    filterDataSets(usefulDataSets, allDataSets) {
+    formatSets(usefulSets, allSets) {
       let tempKeys = {};
-      // let tempDateSets = [];
-      let data = {};
+      let result = {};
 
-// console.log('!!!!!!!!usefulDataSets', usefulDataSets);
-// console.log(allDataSets);
-
-      Object.keys(usefulDataSets).map(key => {
+      Object.keys(usefulSets).map(key => {
         const formatedKey = key.toLowerCase().replace(/[^A-Z0-9]+/gi, "");
         tempKeys[formatedKey] = key;
       });
 
-      allDataSets.map(dataset => {
-        const tempDateSetName = 
+      allSets.map(dataset => {
+        const tempDataName = 
           dataset.name
           .toLowerCase()
           .replace(/[^A-Z0-9]+/gi, "");
-        const test = tempKeys[tempDateSetName];
-              // console.log('@@@@@dataset', dataset);
-              // console.log('#####test', test);
+        const facetKey = tempKeys[tempDataName];
 
-
-        if (test) {
-          data[tempKeys[tempDateSetName]] = dataset;
-          data[tempKeys[tempDateSetName]].number = usefulDataSets[tempKeys[tempDateSetName]];
-
-          // tempDateSets.push(data);
+        if (facetKey) {
+          result[facetKey] = dataset;
+          result[facetKey].number = usefulSets[facetKey];
         }
       });
-      // console.log('result', tempDateSets);
-              // console.log('#####data', data);
-      return data;
+
+      return result;
+    },
+
+    /**
+     * !!the server returns only the data sets that have a value (everything that is 0, will not be received)
+     * but we look for all received datasets and replace the existing number with the new one or with 0
+     * this way the CheckBoxButtons component will always receive the same list, the count of each will differ
+     */
+    updateFacetsCount() {
+      const resourceTypesClone = JSON.parse(JSON.stringify(this.resourceTypes));
+      const dataTypesClone = JSON.parse(JSON.stringify(this.dataTypes));
+
+      dataTypesClone.map(dataType => {
+        Object.keys(dataType.dataSets).map((key) => {
+          dataType.dataSets[key] = Object.assign(dataType.dataSets[key], { number: this.facets.data_set[key] || 0 });
+        });
+      });
+
+      Object.keys(resourceTypesClone).map((key) => {
+        resourceTypesClone[key] = Object.assign(this.resourceTypes[key], { number: this.facets.resource_type[key] || 0 });
+      });
+
+      this.dataTypes = JSON.parse(JSON.stringify(dataTypesClone));
+      this.resourceTypes = JSON.parse(JSON.stringify(resourceTypesClone));
     }
+  },
+
+  watch: {
+    facets: function (val) {
+      this.updateFacetsCount();
+    },
   }
 };
 </script>

@@ -78,5 +78,5 @@ export function search(term) {
 }
 
 export function searchId(id) {
-  return fetchSearch(`${id}/`);
+  return fetchSearch(`?ids=${id}/`);
 }
