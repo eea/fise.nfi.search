@@ -1,11 +1,12 @@
 <template>
   <div>
-    <a 
+    <a
       v-for="data in dataList"
       :key="data.id"
-      href="#" 
-      target="_self" 
+      href="#"
+      target="_self"
       class="list-group-item flex-column align-items-start list-group-item-action"
+      v-on:click="handleClicked($event, data)"
     >
       <div class="d-flex w-100 justify-content-between">
         <h5 class="mb-1 blue">{{data.title}}</h5>
@@ -20,11 +21,21 @@
 
 <script>
 export default {
-  name: "ListCustom",
+  name: 'ListCustom',
 
   props: {
     dataList: {},
   },
+
+  methods: {
+    handleClicked(ev, data) {
+      ev.preventDefault();
+      setTimeout(() => {
+        // will emit after the render updates the model
+        this.$emit('selected-result', data);
+      });
+    },
+  }
 };
 </script>
 
