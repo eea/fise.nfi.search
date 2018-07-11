@@ -5,3 +5,4 @@ Dockerfile
 .cache
 docs
 docker
+*.sock

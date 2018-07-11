@@ -1,0 +1,17 @@
+#!/usr/bin/env bash
+
+export DOCKER_REPO=eeacms/fise.nfi.search
+export RANCHER_STACK=nfi-search
+export PYTHONPATH=`pwd`
+export DJANGO_PORT=8000
+export DJANGO_SETTINGS_MODULE=nfi_search.site.settings.local
+export DEBUG=yes
+export POSTGRES_HOST=localhost
+export ELASTICSEARCH_HOST=localhost
+export ELASTICSEARCH_TIMEOUT=120
+export FILES_DIR="${HOME}/Documents/nfi_data"
+export IMPORT_FILES_DIR="${HOME}/Documents/nfi_original_data"
+export TIKA_HOST='localhost'
+export TIKA_TIMEOUT=20
+export NFI_SEARCH_USE_TLS=False
+export NFI_SEARCH_DOMAIN="localhost:8000"

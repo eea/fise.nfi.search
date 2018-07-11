@@ -1,0 +1,37 @@
+version: '2'
+
+services:
+
+  postgres:
+    image: postgres:10.4
+    container_name: nfi.db
+    environment:
+      - TZ=Europe/Copenhagen
+    env_file:
+      - docker/postgres.env
+    volumes:
+      - postgres-data:/var/lib/postgresql/data
+    labels:
+      io.rancher.scheduler.affinity:host_label_ne: reserved=yes
+
+  app:
+    depends_on:
+      - postgres
+      - tika
+    labels:
+      io.rancher.container.pull_image: always
+      io.rancher.scheduler.affinity:host_label_ne: reserved=yes
+
+  nginx:
+    labels:
+      io.rancher.scheduler.affinity:host_label_ne: reserved=yes
+
+volumes:
+  postgres-data:
+    driver: rancher-nfs
+  static-files:
+    driver: rancher-nfs
+  data-files:
+    driver: rancher-nfs
+  import-files:
+    driver: rancher-nfs
