@@ -13,6 +13,7 @@
             <search-results 
               v-on:updated-search-term="handleUpdatedSearchTerm"
               :results="results"
+              :count="count"
             ></search-results>
           </div>
         </div>
@@ -41,6 +42,7 @@ export default {
       searchTerm: '',
       facets: {},
       results: [],
+      count: null,
     };
   },
 
@@ -71,6 +73,7 @@ export default {
       this.searchToUpdateFacets()
         .then((response) => {
           this.results = response.data.results;
+          this.count = response.data.count;
           this.facets = response.data.facets;
         })
         .catch((error) => {
