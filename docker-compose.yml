@@ -13,7 +13,6 @@ services:
       - docker/postgres.env
       - docker/app.env
     volumes:
-      - static-files:/var/local/fise.nfi.search/static
       - data-files:/var/local/fise.nfi.search/data_files
       - import-files:/var/local/fise.nfi.search/import_files
     depends_on:
@@ -27,7 +26,6 @@ services:
           ip_hash;
           server app:${DJANGO_PORT};
         }
-
         server {
           listen 80;
           server_name ${NFI_SEARCH_DOMAIN};
@@ -37,24 +35,17 @@ services:
             uwsgi_pass app;
             include uwsgi_params;
           }
-          location /static {
-            sendfile on;
-            tcp_nopush on;
-            gzip on;
-            gzip_types text/plain application/x-javascript text/css;
-            expires 1d;
-            root /var/local/fise.nfi.search;
+          location ~* \.(jpg|jpeg|png|gif|ico|css|js)$$ {
+            uwsgi_pass app;
+            include uwsgi_params;
+            expires 365d;
           }
         }
     command: /bin/sh -c 'echo "$$NGINX_CONF" > /etc/nginx/conf.d/default.conf && exec nginx -g "daemon off;"'
-    volumes:
-      - static-files:/var/local/fise.nfi.search/static:ro
     depends_on:
       - app
 
 volumes:
-  static-files:
-    driver: local
   data-files:
     driver: local
   import-files:

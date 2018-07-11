@@ -10,6 +10,7 @@ RUN runDeps="nodejs yarn" \
     && apt-get install -y --no-install-recommends $runDeps
 RUN mkdir -p $APP_HOME/frontend
 COPY frontend $APP_HOME/frontend/
+RUN rm -rf frontend/dist
 COPY package.json postcss.config.js yarn.lock $APP_HOME/
 WORKDIR $APP_HOME
 RUN npm_config_tmp=$APP_HOME yarn
@@ -23,7 +24,7 @@ RUN runDeps="netcat libpq-dev" \
     && apt-get install -y --no-install-recommends $runDeps \
     && apt-get clean \
     && rm -vrf /var/lib/apt/lists/*
-RUN mkdir -p $APP_HOME/frontend/dist
+RUN mkdir -p $APP_HOME
 COPY $REQUIREMENTS_FILE $APP_HOME/
 WORKDIR $APP_HOME
 RUN buildDeps="build-essential gcc" \
@@ -31,10 +32,12 @@ RUN buildDeps="build-essential gcc" \
     && apt-get install -y --no-install-recommends $buildDeps \
     && pip install --no-cache-dir -r $REQUIREMENTS_FILE \
     && apt-get -y remove --purge --auto-remove $buildDeps
+COPY . $APP_HOME
+RUN rm -rf frontend package.json postcss.config.js yarn.lock \
+    && mkdir -p $APP_HOME/frontend/dist \
+    && mkdir $APP_HOME/static
 COPY --from=npm_builder $APP_HOME/frontend/dist/build/ $APP_HOME/static/
 COPY --from=npm_builder $APP_HOME/frontend/dist/stats.json $APP_HOME/frontend/dist/stats.json
-COPY . $APP_HOME
-RUN rm -rf package.json postcss.config.js yarn.lock
 
 ENTRYPOINT ["./docker-entrypoint.sh"]
 CMD ["run"]

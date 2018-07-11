@@ -19,8 +19,6 @@ services:
       io.rancher.scheduler.affinity:host_label_ne: frontend=yes
 
 volumes:
-  static-files:
-    driver: rancher-nfs
   data-files:
     driver: rancher-nfs
   import-files:
