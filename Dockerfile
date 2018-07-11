@@ -1,4 +1,12 @@
 FROM python:3.6-slim as npm_builder
+
+# Overriden in compose as needed
+ARG BACKEND_HOST=nfi-search.dev.eaudeweb.ro
+ARG BACKEND_PORT=80
+
+ENV BACKEND_HOST=$BACKEND_HOST
+ENV BACKEND_PORT=$BACKEND_PORT
+
 ENV APP_HOME=/var/local/fise.nfi.search
 RUN apt-get update -y \
     && apt-get install -y --no-install-recommends apt-utils curl software-properties-common gnupg \
