@@ -6,3 +6,7 @@ Dockerfile
 docs
 docker
 *.sock
+node_modules
+frontend
+static
+*.log
