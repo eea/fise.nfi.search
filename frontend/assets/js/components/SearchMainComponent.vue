@@ -26,10 +26,7 @@ import SearchResultsComponent from './SearchResultsComponent';
 import SearchFiltersComponent from './SearchFiltersComponent';
 import { search } from '../api';
 
-/**
- * TODO 
- * async on filters get facets is slow - fix it!!!
- */
+
 export default {
   name: 'SearchMainComponent',
 
@@ -48,6 +45,10 @@ export default {
   },
 
   methods: {
+    /**
+     * this will issue the search but will only update the facets
+     * it is called by the filter component (facets)
+     */
     handleUpdatedFilter(val) {
       this.filterConfiguration = val;
 
@@ -60,6 +61,10 @@ export default {
         });
     },
 
+    /**
+     * this will issue the search and update both the facets and the results
+     * it is called by the result component by pressing the search button
+     */
     handleUpdatedSearchTerm(val) {
       this.searchTerm = val;
 
@@ -73,18 +78,22 @@ export default {
         });
     },
 
+    /**
+     * this will make a search request to the api based on the combined properties of the facets and search term
+     * @returns promise
+     */
     searchToUpdateFacets() {
       let searchQuery = this.searchTerm ? `?search=${this.searchTerm}&` : '?';
       
       Object.keys(this.filterConfiguration).map(key => {
         const filter = this.filterConfiguration[key];
 
-        if(Array.isArray(filter)) {
+        if(Array.isArray(filter)) { // for all the checkboxes
           for (let i = 0; i < filter.length; i++) {
             const element = filter[i];
             searchQuery += `${key}=${element.name}&`;
           }
-        } else if (filter){
+        } else if (filter) { // for the country, which can only be one, there for it's not array
           searchQuery += `${key}=${filter.name}&`;
         }
       });

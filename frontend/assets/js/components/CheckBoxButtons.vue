@@ -49,7 +49,18 @@ export default {
   },
 
   watch: {
-    dataList: function (val) {
+    /**
+     * on each change of the list in prop, received from the parent
+     * it will update the facets (checkboxes) with the new count
+     * Object.assign is needed so that Vue know that the model has been updatet
+     * I tried creating a clone and assigning it at the end but it doesn't work (it keeps the previuos value in mySelectedList and doesn't update it)
+     * @param {Object} val - the object that contains the list to display as checkboxes
+     * @param {Object} val["corine land cover"] - example of a facet object
+     * @param {number} val["corine land cover"].id
+     * @param {string} val["corine land cover"].name
+     * @param {number} val["corine land cover"].number - the new count
+     */
+    dataList: function updateFacetsCount(val) {
       for (const key in val) {
         if (val.hasOwnProperty(key)) {
           const newFacetCount = val[key].number;

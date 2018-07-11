@@ -56,12 +56,12 @@ import {
   fetchNutsLevels,
   fetchResourceTypes,
   search
-} from "../api";
-import CheckBoxButtons from "./CheckBoxButtons";
-import SelectCustom from "./SelectCustom";
+} from '../api';
+import CheckBoxButtons from './CheckBoxButtons';
+import SelectCustom from './SelectCustom';
 
 export default {
-  name: "SearchFiltersComponent",
+  name: 'SearchFiltersComponent',
 
   components: {
     checkBoxButtons: CheckBoxButtons,
@@ -83,7 +83,7 @@ export default {
       allSets: [],
       allResourceTypes: [],
       selectedFilterOptions: {
-        country: "",
+        country: '',
         resource_type: [],
         data_type: [],
         data_set: []
@@ -98,55 +98,73 @@ export default {
   },
 
   methods: {
+    /**
+     * will get the dataTypes and set to each one the corresponding dataSets
+     * there isn't a formal contraint on the database regarding which dataSet corresponds to which dataType
+     * there for we will search for each DataType and see which dataSet facets comes back
+     */
     getTypesAndSets() {
       let promiseParalel = [];
-      let promisesSearchDataTypes = [];
 
       promiseParalel.push(fetchDataTypes());
       promiseParalel.push(fetchDataSets());
 
-      Promise.all(promiseParalel).then(dataTypesResponse => {
-        let dataTypes = dataTypesResponse[0].data;
-        this.allSets = dataTypesResponse[1].data;
+      Promise.all(promiseParalel).then(typesAndSetsResponse => {
+        let dataTypes = typesAndSetsResponse[0].data;
+        this.allSets = typesAndSetsResponse[1].data;
 
-        dataTypes.map(dataType => {
-          this.searchByTerms("data_type", dataType.name).then(response => {
-            dataType.dataSets = this.formatSets(
-              response.data.facets.data_set,
-              this.allSets
-            );
-          });
-        });
+        let promisesSearchDataTypes = this.makeDataSetsPromisesForEachDataType(dataTypes);
 
-        dataTypes.map(dataType => {
-          promisesSearchDataTypes.push(
-            ((params) => {
-              return new Promise((resolve, reject) => {
-                this.searchByTerms("data_type", dataType.name)
-                      .then(result => {
-                        resolve({
-                          dataType: dataType,
-                          result: result
-                        });
-                      })
-                      .catch((error) => {
-                        reject(error);
-                      })
-              });
-            })()
+        this.assignDataSetsToEachDataType(promisesSearchDataTypes, dataTypes);
+      });
+    },
+
+    /**
+     * will search by dataType name for each dataType
+     * @returns {Object[]} - array of promises for each searchByTerms that will return the dataType it's sets
+     */
+    makeDataSetsPromisesForEachDataType(dataTypes) {
+      let promisesSearchDataTypes = [];
+
+      dataTypes.map(dataType => {
+        promisesSearchDataTypes.push(
+          (params => {
+            return new Promise((resolve, reject) => {
+              this.searchByTerms('data_type', dataType.name)
+                .then(result => {
+                  resolve({
+                    dataType: dataType,
+                    result: result
+                  });
+                })
+                .catch(error => {
+                  reject(error);
+                });
+            });
+          })()
+        );
+      });
+
+      return promisesSearchDataTypes;
+    },
+
+    /**
+     * aftter all the search requests for each dataType is done, it will assign the dataSets to each dataType
+     * it's important to wait until the end of all the requests so that the checkboxe components will get
+     * the correct list, not undefined 
+     * TODO try and give to each checkbox component only what it need and when it's done, don't wait for all
+     * it will update this.dataTypes not the clone (test for performance)
+     */
+    assignDataSetsToEachDataType(promisesSetsForEachType, dataTypes) {
+      Promise.all(promisesSetsForEachType).then(searchDataTypesResponses => {
+        searchDataTypesResponses.map(response => {
+          response.dataType.dataSets = this.formatSets(
+            response.result.data.facets.data_set,
+            this.allSets
           );
         });
-
-        Promise.all(promisesSearchDataTypes).then(searchDataTypesResponses => {
-          searchDataTypesResponses.map(response => {
-            response.dataType.dataSets = this.formatSets(
-              response.result.data.facets.data_set,
-              this.allSets
-            );
-          });
-          this.dataTypes = dataTypes.slice();
-          this.showDateSets = true;
-        });
+        this.dataTypes = dataTypes.slice();
+        this.showDateSets = true;
       });
     },
 
@@ -160,6 +178,10 @@ export default {
         });
     },
 
+    /**
+     * will get all the resource types but it will also make a new object that will contain the code and the number from facets
+     * just like dataSets
+     */
     getResourceType() {
       fetchResourceTypes()
         .then(response => {
@@ -178,8 +200,8 @@ export default {
     },
 
     searchByTerms(termType, term) {
-      const resultTermType = termType || "";
-      const resultTerm = term || "";
+      const resultTermType = termType || '';
+      const resultTerm = term || '';
 
       return search(`?${resultTermType}=${resultTerm}`);
     },
@@ -218,22 +240,35 @@ export default {
     },
 
     emitSelectedFilter() {
-      this.$emit("updated-filters", this.selectedFilterOptions);
+      this.$emit('updated-filters', this.selectedFilterOptions);
     },
 
+    /**
+     * @param {Object} usefulSets - object that contains a key and a count
+     * @param {number} usefulSets["corine land cover"] - ex: count for corine land cover
+     * @param {Object[]} allSets - array that contains facets with name and id
+     * @param {Object} allSets[] - facets with name and id
+     * @param {string} allSets[].name
+     * @param {number} allSets[].id
+     * @returns {Object} result - formated object with number, id and name
+     * @returns {Object} result["corine land cover"] - facet
+     * @returns {number} result["corine land cover"].id
+     * @returns {string} result["corine land cover"].name
+     * @returns {number} result["corine land cover"].number - count
+     */
     formatSets(usefulSets, allSets) {
       let tempKeys = {};
       let result = {};
 
       Object.keys(usefulSets).map(key => {
-        const formatedKey = key.toLowerCase().replace(/[^A-Z0-9]+/gi, "");
+        const formatedKey = key.toLowerCase().replace(/[^A-Z0-9]+/gi, '');
         tempKeys[formatedKey] = key;
       });
 
       allSets.map(dataset => {
         const tempDataName = dataset.name
           .toLowerCase()
-          .replace(/[^A-Z0-9]+/gi, "");
+          .replace(/[^A-Z0-9]+/gi, '');
         const facetKey = tempKeys[tempDataName];
 
         if (facetKey) {
@@ -249,6 +284,7 @@ export default {
      * !!the server returns only the data sets that have a value (everything that is 0, will not be received)
      * but we look for all received datasets and replace the existing number with the new one or with 0
      * this way the CheckBoxButtons component will always receive the same list, the count of each will differ
+     * used clones to avoid rendering on each property set
      */
     updateFacetsCount() {
       const resourceTypesClone = JSON.parse(JSON.stringify(this.resourceTypes));
