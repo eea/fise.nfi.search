@@ -26,9 +26,9 @@ services:
     env_file:
       - docker/postgres.env
     volumes:
-      - postgresdata:/var/lib/postgresql/data
+      - postgres-data:/var/lib/postgresql/data
     ports:
-      - 9200:9200
+      - 5432:5432
 
   app:
     depends_on:
@@ -37,9 +37,13 @@ services:
       - tika
 
 volumes:
-  postgresdata:
+  postgres-data:
     driver: local
   esdata:
     driver: local
   static-files:
+    driver: local
+  data-files:
+    driver: local
+  import-files:
     driver: local

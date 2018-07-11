@@ -10,7 +10,7 @@ services:
     env_file:
       - docker/postgres.env
     volumes:
-      - postgresdata:/var/lib/postgresql/data
+      - postgres-data:/var/lib/postgresql/data
     labels:
       io.rancher.scheduler.affinity:host_label_ne: reserved=yes
 
@@ -22,8 +22,16 @@ services:
       io.rancher.container.pull_image: always
       io.rancher.scheduler.affinity:host_label_ne: reserved=yes
 
+  nginx:
+    labels:
+      io.rancher.scheduler.affinity:host_label_ne: reserved=yes
+
 volumes:
-  postgresdata:
+  postgres-data:
     driver: rancher-nfs
   static-files:
+    driver: rancher-nfs
+  data-files:
+    driver: rancher-nfs
+  import-files:
     driver: rancher-nfs

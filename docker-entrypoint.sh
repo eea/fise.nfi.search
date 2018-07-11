@@ -29,16 +29,9 @@ case "$1" in
         ;;
     run)
         if [ "x$DEBUG" = 'xyes' ]; then
-            exec python manage.py runserver 0.0.0.0:${GUNICORN_PORT:-8000}
+            exec python manage.py runserver 0.0.0.0:${DJANGO_PORT:-8000}
         else
-            exec gunicorn -e SCRIPT_NAME=$SCRIPT_NAME \
-                        nfi_search.site.wsgi:application \
-                        --name search \
-                        --bind 0.0.0.0:${GUNICORN_PORT:-8000} \
-                        --workers 3 \
-                        --timeout ${TIMEOUT} \
-                        --access-logfile - \
-                        --error-logfile -
+            uwsgi --ini uwsgi.ini
         fi
         ;;
     *)
