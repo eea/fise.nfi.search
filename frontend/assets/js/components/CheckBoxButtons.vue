@@ -32,14 +32,10 @@ export default {
     title: '',
   },
 
-  created() {
-    this.myDataList = JSON.parse(JSON.stringify(this.dataList));
-  },
-
   data() {
     return {
       mySelectedList: [],
-      myDataList: [],
+      myDataList: JSON.parse(JSON.stringify(this.dataList)),
     };
   },
 

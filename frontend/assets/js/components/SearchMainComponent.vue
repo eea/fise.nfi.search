@@ -26,7 +26,10 @@ import SearchResultsComponent from './SearchResultsComponent';
 import SearchFiltersComponent from './SearchFiltersComponent';
 import { search } from '../api';
 
-
+/**
+ * TODO 
+ * async on filters get facets is slow - fix it!!!
+ */
 export default {
   name: 'SearchMainComponent',
 

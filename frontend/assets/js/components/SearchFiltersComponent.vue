@@ -14,7 +14,7 @@
     </div>
 
     <!-- Select Data Sets -->
-    <b-row v-if="showDateSets">
+     <b-row v-if="showDateSets">
       <b-col>
         <checkBoxButtons 
           :dataList="dataTypes[0].dataSets" 
@@ -22,7 +22,7 @@
           :title="dataTypes[0].name"
           v-on:selected-dataSets-0="handleSelectedDataSetsRaster"
         ></checkBoxButtons>
-      </b-col>
+      </b-col>   
 
       <b-col>
         <checkBoxButtons 
@@ -65,11 +65,11 @@ export default {
 
   components: {
     checkBoxButtons: CheckBoxButtons,
-    selectCustom: SelectCustom,
+    selectCustom: SelectCustom
   },
 
   props: {
-    facets: {},
+    facets: {}
   },
 
   data() {
@@ -100,6 +100,7 @@ export default {
   methods: {
     getTypesAndSets() {
       let promiseParalel = [];
+      let promisesSearchDataTypes = [];
 
       promiseParalel.push(fetchDataTypes());
       promiseParalel.push(fetchDataSets());
@@ -116,11 +117,36 @@ export default {
             );
           });
         });
-        
-        this.dataTypes = dataTypes.slice();
-        setTimeout(()=> {
+
+        dataTypes.map(dataType => {
+          promisesSearchDataTypes.push(
+            ((params) => {
+              return new Promise((resolve, reject) => {
+                this.searchByTerms("data_type", dataType.name)
+                      .then(result => {
+                        resolve({
+                          dataType: dataType,
+                          result: result
+                        });
+                      })
+                      .catch((error) => {
+                        reject(error);
+                      })
+              });
+            })()
+          );
+        });
+
+        Promise.all(promisesSearchDataTypes).then(searchDataTypesResponses => {
+          searchDataTypesResponses.map(response => {
+            response.dataType.dataSets = this.formatSets(
+              response.result.data.facets.data_set,
+              this.allSets
+            );
+          });
+          this.dataTypes = dataTypes.slice();
           this.showDateSets = true;
-        }, 1000);
+        });
       });
     },
 
@@ -152,9 +178,9 @@ export default {
     },
 
     searchByTerms(termType, term) {
-      const resultTermType = termType || '';
-      const resultTerm = term || '';
-      
+      const resultTermType = termType || "";
+      const resultTerm = term || "";
+
       return search(`?${resultTermType}=${resultTerm}`);
     },
 
@@ -174,7 +200,10 @@ export default {
     },
 
     handleSelectedDataSets() {
-      this.selectedFilterOptions.data_set = [...this.selectedDataSetsSample, ...this.selectedDataSetsRaster];
+      this.selectedFilterOptions.data_set = [
+        ...this.selectedDataSetsSample,
+        ...this.selectedDataSetsRaster
+      ];
       this.emitSelectedFilter();
     },
 
@@ -202,8 +231,7 @@ export default {
       });
 
       allSets.map(dataset => {
-        const tempDataName = 
-          dataset.name
+        const tempDataName = dataset.name
           .toLowerCase()
           .replace(/[^A-Z0-9]+/gi, "");
         const facetKey = tempKeys[tempDataName];
@@ -227,13 +255,17 @@ export default {
       const dataTypesClone = JSON.parse(JSON.stringify(this.dataTypes));
 
       dataTypesClone.map(dataType => {
-        Object.keys(dataType.dataSets).map((key) => {
-          dataType.dataSets[key] = Object.assign(dataType.dataSets[key], { number: this.facets.data_set[key] || 0 });
+        Object.keys(dataType.dataSets).map(key => {
+          dataType.dataSets[key] = Object.assign(dataType.dataSets[key], {
+            number: this.facets.data_set[key] || 0
+          });
         });
       });
 
-      Object.keys(resourceTypesClone).map((key) => {
-        resourceTypesClone[key] = Object.assign(this.resourceTypes[key], { number: this.facets.resource_type[key] || 0 });
+      Object.keys(resourceTypesClone).map(key => {
+        resourceTypesClone[key] = Object.assign(this.resourceTypes[key], {
+          number: this.facets.resource_type[key] || 0
+        });
       });
 
       this.dataTypes = JSON.parse(JSON.stringify(dataTypesClone));
@@ -242,17 +274,15 @@ export default {
   },
 
   watch: {
-    facets: function (val) {
+    facets: function(val) {
       this.updateFacetsCount();
-    },
+    }
   }
 };
 </script>
 
 <style>
-
-
 .custom-select {
-    background-color: transparent!important;
+  background-color: transparent !important;
 }
 </style>
