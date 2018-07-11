@@ -1,20 +1,44 @@
 <template>
   <div class="container-fluid">
     <div class="row flex-xl-nowrap2">
+      <!-- facets section -->
       <div class="bd-sidebar col-md-4 col-xl-4 col-12">
         <search-filters 
           v-on:updated-filters="handleUpdatedFilter"
           :facets="facets"
         ></search-filters>
       </div>
+
+      <!-- result section -->
       <div class="pb-md-3 pl-md-5 bd-content col-md-8 col-xl-8 col-12"> 
         <div class="container">
           <div class="bd-content">
+
             <search-results 
               v-on:updated-search-term="handleUpdatedSearchTerm"
               :results="results"
               :count="count"
             ></search-results>
+
+            <!-- prev/next page -->
+            <div>
+              <b-button-group>
+                <b-button 
+                  v-if="previous"
+                  variant="primary"
+                  v-on:click="getPrevNextResults('previous')"
+                >Prev
+                </b-button>
+                <b-button 
+                  v-if="next"
+                  variant="primary"
+                  v-on:click="getPrevNextResults('next')"
+                >Next
+                </b-button>
+              </b-button-group>
+              <br><br>
+            </div>
+
           </div>
         </div>
       </div>
@@ -28,6 +52,13 @@ import SearchFiltersComponent from './SearchFiltersComponent';
 import { search } from '../api';
 
 
+/**
+ * TODO
+ * + implement next/prev page
+ * - cache pages as long as searchQuery is same
+ * - implement metadata modal
+ * - add download button
+ */
 export default {
   name: 'SearchMainComponent',
 
@@ -43,6 +74,9 @@ export default {
       facets: {},
       results: [],
       count: null,
+      next: '',
+      previous: '',
+      searchQuery: '',
     };
   },
 
@@ -75,6 +109,8 @@ export default {
           this.results = response.data.results;
           this.count = response.data.count;
           this.facets = response.data.facets;
+          this.next = response.data.next;
+          this.previous = response.data.previous;
         })
         .catch((error) => {
           console.log(error);
@@ -100,8 +136,28 @@ export default {
           searchQuery += `${key}=${filter.name}&`;
         }
       });
+      this.searchQuery = searchQuery;
 
       return search(searchQuery);
+    },
+
+    getPrevNextResults(prevNext) {
+      const nextPrevUrl = this[prevNext];
+      console.log('nextPrev', nextPrevUrl)
+      if(nextPrevUrl) {
+        const pageNumber = nextPrevUrl.split('&page=')[1]
+        const nextPrevResultsQuery = pageNumber ? this.searchQuery + '&page=' + pageNumber : this.searchQuery;
+
+        search(nextPrevResultsQuery)
+          .then((response) => {
+            this.results = response.data.results;
+            this.next = response.data.next;
+            this.previous = response.data.previous;
+          })
+          .catch((error) => {
+            console.log(error);
+          });        
+      }
     },
   },
 };
