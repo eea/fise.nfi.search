@@ -80,3 +80,5 @@ export function search(term) {
 export function searchId(id) {
   return fetchSearch(`?ids=${id}/`);
 }
+
+export { searchFullUrl } from './config';

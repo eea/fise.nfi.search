@@ -43,4 +43,9 @@ function remove(path) {
   return api.delete(path);
 }
 
-export { api, fetchFacets, fetchSearch, post, update, remove };
+function searchFullUrl(path) {
+  logRequests && console.log(`fetching ${path} ...`);
+  return axios.get(path);
+}
+
+export { api, fetchFacets, fetchSearch, searchFullUrl, post, update, remove };

@@ -49,7 +49,7 @@
 <script>
 import SearchResultsComponent from './SearchResultsComponent';
 import SearchFiltersComponent from './SearchFiltersComponent';
-import { search } from '../api';
+import { search, searchFullUrl } from '../api';
 
 
 /**
@@ -139,14 +139,14 @@ export default {
       return search(searchQuery);
     },
 
+    /**
+     * the server return the full url path for next and prev, we will use it as is
+     */
     getPrevNextResults(prevNext) {
       const nextPrevUrl = this[prevNext];
-      console.log('nextPrev', nextPrevUrl)
-      if(nextPrevUrl) {
-        const pageNumber = nextPrevUrl.split('&page=')[1]
-        const nextPrevResultsQuery = pageNumber ? this.searchQuery + '&page=' + pageNumber : this.searchQuery;
 
-        search(nextPrevResultsQuery)
+      if(nextPrevUrl) {
+        searchFullUrl(nextPrevUrl)
           .then((response) => {
             this.results = response.data.results;
             this.next = response.data.next;
