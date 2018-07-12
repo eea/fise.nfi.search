@@ -54,10 +54,8 @@ import { search } from '../api';
 
 /**
  * TODO
- * + implement next/prev page
+ * - remake prev/next, use the url form request
  * - cache pages as long as searchQuery is same
- * + implement metadata modal
- * + add download button
  */
 export default {
   name: 'SearchMainComponent',

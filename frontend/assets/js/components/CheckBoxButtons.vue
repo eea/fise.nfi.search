@@ -43,6 +43,7 @@ export default {
     handleClicked() {
       setTimeout(() => {
         // will emit after the render updates the model
+        console.log('selected-' + this.componentName)
         this.$emit('selected-' + this.componentName, this.mySelectedList);
       });
     }

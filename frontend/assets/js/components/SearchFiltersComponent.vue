@@ -5,43 +5,43 @@
     <!-- Select Country -->
     <h4>Country and region</h4>
     <div v-if="countries.length > 0">
-      <selectCustom
+      <select-custom
         :dataList="countries"
         :componentName="'country'"
         :message="'Select country'"
         v-on:selected-country="handleSelectedCountry"
-      ></selectCustom>
+      ></select-custom>
     </div>
 
     <!-- Select Data Sets -->
      <b-row v-if="showDateSets">
       <b-col>
-        <checkBoxButtons 
+        <check-box-buttons
           :dataList="dataTypes[0].dataSets" 
           :componentName="'dataSets-0'"
           :title="dataTypes[0].name"
           v-on:selected-dataSets-0="handleSelectedDataSetsRaster"
-        ></checkBoxButtons>
+        ></check-box-buttons>
       </b-col>   
 
       <b-col>
-        <checkBoxButtons 
+        <check-box-buttons
           :dataList="dataTypes[1].dataSets" 
           :componentName="'dataSets-1'"
           :title="dataTypes[1].name"
           v-on:selected-dataSets-1="handleSelectedDataSetsSample"
-        ></checkBoxButtons>
+        ></check-box-buttons>
       </b-col>
     </b-row>
     
     <!-- Select Result Formats -->
     <div v-if="(resourceTypes != null)">
       <h4>Result format</h4>
-      <checkBoxButtons 
+      <check-box-buttons
         :dataList="resourceTypes" 
         :componentName="'resourceTypes'"
         v-on:selected-resourceTypes="handleSelectedResourceTypes"
-      ></checkBoxButtons>
+      ></check-box-buttons>
     </div>
 
   </div>
@@ -60,12 +60,19 @@ import {
 import CheckBoxButtons from './CheckBoxButtons';
 import SelectCustom from './SelectCustom';
 
+const facets = {
+  country: 'country',
+  data_set: 'data_set',
+  data_type: 'data_type',
+  resource_type: 'resource_type',
+}
+
 export default {
   name: 'SearchFiltersComponent',
 
   components: {
-    checkBoxButtons: CheckBoxButtons,
-    selectCustom: SelectCustom
+    'check-box-buttons': CheckBoxButtons,
+    'select-custom': SelectCustom
   },
 
   props: {
@@ -82,6 +89,7 @@ export default {
       showDateSets: false,
       allSets: [],
       allResourceTypes: [],
+      sourceOfUpdate: null,
       selectedFilterOptions: {
         country: '',
         resource_type: [],
@@ -130,7 +138,7 @@ export default {
         promisesSearchDataTypes.push(
           (params => {
             return new Promise((resolve, reject) => {
-              this.searchByTerms('data_type', dataType.name)
+              this.searchByTerms(facets.data_type, dataType.name)
                 .then(result => {
                   resolve({
                     dataType: dataType,
@@ -206,11 +214,6 @@ export default {
       return search(`?${resultTermType}=${resultTerm}`);
     },
 
-    handleSelectedDataTypes(ev) {
-      this.selectedFilterOptions.data_type = ev.slice();
-      this.emitSelectedFilter();
-    },
-
     handleSelectedDataSetsRaster(ev) {
       this.selectedDataSetsSample = ev.slice();
       this.handleSelectedDataSets();
@@ -226,16 +229,19 @@ export default {
         ...this.selectedDataSetsSample,
         ...this.selectedDataSetsRaster
       ];
+      this.sourceOfUpdate = facets.data_type;
       this.emitSelectedFilter();
     },
 
     handleSelectedResourceTypes(ev) {
       this.selectedFilterOptions.resource_type = ev.slice();
+      this.sourceOfUpdate = facets.resource_type;
       this.emitSelectedFilter();
     },
 
     handleSelectedCountry(ev) {
       this.selectedFilterOptions.country = ev;
+      this.sourceOfUpdate = 'country';
       this.emitSelectedFilter();
     },
 
@@ -281,31 +287,35 @@ export default {
     },
 
     /**
-     * !!the server returns only the data sets that have a value (everything that is 0, will not be received)
+     * - will update data for all child componentes except for the one that started the update
+     * - !!the server returns only the data sets that have a value (everything that is 0, will not be received)
      * but we look for all received datasets and replace the existing number with the new one or with 0
-     * this way the CheckBoxButtons component will always receive the same list, the count of each will differ
-     * used clones to avoid rendering on each property set
+     * this way the check-box-buttons component will always receive the same list, the count of each will differ
+     * - used clones to avoid rendering on each property set
      */
     updateFacetsCount() {
-      const resourceTypesClone = JSON.parse(JSON.stringify(this.resourceTypes));
-      const dataTypesClone = JSON.parse(JSON.stringify(this.dataTypes));
 
-      dataTypesClone.map(dataType => {
-        Object.keys(dataType.dataSets).map(key => {
-          dataType.dataSets[key] = Object.assign(dataType.dataSets[key], {
-            number: this.facets.data_set[key] || 0
+      if(this.sourceOfUpdate !== facets.data_type) {
+        const dataTypesClone = JSON.parse(JSON.stringify(this.dataTypes));
+        dataTypesClone.map(dataType => {
+          Object.keys(dataType.dataSets).map(key => {
+            dataType.dataSets[key] = Object.assign(dataType.dataSets[key], {
+              number: this.facets.data_set[key] || 0
+            });
           });
         });
-      });
+        this.dataTypes = JSON.parse(JSON.stringify(dataTypesClone));
+      }
 
-      Object.keys(resourceTypesClone).map(key => {
-        resourceTypesClone[key] = Object.assign(this.resourceTypes[key], {
-          number: this.facets.resource_type[key] || 0
+      if(this.sourceOfUpdate !== facets.resource_type) {
+        const resourceTypesClone = JSON.parse(JSON.stringify(this.resourceTypes));
+        Object.keys(resourceTypesClone).map(key => {
+          resourceTypesClone[key] = Object.assign(this.resourceTypes[key], {
+            number: this.facets.resource_type[key] || 0
+          });
         });
-      });
-
-      this.dataTypes = JSON.parse(JSON.stringify(dataTypesClone));
-      this.resourceTypes = JSON.parse(JSON.stringify(resourceTypesClone));
+        this.resourceTypes = JSON.parse(JSON.stringify(resourceTypesClone));
+      }
     }
   },
 
