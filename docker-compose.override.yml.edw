@@ -7,6 +7,9 @@ services:
       io.rancher.scheduler.affinity:host_label_ne: frontend=yes
 
   app:
+    environment:
+     - NFI_SEARCH_DOMAIN=nfi-search.dev.eaudeweb.ro
+     - BACKEND_HOST=nfi-search.dev.eaudeweb.ro
     labels:
       io.rancher.container.pull_image: always
       io.rancher.scheduler.affinity:host_label_ne: frontend=yes
