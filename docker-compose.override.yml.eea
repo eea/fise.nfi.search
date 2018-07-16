@@ -1,0 +1,60 @@
+version: '2'
+
+services:
+
+  tika:
+    labels:
+      io.rancher.scheduler.affinity:host_label_ne: reserved=yes
+
+  postgres:
+    image: postgres:10.4
+    environment:
+      - TZ=Europe/Copenhagen
+    env_file:
+      - docker/postgres.env
+    volumes:
+      - postgres-data:/var/lib/postgresql/data
+    labels:
+      io.rancher.scheduler.affinity:host_label_ne: reserved=yes
+
+  elasticsearch:
+    image: docker.elastic.co/elasticsearch/elasticsearch:6.2.4
+    environment:
+      - cluster.name=es-cluster-nfi
+      - bootstrap.memory_lock=true
+      - "ES_JAVA_OPTS=-Xms512m -Xmx512m"
+      - TAKE_FILE_OWNERSHIP=true
+    ulimits:
+      memlock:
+        soft: -1
+        hard: -1
+    volumes:
+      - es-data:/usr/share/elasticsearch/data
+    labels:
+      io.rancher.scheduler.affinity:host_label_ne: reserved=yes
+
+  app:
+    environment:
+     - NFI_SEARCH_DOMAIN=demo-forests.eea.europa.eu
+     - BACKEND_HOST=demo-forests.eea.europa.eu
+    depends_on:
+      - postgres
+      - tika
+      - elasticsearch
+    labels:
+      io.rancher.container.pull_image: always
+      io.rancher.scheduler.affinity:host_label_ne: reserved=yes
+
+  nginx:
+    labels:
+      io.rancher.scheduler.affinity:host_label_ne: reserved=yes
+
+volumes:
+  es-data:
+    driver: local
+  postgres-data:
+    driver: rancher-nfs
+  data-files:
+    driver: rancher-nfs
+  import-files:
+    driver: rancher-nfs
