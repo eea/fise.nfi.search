@@ -1,11 +1,11 @@
 FROM python:3.6-slim as npm_builder
 
-# Overriden in compose as needed
-ARG BACKEND_HOST=nfi-search.dev.eaudeweb.ro
-ARG BACKEND_PORT=80
+ARG BACKEND_HOST=demo-forests.eea.europa.eu
+ARG SCRIPT_NAME=/nfi_search
 
+# Overriden in compose as needed
 ENV BACKEND_HOST=$BACKEND_HOST
-ENV BACKEND_PORT=$BACKEND_PORT
+ENV SCRIPT_NAME=$SCRIPT_NAME
 
 ENV APP_HOME=/var/local/fise.nfi.search
 RUN apt-get update -y \
