@@ -1,12 +1,10 @@
 FROM python:3.6-slim as npm_builder
 
 ARG BACKEND_HOST=demo-forests.eea.europa.eu
-ARG BACKEND_PORT=80
 ARG SCRIPT_NAME=/nfi_search
 
 # Overriden in compose as needed
 ENV BACKEND_HOST=$BACKEND_HOST
-ENV BACKEND_PORT=$BACKEND_PORT
 ENV SCRIPT_NAME=$SCRIPT_NAME
 
 ENV APP_HOME=/var/local/fise.nfi.search

@@ -2,13 +2,14 @@ import axios from 'axios';
 
 const logRequests = process.env.NODE_ENV === 'development';
 
-const BACKEND_HOST = 'localhost';
-const BACKEND_PORT = 8000;
-const _backend_host = process.env.BACKEND_HOST || BACKEND_HOST;
-const _backend_port = process.env.BACKEND_PORT && Number(process.env.BACKEND_PORT) || BACKEND_PORT;
-const _script_name = process.env.SCRIPT_NAME || ''
 
-const apiURL = `http://${_backend_host}:${_backend_port}${_script_name}/api/`;
+const _backend_host = process.env.BACKEND_HOST;
+const _backend_port = process.env.BACKEND_PORT && Number(process.env.BACKEND_PORT) ? `:${process.env.BACKEND_PORT}` : '';
+const _script_name = process.env.SCRIPT_NAME || '';
+
+const _protocol = location.protocol;
+
+const apiURL = `${_protocol}//${_backend_host}${_backend_port}${_script_name}/api/`;
 
 const api = axios.create({
   baseURL: apiURL,
