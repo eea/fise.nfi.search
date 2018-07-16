@@ -15,7 +15,10 @@
             v-on:click="handleClicked"
           >Search</b-btn>
         </b-input-group-append>
-        <i class="fa fa-close right-icon"></i>
+        <i
+          class="fa fa-close right-icon"
+          v-on:click="removeSearchTerm"
+        ></i>
     </b-input-group>
 
     <!-- result count -->
@@ -110,6 +113,10 @@ export default {
     handleSelectedResult(ev) {
       this.selectedResult = ev;
       this.modalShow = true;
+    },
+
+    removeSearchTerm() {
+      this.searchTerm = null;
     },
   }
 };
