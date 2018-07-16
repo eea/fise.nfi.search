@@ -11,6 +11,7 @@ const PORT = 8080
 
 const _host = process.env.HOST || HOST
 const _port = process.env.PORT && Number(process.env.PORT) || PORT
+const _script_name = process.env.SCRIPT_NAME || ''
 
 module.exports = {
   dev: {
@@ -63,7 +64,7 @@ module.exports = {
     // (and also with )
     assetsRoot: path.resolve(__dirname, '../dist/build'),
     assetsSubDirectory: '',
-    assetsPublicPath: '/static/',
+    assetsPublicPath: `${_script_name}/static/`,
 
     /**
      * Source Maps

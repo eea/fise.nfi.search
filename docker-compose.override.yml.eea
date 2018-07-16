@@ -37,6 +37,7 @@ services:
     environment:
      - NFI_SEARCH_DOMAIN=demo-forests.eea.europa.eu
      - BACKEND_HOST=demo-forests.eea.europa.eu
+     - SCRIPT_NAME=/nfi_search
     depends_on:
       - postgres
       - tika
@@ -46,6 +47,28 @@ services:
       io.rancher.scheduler.affinity:host_label_ne: reserved=yes
 
   nginx:
+    environment:
+      NGINX_CONF: |-
+        upstream app {
+          ip_hash;
+          server app:${DJANGO_PORT};
+        }
+        server {
+          listen 80;
+          server_name ${NFI_SEARCH_DOMAIN};
+          client_max_body_size 50M;
+          access_log /var/log/nginx/access.log main;
+          location / {
+            uwsgi_pass app;
+            uwsgi_param SCRIPT_NAME /nfi_search;
+            include uwsgi_params;
+          }
+          location ~* \.(jpg|jpeg|png|gif|ico|css|js)$$ {
+            uwsgi_pass app;
+            include uwsgi_params;
+            expires 365d;
+          }
+        }
     labels:
       io.rancher.scheduler.affinity:host_label_ne: reserved=yes
 
