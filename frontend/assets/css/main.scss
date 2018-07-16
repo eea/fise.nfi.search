@@ -1,3 +1,20 @@
-@import '~bootstrap/scss/bootstrap';
-@import '~bootstrap-vue/dist/bootstrap-vue';
+// @import '~bootstrap/scss/bootstrap';
+// @import '~bootstrap-vue/dist/bootstrap-vue';
+
+.filter-group .custom-control-label::before{
+    border-radius: 0!important;
+    background-color: transparent;
+    border: 2px solid #b8b8b8;
+}
+
+.custom-checkbox .custom-control-input:checked ~ .custom-control-label::after {
+    content: "\f00c";
+    background: transparent;
+    background-image: none;
+    font-family: FontAwesome;
+    line-height: 1;
+}
+.custom-checkbox .custom-control-input:checked ~ .custom-control-label::before {
+    background-color: transparent;
+}
 

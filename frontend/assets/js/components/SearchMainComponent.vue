@@ -10,7 +10,7 @@
       </div>
 
       <!-- result section -->
-      <div class="pb-md-3 pl-md-5 bd-content col-md-8 col-xl-8 col-12"> 
+      <div class="pb-md-3 bd-content col-md-8 col-xl-8 col-12"> 
         <div class="container">
           <div class="bd-content">
 
@@ -181,13 +181,15 @@ a {
 
 .bd-sidebar {
   padding-left: 0;
-  display: flex;
 }
 
 .bd-sidebar .jumbotron {
   margin-bottom: 0;
   min-height: 100vh;
   background-color: #e6e6e6;
+  position: sticky;
+    top: 0;
+    border-radius: 0;
 }
 
 </style>

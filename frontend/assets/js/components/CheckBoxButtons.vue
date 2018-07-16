@@ -1,5 +1,5 @@
 <template>
-  <div role="group" class="">
+  <div role="group" class="filter-group">
     <div>
       {{title}}
     </div>
@@ -16,8 +16,11 @@
         v-on:change="handleClicked()"
         lazy
       ></b-form-checkbox>
-      <span>{{dataItem.name}}</span>
-      <span class="badge badge-primary">{{dataItem.number}}</span>
+      <span class="filter-item-name">
+        {{dataItem.name}}
+        <span class="badge badge-primary">{{dataItem.number}}</span>
+      </span>
+
     </label>
   </div>
 </template>
@@ -85,8 +88,21 @@ export default {
   vertical-align: middle;
   flex-wrap: wrap;
 }
-
 .custom-control-inline {
   margin-right: 0;
 }
+.filter-group .badge {
+  background-color: transparent;
+  color: #5c5c5c;
+  position: absolute;
+  left: 100%;
+  top: 0;
+}
+.filter-group .filter-item-name {
+  position: relative;
+}
+.filter-group > label {
+  cursor: pointer;
+}
+
 </style>

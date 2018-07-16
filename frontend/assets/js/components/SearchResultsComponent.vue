@@ -2,18 +2,20 @@
   <div class="search">
     <!-- Search term -->
 
-    <b-input-group class="mt-5 mb-5">
+    <b-input-group class="mt-5 mb-5 slinput">
+      <i class="fa fa-search left-icon"></i>
       <input 
         class="form-control" 
         v-model="searchTerm"
-        v-on:keyup.enter="handleClicked" 
+        v-on:keyup.enter="handleClicked"
         placeholder="Type something"
       >
-      <b-input-group-append>
-        <b-btn variant="primary" 
-          v-on:click="handleClicked"
-        >Search</b-btn>
-      </b-input-group-append>
+        <b-input-group-append>
+          <b-btn variant="primary"
+            v-on:click="handleClicked"
+          >Search</b-btn>
+        </b-input-group-append>
+        <i class="fa fa-close right-icon"></i>
     </b-input-group>
 
     <!-- result count -->
@@ -21,7 +23,7 @@
       <hr>
 
     <!-- search results -->
-    <list-custom 
+    <list-custom
       v-if="results.length > 0"
       :dataList="results"
       v-on:selected-result="handleSelectedResult"
@@ -116,5 +118,40 @@ export default {
 <style scoped>
 .nav-tabs .nav-link {
   border: 0;
+}
+.slinput {
+  position: relative;
+}
+.slinput input {
+  font-size: 1.6rem;
+  padding-left: 4rem;
+}
+.slinput button {
+  position: absolute;
+  right: .5rem;
+  top: 50%;
+  transform: translateY(-50%);
+  min-width: 120px;
+  background-color:#666666;
+  border-color: transparent;
+  z-index: 4;
+}
+.slinput .fa-search {
+  position: absolute;
+  left: 1rem;
+  z-index: 1;
+  top: 50%;
+  transform: translateY(-50%);
+  font-size: 2rem;
+  color:#666666;
+  z-index: 4;
+}
+.slinput .fa-close {
+  position: absolute;
+  right: calc(1.2rem + 120px + 1rem);
+  top:50%;
+  transform:translateY(-50%);
+  color:#666666;
+  z-index: 4;
 }
 </style>

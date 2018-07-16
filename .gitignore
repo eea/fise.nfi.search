@@ -121,3 +121,4 @@ webpack-stats.json
 *.sql
 
 data/gemet
+.DS_Store
