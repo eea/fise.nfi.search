@@ -5,7 +5,7 @@
       :key="data.id"
       href="#"
       target="_self"
-      class="list-group-item flex-column align-items-start list-group-item-action"
+      class="list-group-item-custom flex-column align-items-start list-group-item-action"
       v-on:click="handleClicked($event, data)"
     >
       <div class="d-flex w-100 justify-content-between">
@@ -48,7 +48,7 @@ export default {
     -ms-flex-direction: column !important;
     flex-direction: column !important;
 }
-.list-group-item {
+.list-group-item-custom {
     position: relative;
     display: block;
     padding: 0.75rem 1.25rem;
