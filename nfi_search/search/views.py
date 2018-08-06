@@ -157,6 +157,10 @@ class SearchViewSet(BaseDocumentViewSet):
         'info_level',
         'topic_category',
         'resource_type',
+        'published_year',
+        'data_collection_start_year',
+        'data_collection_end_year',
+        'next_update_year',
     )
 
     filter_fields = {f: f for f in facets}
