@@ -17,7 +17,6 @@ from django_elasticsearch_dsl_drf.filter_backends import (
 from django_elasticsearch_dsl_drf.pagination import PageNumberPagination
 from django_elasticsearch_dsl_drf.viewsets import BaseDocumentViewSet
 
-from elasticsearch_dsl import DateHistogramFacet, RangeFacet, TermsFacet
 
 from .documents import DocumentDoc
 from .backends import NestedFacetedSearchFilterBackend

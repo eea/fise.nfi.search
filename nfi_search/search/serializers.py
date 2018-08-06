@@ -110,6 +110,11 @@ class DocumentDocSerializer(DocumentSerializer):
             'resource_type',
             'info_level',
             'topic_category',
+            'data_collection_start_year',
+            'data_collection_end_year',
+            'published_year',
+            'next_update_year',
+
         )
 
     @staticmethod
