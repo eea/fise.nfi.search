@@ -1,4 +1,3 @@
-from pathlib import Path
 from django.conf import settings
 from django.views import static
 from rest_framework import status
@@ -12,11 +11,13 @@ from django_elasticsearch_dsl_drf.filter_backends import (
     IdsFilterBackend,
     OrderingFilterBackend,
     DefaultOrderingFilterBackend,
-    SearchFilterBackend,
+    CompoundSearchFilterBackend,
     FacetedSearchFilterBackend,
 )
 from django_elasticsearch_dsl_drf.pagination import PageNumberPagination
-from django_elasticsearch_dsl_drf.views import BaseDocumentViewSet
+from django_elasticsearch_dsl_drf.viewsets import BaseDocumentViewSet
+
+from elasticsearch_dsl import DateHistogramFacet, RangeFacet, TermsFacet
 
 from .documents import DocumentDoc
 from .backends import NestedFacetedSearchFilterBackend
@@ -113,7 +114,7 @@ class SearchPageNumberPagination(PageNumberPagination):
     `django_elasticsearch_dsl_drf.PageNumberPagination.get_facets`.
     """
 
-    page_size_query_param = 'page_size'
+    page_size_query_param = "page_size"
 
     def get_facets(self, page=None):
         raw_facets = super().get_facets(page)
@@ -122,7 +123,7 @@ class SearchPageNumberPagination(PageNumberPagination):
             for filter_key, data in raw_facets.items():
                 field = filter_key[8:]  # remove '_filter_' prefix
                 facets[field] = {
-                    b['key']: b['doc_count'] for b in data[field]['buckets']
+                    b["key"]: b["doc_count"] for b in data[field]["buckets"]
                 }
             return facets
 
@@ -131,67 +132,70 @@ class SearchViewSet(BaseDocumentViewSet):
     document = DocumentDoc
     serializer_class = DocumentDocSerializer
     pagination_class = SearchPageNumberPagination
-    lookup_field = 'id'
+    lookup_field = "id"
     filter_backends = [
         FilteringFilterBackend,
         NestedFilteringFilterBackend,
         IdsFilterBackend,
         OrderingFilterBackend,
         DefaultOrderingFilterBackend,
-        SearchFilterBackend,
+        CompoundSearchFilterBackend,
         NestedFacetedSearchFilterBackend,
         FacetedSearchFilterBackend,
     ]
     search_fields = (
-        'title',
-        'description',
+        "title",
+        "description",
         # 'text',
     )
 
     # Facets for DocumentDoc's non-nested fields
     facets = (
-        'country',
-        'data_type',
-        'data_set',
-        'data_source',
-        'info_level',
-        'topic_category',
-        'resource_type',
-        'published_year',
-        'data_collection_start_year',
-        'data_collection_end_year',
-        'next_update_year',
+        "country",
+        "data_type",
+        "data_set",
+        "data_source",
+        "info_level",
+        "topic_category",
+        "resource_type",
+        "published_year",
+        "data_collection_start_year",
+        "data_collection_end_year",
+        "next_update_year",
     )
 
     filter_fields = {f: f for f in facets}
 
     nested_filter_fields = {
-        'keyword': {
-            'field': 'keywords.name',
-            'path': 'keywords'
-        },
-        'nuts_level': {
-            'field': 'nuts_levels.name',
-            'path': 'nuts_levels'
-        }
+        "keyword": {"field": "keywords.name", "path": "keywords"},
+        "nuts_level": {"field": "nuts_levels.name", "path": "nuts_levels"},
     }
 
     # Nested facets are added through the custom `NestedFacetedSearchFilterBackend`
     faceted_search_fields = {
-        field: {'field': field, 'enabled': True} for field in facets
+        field: {
+            "field": field,
+            "enabled": True,
+            "options": {
+                # Dirty hack to force all facet values to show up in results
+                # (setting size=0 does NOT work with aggregations).
+                "size": 1000,
+            }
+        }
+        for field in facets
     }
 
     ordering_fields = {f: f for f in facets}
-    ordering = ('title',)
+    ordering = ("title",)
 
 
 class DocumentViewSet(ReadOnlyModelViewSet):
     serializer_class = DocSerializer
 
     def get_queryset(self):
-        return Document.objects.order_by('id').all()
+        return Document.objects.order_by("id").all()
 
-    @detail_route(methods=['get', 'head'], renderer_classes=(StaticHTMLRenderer,))
+    @detail_route(methods=["get", "head"], renderer_classes=(StaticHTMLRenderer,))
     def download(self, request, pk):
         doc_file = self.get_object().file
         if doc_file is None:
@@ -200,22 +204,19 @@ class DocumentViewSet(ReadOnlyModelViewSet):
         file = doc_file.file
         relpath = file.name
 
-        if relpath is None or relpath == '':
+        if relpath is None or relpath == "":
             return Response(status=status.HTTP_404_NOT_FOUND)
 
         if settings.DEBUG:
             response = static.serve(
-                request,
-                path=relpath,
-                document_root=file.storage.location)
+                request, path=relpath, document_root=file.storage.location
+            )
         else:
             # this does "X-Sendfile" on nginx, see
             # https://www.nginx.com/resources/wiki/start/topics/examples/x-accel/
             response = Response(
-                headers={
-                    'X-Accel-Redirect': file.storage.path(relpath)
-                }
+                headers={"X-Accel-Redirect": file.storage.path(relpath)}
             )
 
-        response['Content-Disposition'] = f'attachment; filename={doc_file.name}'
+        response["Content-Disposition"] = f"attachment; filename={doc_file.name}"
         return response
