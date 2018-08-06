@@ -71,9 +71,6 @@
       </b-modal>
     </div>
 
-    <div v-if="!prestineForm && results.length === 0">
-      No results found
-    </div>
   </div>
 </template>
 

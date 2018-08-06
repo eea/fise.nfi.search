@@ -1,7 +1,7 @@
 <template>
   <div>
     <a
-      v-for="data in dataList"
+      v-for="data in dataList.slice(0, 5)"
       :key="data.id"
       href="#"
       target="_self"

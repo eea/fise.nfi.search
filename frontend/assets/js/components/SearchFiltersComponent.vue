@@ -13,8 +13,39 @@
       ></select-custom>
     </div>
 
+
+    <!-- Select Keywords -->
+    <div v-if="facetsData.keyword">
+      <h4>Keywords</h4>
+      <bar-chart
+        :dataList="facetsData.keyword" 
+        :componentName="'keyword'"
+        v-on:selected-keyword="handleSelectedKeywords"
+      ></bar-chart>
+    </div>
+
+    <!-- Select Nuts Levels -->
+    <div v-if="facetsData.nuts_level">
+      <h4>Nuts Levels</h4>
+      <check-box-buttons
+        :dataList="facetsData.nuts_level" 
+        :componentName="'nutsLevels'"
+        v-on:selected-nutsLevels="handleSelectedNutsLevels"
+      ></check-box-buttons>
+    </div>
+
+    <!-- Select Keywords
+    <div v-if="facetsData.keyword">
+      <h4>Keywords</h4>
+      <check-box-buttons
+        :dataList="facetsData.keyword" 
+        :componentName="'keyword'"
+        v-on:selected-keyword="handleSelectedKeywords"
+      ></check-box-buttons>
+    </div> -->
+    
     <!-- Select Data Sets -->
-     <b-row v-if="showDateSets">
+      <b-row v-if="showDateSets">
       <b-col>
         <check-box-buttons
           :dataList="dataTypes[0].dataSets" 
@@ -22,7 +53,7 @@
           :title="dataTypes[0].name"
           v-on:selected-dataSets-0="handleSelectedDataSetsRaster"
         ></check-box-buttons>
-      </b-col>   
+      </b-col>
 
       <b-col>
         <check-box-buttons
@@ -33,12 +64,22 @@
         ></check-box-buttons>
       </b-col>
     </b-row>
-    
+
+    <!-- Select Topic Category -->
+    <div v-if="facetsData.topic_category">
+      <h4>Topic Category</h4>
+      <check-box-buttons
+        :dataList="facetsData.topic_category" 
+        :componentName="'topicCategory'"
+        v-on:selected-topicCategory="handleSelectedTopicCategory"
+      ></check-box-buttons>
+    </div>
+
     <!-- Select Result Formats -->
-    <div v-if="(resourceTypes != null)">
+    <div v-if="facetsData.resource_type">
       <h4>Result format</h4>
       <check-box-buttons
-        :dataList="resourceTypes" 
+        :dataList="facetsData.resource_type" 
         :componentName="'resourceTypes'"
         v-on:selected-resourceTypes="handleSelectedResourceTypes"
       ></check-box-buttons>
@@ -52,19 +93,33 @@ import {
   fetchCountries,
   fetchDataSets,
   fetchDataTypes,
-  fetchInfoLevels,
   fetchNutsLevels,
   fetchResourceTypes,
+  fetchTopicCategories,
+  fetchKeywords,
   search
 } from '../api';
 import CheckBoxButtons from './CheckBoxButtons';
 import SelectCustom from './SelectCustom';
+import BarChart from './BarChart';
 
 const facets = {
   country: 'country',
   data_set: 'data_set',
   data_type: 'data_type',
   resource_type: 'resource_type',
+  nuts_level: 'nuts_level',
+  topic_category: 'topic_category',
+  year_published: 'year_published',
+  year_collected: 'year_collected',
+  keyword: 'keyword',
+}
+
+const simpleFacets = {
+  resource_type: { name: facets.resource_type, handler: fetchResourceTypes },
+  nuts_level: { name: facets.nuts_level, handler: fetchNutsLevels },
+  topic_category: { name: facets.topic_category, handler: fetchTopicCategories },
+  keyword: { name: facets.keyword, handler: fetchKeywords },
 }
 
 export default {
@@ -72,7 +127,8 @@ export default {
 
   components: {
     'check-box-buttons': CheckBoxButtons,
-    'select-custom': SelectCustom
+    'select-custom': SelectCustom,
+    'bar-chart': BarChart,
   },
 
   props: {
@@ -82,33 +138,90 @@ export default {
   data() {
     return {
       countries: [],
-      resourceTypes: null,
-      dataTypes: {},
+      dataTypes: null,
+      facetsData: {},
       selectedDataSetsSample: [],
       selectedDataSetsRaster: [],
       showDateSets: false,
-      allSets: [],
-      allResourceTypes: [],
       sourceOfUpdate: null,
-      selectedFilterOptions: {
-        country: '',
-        resource_type: [],
-        data_type: [],
-        data_set: []
-      }
+      selectedFilterOptions: {},
     };
   },
 
   created() {
+    this.makeSelectedFilterOptions();
     this.getCountries();
-    this.getResourceType();
+    this.getFacets();
     this.getTypesAndSets();
   },
 
   methods: {
+
+    makeSelectedFilterOptions() {
+      Object.keys(facets).map(key => {
+        if(key === 'country') {
+          this.selectedFilterOptions[key] = '';
+        } else {
+          this.selectedFilterOptions[key] = [];
+        }
+      });
+    },
+
+    getCountries() {
+      fetchCountries()
+        .then(response => {
+          this.countries = response.data;
+        })
+        .catch(error => {
+          console.log(error);
+        });
+    },
+
+    getFacets() {
+      const promises = [];
+      const facetsData = {};
+      
+      Object.keys(simpleFacets).map(key => {
+        const entity = simpleFacets[key];
+        promises.push(this.wrapPromiseGetEntity(entity));
+      });
+      promises.push(this.searchByTerms());
+
+      Promise.all(promises).then(response => {
+        const responseLength = response.length;
+        const entities = response.slice(0, responseLength-1);
+        const facets = response[responseLength-1].data.facets;
+        
+        entities.map(entity => {
+          const entityName = entity.name;
+          const entityData = entity.data;
+          facetsData[entityName] = this.formatSets(
+            facets[entityName],
+            entityData
+          );
+        })
+
+        this.facetsData = JSON.parse(JSON.stringify(facetsData));
+      })
+      .catch(error => {
+        console.log(error);
+      });
+    },
+
+    wrapPromiseGetEntity(entity) {
+      return new Promise((resolve, reject) => {
+        entity.handler()
+          .then(response => {
+            resolve({ data: response.data, name: entity.name });
+          })
+          .catch(error => {
+            reject(error);
+          });
+      });
+    },
     /**
      * will get the dataTypes and set to each one the corresponding dataSets
-     * there isn't a formal contraint on the database regarding which dataSet corresponds to which dataType
+     * there isn't a formal constraint on the database regarding which dataSet corresponds to which dataType
      * there for we will search for each DataType and see which dataSet facets comes back
      */
     getTypesAndSets() {
@@ -125,6 +238,13 @@ export default {
 
         this.assignDataSetsToEachDataType(promisesSearchDataTypes, dataTypes);
       });
+    },
+
+    searchByTerms(termType, term) {
+      const resultTermType = termType || '';
+      const resultTerm = term || '';
+
+      return search(`?${resultTermType}=${resultTerm}`);
     },
 
     /**
@@ -176,44 +296,6 @@ export default {
       });
     },
 
-    getCountries() {
-      fetchCountries()
-        .then(response => {
-          this.countries = response.data;
-        })
-        .catch(error => {
-          console.log(error);
-        });
-    },
-
-    /**
-     * will get all the resource types but it will also make a new object that will contain the code and the number from facets
-     * just like dataSets
-     */
-    getResourceType() {
-      fetchResourceTypes()
-        .then(response => {
-          this.allResourceTypes = response.data;
-
-          this.searchByTerms().then(response => {
-            this.resourceTypes = this.formatSets(
-              response.data.facets.resource_type,
-              this.allResourceTypes
-            );
-          });
-        })
-        .catch(error => {
-          console.log(error);
-        });
-    },
-
-    searchByTerms(termType, term) {
-      const resultTermType = termType || '';
-      const resultTerm = term || '';
-
-      return search(`?${resultTermType}=${resultTerm}`);
-    },
-
     handleSelectedDataSetsRaster(ev) {
       this.selectedDataSetsSample = ev.slice();
       this.handleSelectedDataSets();
@@ -242,6 +324,26 @@ export default {
     handleSelectedCountry(ev) {
       this.selectedFilterOptions.country = ev;
       this.sourceOfUpdate = 'country';
+      this.emitSelectedFilter();
+    },
+
+    handleSelectedNutsLevels(ev) {
+      this.selectedFilterOptions.nuts_level = ev;
+      this.sourceOfUpdate = 'nuts_level';
+      this.emitSelectedFilter();
+    },
+
+    handleSelectedTopicCategory(ev) {
+      console.log(ev)
+      this.selectedFilterOptions.topic_category = ev;
+      this.sourceOfUpdate = 'topic_category';
+      this.emitSelectedFilter();
+    },
+
+    handleSelectedKeywords(ev) {
+      console.log(ev)
+      this.selectedFilterOptions.keywords = ev;
+      this.sourceOfUpdate = 'keywords';
       this.emitSelectedFilter();
     },
 
@@ -294,9 +396,26 @@ export default {
      * - used clones to avoid rendering on each property set
      */
     updateFacetsCount() {
+      Object.keys(simpleFacets).map(key => {
+        const faceName = simpleFacets[key].name;
+
+        if(this.sourceOfUpdate !== faceName) {
+          let entityClone = JSON.parse(JSON.stringify(this.facetsData[faceName]));
+
+          Object.keys(entityClone).map(entityItemName => {
+            const entityItem = this.facetsData[faceName][entityItemName];
+            
+            entityClone[entityItemName] = Object.assign(entityItem, {
+              number: this.facets[faceName][entityItemName] || 0
+            });
+          });
+
+          this.facetsData[faceName] = JSON.parse(JSON.stringify(entityClone));
+        }
+      });
 
       if(this.sourceOfUpdate !== facets.data_type) {
-        const dataTypesClone = JSON.parse(JSON.stringify(this.dataTypes));
+        let dataTypesClone = JSON.parse(JSON.stringify(this.dataTypes));
         dataTypesClone.map(dataType => {
           Object.keys(dataType.dataSets).map(key => {
             dataType.dataSets[key] = Object.assign(dataType.dataSets[key], {
@@ -305,16 +424,6 @@ export default {
           });
         });
         this.dataTypes = JSON.parse(JSON.stringify(dataTypesClone));
-      }
-
-      if(this.sourceOfUpdate !== facets.resource_type) {
-        const resourceTypesClone = JSON.parse(JSON.stringify(this.resourceTypes));
-        Object.keys(resourceTypesClone).map(key => {
-          resourceTypesClone[key] = Object.assign(this.resourceTypes[key], {
-            number: this.facets.resource_type[key] || 0
-          });
-        });
-        this.resourceTypes = JSON.parse(JSON.stringify(resourceTypesClone));
       }
     }
   },
