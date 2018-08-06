@@ -495,6 +495,17 @@ class Document(models.Model):
                         f"ElasticSearch timeout while indexing text for document {self.pk}"
                     )
 
+    @classmethod
+    def collection_range(cls):
+        return (
+            cls.objects.all().aggregate(min=models.Min('data_collection_start_year'))['min'],
+            cls.objects.all().aggregate(max=models.Max('data_collection_end_year'))['max']
+        )
+
+    @classmethod
+    def publication_years(cls):
+        return set(cls.objects.values_list('published_year', flat=True).order_by('published_year'))
+
 
 class FileStorage(FileSystemStorage):
     def __init__(self):

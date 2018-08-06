@@ -1,7 +1,8 @@
 from django.conf import settings
 from django.views import static
 from rest_framework import status
-from rest_framework.viewsets import ReadOnlyModelViewSet
+from rest_framework import views
+from rest_framework.viewsets import ReadOnlyModelViewSet, ViewSet
 from rest_framework.decorators import detail_route
 from rest_framework.renderers import StaticHTMLRenderer
 from rest_framework.response import Response
@@ -178,8 +179,8 @@ class SearchViewSet(BaseDocumentViewSet):
             "options": {
                 # Dirty hack to force all facet values to show up in results
                 # (setting size=0 does NOT work with aggregations).
-                "size": 1000,
-            }
+                "size": 1000
+            },
         }
         for field in facets
     }
@@ -219,3 +220,14 @@ class DocumentViewSet(ReadOnlyModelViewSet):
 
         response["Content-Disposition"] = f"attachment; filename={doc_file.name}"
         return response
+
+
+class CollectionYearsRangeViewSet(ViewSet):
+    def list(self, request, *args, **kwargs):
+        earliest, latest = Document.collection_range()
+        return Response({"min": earliest, "max": latest})
+
+
+class PublicationYearsViewSet(ViewSet):
+    def list(self, request, *args, **kwargs):
+        return Response(list(Document.publication_years()))
