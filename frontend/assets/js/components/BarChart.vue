@@ -3,12 +3,11 @@
     <svg class="line-graph"></svg>
     <div v-if="dataset.labels">
       <range-slider
-          :dataList="dataset.labels" 
-          :componentName="'keyword-label'"
-          v-on:selected-keyword-label="handleSelectedLabelKeywords"
+        :dataList="dataset.labels" 
+        :componentName="'year-published'"
+        v-on:selected-year-published="handleSelectedYearPublished"
       ></range-slider>      
     </div>
-
 </div>
 </template>
 
@@ -125,8 +124,6 @@ export default {
           .on("click", function handleClicked(params) {
             let x = d3.event.x;
             let y = d3.event.y;
-            console.log("x", x);
-            console.log("clicked y", y);
           })
           .transition()
           .duration(duration)
@@ -181,23 +178,17 @@ export default {
     handleClicked() {
     },
 
-    handleSelectedLabelKeywords(ev) {
-      for (let i = ev[0]; i <= ev[1]; i++) {
-        const elementCode = this.dataset.codes[i];
-        const element = this.myDataList[elementCode];
+    handleSelectedYearPublished(ev) {
+      this.mySelectedList = [];
 
-        this.mySelectedList.push(element);
-      }
+      const firstElementCode = this.dataset.codes[ev[0]];
+      const firstElement = this.myDataList[firstElementCode];
+      const secondElementCode = this.dataset.codes[ev[1]];
+      const secondElement = this.myDataList[secondElementCode];
 
+      this.mySelectedList.push(firstElement);
+      this.mySelectedList.push(secondElement);
       this.emitSelected();
-
-      // const firstElementCode = this.dataset.codes[ev[0]];
-      // const firstElement = this.myDataList[firstElementCode];
-      // const secondElementCode = this.dataset.codes[ev[1]];
-      // const secondElement = this.myDataList[secondElementCode];
-
-      // this.mySelectedList.push(firstElement);
-      // this.mySelectedList.push(secondElement);
     },
 
     emitSelected() {

@@ -97,3 +97,4 @@ docker/*.env
 
 data/gemet
 .DS_Store
+.vscode/

@@ -14,14 +14,24 @@
     </div>
 
 
-    <!-- Select Keywords -->
-    <div v-if="facetsData.keyword">
-      <h4>Keywords</h4>
+    <!-- Select Published Year -->
+    <div v-if="facetsData.published_year">
+      <h4>Published Year</h4>
       <bar-chart
-        :dataList="facetsData.keyword" 
-        :componentName="'keyword'"
-        v-on:selected-keyword="handleSelectedKeywords"
+        :dataList="facetsData.published_year" 
+        :componentName="'published-year'"
+        v-on:selected-published-year="handleSelectedPublishedYear"
       ></bar-chart>
+    </div>
+
+    <!-- Select Collection Years -->
+    <div v-if="collectionsRange">
+      <h4>Collection Years</h4>
+      <collection-years
+        :dataList="collectionsRange"
+        :componentName="'collections-range'"
+        v-on:selected-collections-range="handleSelectedCollectionYears"
+      ></collection-years>
     </div>
 
     <!-- Select Nuts Levels -->
@@ -33,16 +43,6 @@
         v-on:selected-nutsLevels="handleSelectedNutsLevels"
       ></check-box-buttons>
     </div>
-
-    <!-- Select Keywords
-    <div v-if="facetsData.keyword">
-      <h4>Keywords</h4>
-      <check-box-buttons
-        :dataList="facetsData.keyword" 
-        :componentName="'keyword'"
-        v-on:selected-keyword="handleSelectedKeywords"
-      ></check-box-buttons>
-    </div> -->
     
     <!-- Select Data Sets -->
       <b-row v-if="showDateSets">
@@ -97,11 +97,14 @@ import {
   fetchResourceTypes,
   fetchTopicCategories,
   fetchKeywords,
+  fetchPublicationYears,
+  fetchCollectionsRange,
   search
 } from '../api';
 import CheckBoxButtons from './CheckBoxButtons';
 import SelectCustom from './SelectCustom';
 import BarChart from './BarChart';
+import CollectionYearsComponent from './CollectionYearsComponent';
 
 const facets = {
   country: 'country',
@@ -110,16 +113,21 @@ const facets = {
   resource_type: 'resource_type',
   nuts_level: 'nuts_level',
   topic_category: 'topic_category',
-  year_published: 'year_published',
-  year_collected: 'year_collected',
+  published_year: 'published_year',
+  published_year_range: 'published_year__range',
+  collections_range: 'collections_range',
+  data_collection_end_year: 'data_collection_end_year',
+  data_collection_start_year: 'data_collection_start_year',
+  data_collection_start_year__lte: 'data_collection_start_year__lte',
+  data_collection_end_year__gte: 'data_collection_end_year__gte',
   keyword: 'keyword',
 }
 
 const simpleFacets = {
-  resource_type: { name: facets.resource_type, handler: fetchResourceTypes },
-  nuts_level: { name: facets.nuts_level, handler: fetchNutsLevels },
-  topic_category: { name: facets.topic_category, handler: fetchTopicCategories },
-  keyword: { name: facets.keyword, handler: fetchKeywords },
+  resource_type: { name: facets.resource_type, getFunction: fetchResourceTypes },
+  nuts_level: { name: facets.nuts_level, getFunction: fetchNutsLevels },
+  topic_category: { name: facets.topic_category, getFunction: fetchTopicCategories },
+  published_year: { name: facets.published_year, getFunction: fetchPublicationYears },
 }
 
 export default {
@@ -129,6 +137,7 @@ export default {
     'check-box-buttons': CheckBoxButtons,
     'select-custom': SelectCustom,
     'bar-chart': BarChart,
+    'collection-years': CollectionYearsComponent,
   },
 
   props: {
@@ -142,6 +151,7 @@ export default {
       facetsData: {},
       selectedDataSetsSample: [],
       selectedDataSetsRaster: [],
+      collectionsRange: null,
       showDateSets: false,
       sourceOfUpdate: null,
       selectedFilterOptions: {},
@@ -150,6 +160,7 @@ export default {
 
   created() {
     this.makeSelectedFilterOptions();
+    this.getCollectionsRange();
     this.getCountries();
     this.getFacets();
     this.getTypesAndSets();
@@ -177,6 +188,16 @@ export default {
         });
     },
 
+    getCollectionsRange() {
+      fetchCollectionsRange()
+        .then(response => {
+          this.collectionsRange = response.data;
+        })
+        .catch(error => {
+          console.log(error);
+        });
+    },
+
     getFacets() {
       const promises = [];
       const facetsData = {};
@@ -195,6 +216,7 @@ export default {
         entities.map(entity => {
           const entityName = entity.name;
           const entityData = entity.data;
+          
           facetsData[entityName] = this.formatSets(
             facets[entityName],
             entityData
@@ -210,7 +232,7 @@ export default {
 
     wrapPromiseGetEntity(entity) {
       return new Promise((resolve, reject) => {
-        entity.handler()
+        entity.getFunction()
           .then(response => {
             resolve({ data: response.data, name: entity.name });
           })
@@ -219,6 +241,47 @@ export default {
           });
       });
     },
+
+    /**
+     * @param {Object} usefulSets - object that contains a key and a count
+     * @param {number} usefulSets["corine land cover"] - ex: count for corine land cover
+     * @param {Object[]} allSets - array that contains facets with name and id
+     * @param {Object} allSets[] - facets with name and id
+     * @param {string} allSets[].name
+     * @param {number} allSets[].id
+     * @returns {Object} result - formated object with number, id and name
+     * @returns {Object} result["corine land cover"] - facet
+     * @returns {number} result["corine land cover"].id
+     * @returns {string} result["corine land cover"].name
+     * @returns {number} result["corine land cover"].number - count
+     */
+    formatSets(usefulSets, allSets) {
+      let tempKeys = {};
+      let result = {};
+
+      Object.keys(usefulSets).map(key => {
+        const formatedKey = key.toLowerCase().replace(/[^A-Z0-9]+/gi, '');
+        tempKeys[formatedKey] = key;
+      });
+
+      allSets.map(dataset => {
+        const datsetName = dataset.name || dataset + '';
+        const tempDataName = datsetName
+          .toLowerCase()
+          .replace(/[^A-Z0-9]+/gi, '');
+        const facetKey = tempKeys[tempDataName];
+
+        if (facetKey) {
+          result[facetKey] = {};
+          result[facetKey].id = dataset.id ? dataset.id : new Date().getTime();
+          result[facetKey].name = dataset.name ? dataset.name : dataset;
+          result[facetKey].number = usefulSets[facetKey];
+        }
+      });
+
+      return result;
+    },
+
     /**
      * will get the dataTypes and set to each one the corresponding dataSets
      * there isn't a formal constraint on the database regarding which dataSet corresponds to which dataType
@@ -312,80 +375,108 @@ export default {
         ...this.selectedDataSetsRaster
       ];
       this.sourceOfUpdate = facets.data_type;
-      this.emitSelectedFilter();
+
+      let searchQuery = this.makeSearchQuery();
+      this.emitSelectedFilter(searchQuery);
     },
 
     handleSelectedResourceTypes(ev) {
       this.selectedFilterOptions.resource_type = ev.slice();
       this.sourceOfUpdate = facets.resource_type;
-      this.emitSelectedFilter();
+      let searchQuery = this.makeSearchQuery();
+      this.emitSelectedFilter(searchQuery);
     },
 
     handleSelectedCountry(ev) {
-      this.selectedFilterOptions.country = ev;
-      this.sourceOfUpdate = 'country';
-      this.emitSelectedFilter();
+      this.selectedFilterOptions.country = ev.slice();
+      this.sourceOfUpdate = facets.country;
+      let searchQuery = this.makeSearchQuery();
+      this.emitSelectedFilter(searchQuery);
     },
 
     handleSelectedNutsLevels(ev) {
-      this.selectedFilterOptions.nuts_level = ev;
-      this.sourceOfUpdate = 'nuts_level';
-      this.emitSelectedFilter();
+      this.selectedFilterOptions.nuts_level = ev.slice();
+      this.sourceOfUpdate = facets.nuts_level;
+      let searchQuery = this.makeSearchQuery();
+      this.emitSelectedFilter(searchQuery);
     },
 
     handleSelectedTopicCategory(ev) {
-      console.log(ev)
-      this.selectedFilterOptions.topic_category = ev;
-      this.sourceOfUpdate = 'topic_category';
-      this.emitSelectedFilter();
+      this.selectedFilterOptions.topic_category = ev.slice();
+      this.sourceOfUpdate = facets.topic_category;
+      let searchQuery = this.makeSearchQuery();
+      this.emitSelectedFilter(searchQuery);
     },
 
-    handleSelectedKeywords(ev) {
-      console.log(ev)
-      this.selectedFilterOptions.keywords = ev;
-      this.sourceOfUpdate = 'keywords';
-      this.emitSelectedFilter();
+    handleSelectedPublishedYear(ev) {
+      this.selectedFilterOptions.published_year = ev.slice();
+      this.sourceOfUpdate = facets.published_year;
+      let searchQuery = this.makeSearchQuery();
+      this.emitSelectedFilter(searchQuery);
     },
 
-    emitSelectedFilter() {
-      this.$emit('updated-filters', this.selectedFilterOptions);
+    handleSelectedCollectionYears(ev) {
+      this.selectedFilterOptions.collections_range = ev.slice();
+      this.sourceOfUpdate = facets.collections_range;
+      let searchQuery = this.makeSearchQuery();
+      this.emitSelectedFilter(searchQuery);
     },
 
-    /**
-     * @param {Object} usefulSets - object that contains a key and a count
-     * @param {number} usefulSets["corine land cover"] - ex: count for corine land cover
-     * @param {Object[]} allSets - array that contains facets with name and id
-     * @param {Object} allSets[] - facets with name and id
-     * @param {string} allSets[].name
-     * @param {number} allSets[].id
-     * @returns {Object} result - formated object with number, id and name
-     * @returns {Object} result["corine land cover"] - facet
-     * @returns {number} result["corine land cover"].id
-     * @returns {string} result["corine land cover"].name
-     * @returns {number} result["corine land cover"].number - count
-     */
-    formatSets(usefulSets, allSets) {
-      let tempKeys = {};
-      let result = {};
+    makePublishedYearSearchQuery(listOfYears) {
+      if(listOfYears.length === 0) return '';
 
-      Object.keys(usefulSets).map(key => {
-        const formatedKey = key.toLowerCase().replace(/[^A-Z0-9]+/gi, '');
-        tempKeys[formatedKey] = key;
-      });
+      let min = listOfYears[0].name < listOfYears[1].name ? listOfYears[0].name : listOfYears[1].name;
+      let max = listOfYears[0].name > listOfYears[1].name ? listOfYears[0].name : listOfYears[1].name;
+      let searchQuery = '';
 
-      allSets.map(dataset => {
-        const tempDataName = dataset.name
-          .toLowerCase()
-          .replace(/[^A-Z0-9]+/gi, '');
-        const facetKey = tempKeys[tempDataName];
+      searchQuery += `${facets.published_year_range}=${min}__${max}&`;
 
-        if (facetKey) {
-          result[facetKey] = dataset;
-          result[facetKey].number = usefulSets[facetKey];
+      return searchQuery;
+    },
+
+    makeCollectionsRangeSearchQuery(listOfYears) {
+      if(listOfYears.length === 0) return '';
+
+      let min = listOfYears[0] < listOfYears[1] ? listOfYears[0] : listOfYears[1];
+      let max = listOfYears[0] > listOfYears[1] ? listOfYears[0] : listOfYears[1];
+      let searchQuery = '';
+
+      searchQuery += `${facets.data_collection_start_year__lte}=${max}&${facets.data_collection_end_year__gte}=${min}&`;
+
+      return searchQuery;
+    },
+
+    makeSearchQuery() {
+      let searchQuery = '';
+
+      Object.keys(this.selectedFilterOptions).map(key => {
+        switch (key)
+        {
+          case facets.published_year:
+            searchQuery += this.makePublishedYearSearchQuery(this.selectedFilterOptions[key]);
+            break;
+          case facets.collections_range:
+            searchQuery += this.makeCollectionsRangeSearchQuery(this.selectedFilterOptions[key]);
+            break;
+          default:
+            const filter = this.selectedFilterOptions[key];
+
+            if(Array.isArray(filter)) { // for all the checkboxes
+              for (let i = 0; i < filter.length; i++) {
+                const element = filter[i];
+                searchQuery += `${key}=${element.name}&`;
+              }
+            } else if (filter) { // for the country, which can only be one, there for it's not array
+              searchQuery += `${key}=${filter.name}&`;
+            }               
         }
       });
 
-      return result;
+      return searchQuery;
+    },
+
+    emitSelectedFilter(searchQuery) {
+      this.$emit('updated-filters', searchQuery);
     },
 
     /**

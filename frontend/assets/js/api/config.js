@@ -20,33 +20,38 @@ api.defaults.xsrfHeaderName = "X-CSRFTOKEN";
 api.defaults.xsrfCookieName = "csrftoken";
 
 function fetchFacets(path) {
-  logRequests && console.log(`fetching ${path}...`);
+  // logRequests && console.log(`fetching ${path}...`);
   return api.get('facets/' + path);
 }
 
 function fetchSearch(path) {
-  logRequests && console.log(`fetching ${path}...`);
+  // logRequests && console.log(`fetching ${path}...`);
   return api.get('search/' + path);
 }
 
+function fetch(path) {
+  // logRequests && console.log(`fetching ${path}...`);
+  return api.get(path);
+}
+
 function post(path, data) {
-  logRequests && console.log(`posting ${path} with data ${data}...`);
+  // logRequests && console.log(`posting ${path} with data ${data}...`);
   return api.post(path, data);
 }
 
 function update(path, data) {
-  logRequests && console.log(`patching ${path} with data ${data}...`);
+  // logRequests && console.log(`patching ${path} with data ${data}...`);
   return api.patch(path, data);
 }
 
 function remove(path) {
-  logRequests && console.log(`removig ${path} ...`);
+  // logRequests && console.log(`removig ${path} ...`);
   return api.delete(path);
 }
 
 function searchFullUrl(path) {
-  logRequests && console.log(`fetching ${path} ...`);
+  // logRequests && console.log(`fetching ${path} ...`);
   return axios.get(path);
 }
 
-export { api, fetchFacets, fetchSearch, searchFullUrl, post, update, remove };
+export { fetch, fetchFacets, fetchSearch, searchFullUrl, post, update, remove };

@@ -1,5 +1,5 @@
 /* eslint-disable */
-import { fetchFacets, fetchSearch } from './config';
+import { fetchFacets, fetchSearch, fetch } from './config';
 
 export function fetchCountries() {
   return fetchFacets('country/');
@@ -71,6 +71,14 @@ export function fetchTopicCategories() {
 
 export function fetchTopicCategory(id) {
   return fetchFacets(`topic-category/${id}/`);
+}
+
+export function fetchCollectionsRange() {
+  return fetch(`collections_range/`);
+}
+
+export function fetchPublicationYears() {
+  return fetch(`publication_years/`);
 }
 
 export function search(term) {
