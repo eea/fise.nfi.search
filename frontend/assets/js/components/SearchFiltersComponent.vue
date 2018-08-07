@@ -5,13 +5,21 @@
     <!-- Select Country -->
     <h4>Country and region</h4>
     <div v-if="countries.length > 0">
+      <country-component
+        :dataList="countries"
+        :componentName="'country'"
+        :message="'Select country'"
+        v-on:selected-country="handleSelectedCountry"
+      ></country-component>
+    </div>
+    <!-- <div v-if="countries.length > 0">
       <select-custom
         :dataList="countries"
         :componentName="'country'"
         :message="'Select country'"
         v-on:selected-country="handleSelectedCountry"
       ></select-custom>
-    </div>
+    </div> -->
 
 
     <!-- Select Published Year -->
@@ -102,9 +110,9 @@ import {
   search
 } from '../api';
 import CheckBoxButtons from './CheckBoxButtons';
-import SelectCustom from './SelectCustom';
 import BarChart from './BarChart';
 import CollectionYearsComponent from './CollectionYearsComponent';
+import CountryComponent from './CountryComponent';
 
 const facets = {
   country: 'country',
@@ -135,9 +143,9 @@ export default {
 
   components: {
     'check-box-buttons': CheckBoxButtons,
-    'select-custom': SelectCustom,
     'bar-chart': BarChart,
     'collection-years': CollectionYearsComponent,
+    'country-component': CountryComponent,
   },
 
   props: {
@@ -389,7 +397,7 @@ export default {
     },
 
     handleSelectedCountry(ev) {
-      this.selectedFilterOptions.country = ev;
+      this.selectedFilterOptions.country = ev.slice();
       this.sourceOfUpdate = facets.country;
       let searchQuery = this.makeSearchQuery();
       this.emitSelectedFilter(searchQuery);
@@ -477,6 +485,7 @@ export default {
     },
 
     emitSelectedFilter(searchQuery) {
+      // console.log('SEARCH QUERY',  searchQuery)
       this.$emit('updated-filters', searchQuery);
     },
 
@@ -522,7 +531,6 @@ export default {
 
   watch: {
     updateSource: function(val) {
-      console.log('watch update source', val)
       if(val === 'searchTerm') {
         this.sourceOfUpdate = null;
       }
