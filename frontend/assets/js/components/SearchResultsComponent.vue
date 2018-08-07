@@ -27,8 +27,8 @@
 
     <!-- search results -->
     <list-custom
-      v-if="results.length > 0"
-      :dataList="results"
+      v-if="myDataList.length > 0"
+      :dataList="myDataList"
       v-on:selected-result="handleSelectedResult"
       v-b-modal.modal1
     ></list-custom>
@@ -96,7 +96,12 @@ export default {
       prestineForm: true,
       selectedResult: null,
       modalShow: false,
+      myDataList: JSON.parse(JSON.stringify(this.results)),
     };
+  },
+
+  created() {
+    console.log('this.myDataList', this.myDataList)
   },
 
   methods: {
@@ -113,8 +118,15 @@ export default {
     },
 
     removeSearchTerm() {
-      this.searchTerm = null;
+      this.searchTerm = '';
+      this.$emit("updated-search-term", this.searchTerm);
     },
+  },
+
+  watch: {
+    results: function(val) {
+      this.myDataList = JSON.parse(JSON.stringify(val));
+    }
   }
 };
 </script>

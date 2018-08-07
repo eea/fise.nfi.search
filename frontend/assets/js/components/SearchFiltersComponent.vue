@@ -141,7 +141,8 @@ export default {
   },
 
   props: {
-    facets: {}
+    facets: {},
+    updateSource: ''
   },
 
   data() {
@@ -520,7 +521,11 @@ export default {
   },
 
   watch: {
-    facets: function(val) {
+    updateSource: function(val) {
+      console.log('watch update source', val)
+      if(val === 'searchTerm') {
+        this.sourceOfUpdate = null;
+      }
       this.updateFacetsCount();
     }
   }

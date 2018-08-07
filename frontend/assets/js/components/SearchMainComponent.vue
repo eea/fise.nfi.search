@@ -5,6 +5,7 @@
       <div class="bd-sidebar col-md-4 col-xl-4 col-12">
         <search-filters 
           v-on:updated-filters="handleUpdatedFilter"
+          :updateSource="updateSource"
           :facets="facets"
         ></search-filters>
       </div>
@@ -73,6 +74,7 @@ export default {
       next: '',
       previous: '',
       searchQuery: '',
+      updateSource: '',
     };
   },
 
@@ -84,7 +86,18 @@ export default {
     handleUpdatedFilter(searchQuery) {
       this.searchToUpdateFacets(searchQuery)
         .then((response) => {
-          this.facets = response.data.facets;
+          if(!this.searchTerm) {
+            this.facets = response.data.facets;
+          } else {
+            this.facets = response.data.facets;
+            this.results = response.data.results;
+            this.count = response.data.count;
+            this.next = response.data.next;
+            this.previous = response.data.previous;
+          }
+          this.updateSource = 'facet';
+          console.log('this.updateSource', this.updateSource);
+
         })
         .catch((error) => {
           console.log(error);
@@ -95,15 +108,19 @@ export default {
      * this will issue the search and update both the facets and the results
      * it is called by the result component by pressing the search button
      */
-    handleUpdatedSearchTerm(searchQuery) {
+    handleUpdatedSearchTerm(val) {
       this.searchTerm = val;
-      this.searchToUpdateFacets(searchQuery)
+
+      this.searchToUpdateFacets()
         .then((response) => {
           this.results = response.data.results;
           this.count = response.data.count;
           this.facets = response.data.facets;
           this.next = response.data.next;
           this.previous = response.data.previous;
+          this.updateSource = 'searchTerm';
+          console.log('this.updateSource', this.updateSource);
+
         })
         .catch((error) => {
           console.log(error);
@@ -116,9 +133,9 @@ export default {
      */
     searchToUpdateFacets(searchQuery) {
       let resultSearchQuery = this.searchTerm ? `?search=${this.searchTerm}&` : '?';
-      resultSearchQuery += searchQuery;
+      resultSearchQuery += searchQuery || this.searchQuery;
 
-      this.searchQuery = resultSearchQuery;
+      this.searchQuery = searchQuery || this.searchQuery;
       return search(resultSearchQuery);
     },
 
