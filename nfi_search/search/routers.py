@@ -11,6 +11,8 @@ from .views import (
     LanguageViewSet,
     SearchViewSet,
     DocumentViewSet,
+    CollectionYearsRangeViewSet,
+    PublicationYearsViewSet,
 )
 
 
@@ -35,9 +37,16 @@ docs_router.register(
 search_router = routers.SimpleRouter()
 search_router.register('search', SearchViewSet, base_name='search')
 
+collections_range = routers.SimpleRouter()
+collections_range.register('collections_range', CollectionYearsRangeViewSet, base_name='collections_range')
+
+publication_years = routers.SimpleRouter()
+publication_years.register('publication_years', PublicationYearsViewSet, base_name='publication_years')
 
 main_routers = (
     facets_router,
     docs_router,
     search_router,
+    collections_range,
+    publication_years,
 )
