@@ -388,7 +388,7 @@ export default {
     },
 
     handleSelectedCountry(ev) {
-      this.selectedFilterOptions.country = ev.slice();
+      this.selectedFilterOptions.country = ev;
       this.sourceOfUpdate = facets.country;
       let searchQuery = this.makeSearchQuery();
       this.emitSelectedFilter(searchQuery);
