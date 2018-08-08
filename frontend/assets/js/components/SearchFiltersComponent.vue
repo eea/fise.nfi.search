@@ -13,9 +13,19 @@
       ></country-component>
     </div>
 
+    <!-- Select Nuts Levels -->
+    <div v-if="facetsData.nuts_level" class="nuts">
+      <h4>NUTS levels</h4>
+      <check-box-buttons
+        :dataList="facetsData.nuts_level" 
+        :componentName="'nutsLevels'"
+        v-on:selected-nutsLevels="handleSelectedNutsLevels"
+      ></check-box-buttons>
+    </div>
+    
     <!-- Select Published Year -->
     <div v-if="facetsData.published_year">
-      <h4>Published Year</h4>
+      <h4>Published year</h4>
       <published-years
         :dataList="facetsData.published_year" 
         :componentName="'published-year'"
@@ -25,7 +35,7 @@
 
     <!-- Select Collection Years -->
     <div v-if="collectionsRange">
-      <h4>Collection Years</h4>
+      <h4>Collection years</h4>
       <collection-years
         :dataList="collectionsRange"
         :componentName="'collections-range'"
@@ -33,16 +43,6 @@
       ></collection-years>
     </div>
 
-    <!-- Select Nuts Levels -->
-    <div v-if="facetsData.nuts_level">
-      <h4>Nuts Levels</h4>
-      <check-box-buttons
-        :dataList="facetsData.nuts_level" 
-        :componentName="'nutsLevels'"
-        v-on:selected-nutsLevels="handleSelectedNutsLevels"
-      ></check-box-buttons>
-    </div>
-    
     <!-- Select Data Sets -->
       <b-row v-if="showDateSets">
       <b-col>
@@ -66,7 +66,7 @@
 
     <!-- Select Topic Category -->
     <div v-if="facetsData.topic_category">
-      <h4>Topic Category</h4>
+      <h4>Topic category</h4>
       <check-box-buttons
         :dataList="facetsData.topic_category" 
         :componentName="'topicCategory'"
@@ -537,8 +537,24 @@ export default {
 };
 </script>
 
-<style>
+<style lang="scss">
 .custom-select {
   background-color: transparent !important;
+}
+.nuts {
+  label {
+    display: inline-flex!important;
+    margin-right: 2rem;
+    .custom-control {
+      max-width: 0px;
+    }
+  }
+}
+
+.bd-sidebar {
+  height: 100vh;
+    overflow: auto;
+    position: sticky;
+    top: 0;
 }
 </style>
