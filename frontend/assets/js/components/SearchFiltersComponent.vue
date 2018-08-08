@@ -12,24 +12,15 @@
         v-on:selected-country="handleSelectedCountry"
       ></country-component>
     </div>
-    <!-- <div v-if="countries.length > 0">
-      <select-custom
-        :dataList="countries"
-        :componentName="'country'"
-        :message="'Select country'"
-        v-on:selected-country="handleSelectedCountry"
-      ></select-custom>
-    </div> -->
-
 
     <!-- Select Published Year -->
     <div v-if="facetsData.published_year">
       <h4>Published Year</h4>
-      <bar-chart
+      <published-years
         :dataList="facetsData.published_year" 
         :componentName="'published-year'"
         v-on:selected-published-year="handleSelectedPublishedYear"
-      ></bar-chart>
+      ></published-years>
     </div>
 
     <!-- Select Collection Years -->
@@ -110,7 +101,7 @@ import {
   search
 } from '../api';
 import CheckBoxButtons from './CheckBoxButtons';
-import BarChart from './BarChart';
+import PublishedYearsComponent from './PublishedYearsComponent';
 import CollectionYearsComponent from './CollectionYearsComponent';
 import CountryComponent from './CountryComponent';
 
@@ -143,7 +134,7 @@ export default {
 
   components: {
     'check-box-buttons': CheckBoxButtons,
-    'bar-chart': BarChart,
+    'published-years': PublishedYearsComponent,
     'collection-years': CollectionYearsComponent,
     'country-component': CountryComponent,
   },

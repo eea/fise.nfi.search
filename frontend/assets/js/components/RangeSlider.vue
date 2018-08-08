@@ -1,13 +1,13 @@
 <template>
   <section data-title="Range + Custom Data" id="demo4">
     <div
-      @mouseup="getIndex"
       class="range-slider"
     >
       <vue-slider 
         ref="slider4"
         v-bind="demo.demo4"
         v-model="demo.demo4.value"
+        @drag-end="getIndex"
       ></vue-slider>
     </div>
   </section>
@@ -63,8 +63,17 @@ export default {
     getIndex() {
       let slider = this.$refs["slider4"];
       setTimeout(() => {
+                const indexes = slider.getIndex();
+        let result = [];
+
         console.log("getIndex ", slider.getIndex());
-        this.$emit("selected-" + this.componentName, slider.getIndex());
+        console.log("indexes[1] ", indexes[1]);
+        console.log("this.dataList.length-1 ", this.dataList.length-1);
+        if((indexes[0] !== 0) || (indexes[1] !== this.dataList.length -1)) {
+          result = indexes.slice();
+        }
+        console.log("result ", result);
+        this.$emit("selected-" + this.componentName, result);
       });
     }
   }

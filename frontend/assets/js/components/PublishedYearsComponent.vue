@@ -17,7 +17,7 @@ import RangeSlider from './RangeSlider';
 
 
 export default {
-  name: "BarChart",
+  name: "PublishedYearsComponent",
 
   components: {
     'range-slider': RangeSlider,
@@ -181,13 +181,16 @@ export default {
     handleSelectedYearPublished(ev) {
       this.mySelectedList = [];
 
-      const firstElementCode = this.dataset.codes[ev[0]];
-      const firstElement = this.myDataList[firstElementCode];
-      const secondElementCode = this.dataset.codes[ev[1]];
-      const secondElement = this.myDataList[secondElementCode];
+      if(ev.length === 2) {
+        const firstElementCode = this.dataset.codes[ev[0]];
+        const firstElement = this.myDataList[firstElementCode];
+        const secondElementCode = this.dataset.codes[ev[1]];
+        const secondElement = this.myDataList[secondElementCode];
 
-      this.mySelectedList.push(firstElement);
-      this.mySelectedList.push(secondElement);
+        this.mySelectedList.push(firstElement);
+        this.mySelectedList.push(secondElement);        
+      }
+
       this.emitSelected();
     },
 

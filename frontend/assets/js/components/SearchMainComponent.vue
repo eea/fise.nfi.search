@@ -75,6 +75,7 @@ export default {
       previous: '',
       searchQuery: '',
       updateSource: '',
+      justStarted: true,
     };
   },
 
@@ -90,7 +91,7 @@ export default {
 
       search(resultSearchQuery)
         .then((response) => {
-          if(!this.searchTerm) {
+          if(this.justStarted) {
             this.facets = response.data.facets;
           } else {
             this.facets = response.data.facets;
@@ -101,7 +102,6 @@ export default {
           }
           this.updateSource = 'facet';
           console.log('this.updateSource', this.updateSource);
-
         })
         .catch((error) => {
           console.log(error);
@@ -116,6 +116,7 @@ export default {
       this.searchTerm = val;
       let resultSearchQuery = this.searchTerm ? `?search=${this.searchTerm}&` : '?';
       resultSearchQuery += this.searchQuery;
+      this.justStarted = false;
 
       search(resultSearchQuery)
         .then((response) => {
@@ -132,18 +133,6 @@ export default {
           console.log(error);
         });
     },
-
-    /**
-     * this will make a search request to the api based on the combined properties of the facets and search term
-     * @returns promise
-     */
-    // searchToUpdateFacets(searchQuery) {
-    //   let resultSearchQuery = this.searchTerm ? `?search=${this.searchTerm}&` : '?';
-    //   resultSearchQuery += searchQuery || this.searchQuery;
-
-    //   this.searchQuery = searchQuery || this.searchQuery;
-    //   return search(resultSearchQuery);
-    // },
 
     /**
      * the server return the full url path for next and prev, we will use it as is
