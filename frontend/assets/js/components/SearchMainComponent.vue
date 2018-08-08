@@ -84,7 +84,11 @@ export default {
      * it is called by the filter component (facets)
      */
     handleUpdatedFilter(searchQuery) {
-      this.searchToUpdateFacets(searchQuery)
+      let resultSearchQuery = this.searchTerm ? `?search=${this.searchTerm}&` : '?';
+      resultSearchQuery += searchQuery;
+      this.searchQuery = searchQuery;
+
+      search(resultSearchQuery)
         .then((response) => {
           if(!this.searchTerm) {
             this.facets = response.data.facets;
@@ -110,8 +114,10 @@ export default {
      */
     handleUpdatedSearchTerm(val) {
       this.searchTerm = val;
+      let resultSearchQuery = this.searchTerm ? `?search=${this.searchTerm}&` : '?';
+      resultSearchQuery += this.searchQuery;
 
-      this.searchToUpdateFacets()
+      search(resultSearchQuery)
         .then((response) => {
           this.results = response.data.results;
           this.count = response.data.count;
@@ -131,13 +137,13 @@ export default {
      * this will make a search request to the api based on the combined properties of the facets and search term
      * @returns promise
      */
-    searchToUpdateFacets(searchQuery) {
-      let resultSearchQuery = this.searchTerm ? `?search=${this.searchTerm}&` : '?';
-      resultSearchQuery += searchQuery || this.searchQuery;
+    // searchToUpdateFacets(searchQuery) {
+    //   let resultSearchQuery = this.searchTerm ? `?search=${this.searchTerm}&` : '?';
+    //   resultSearchQuery += searchQuery || this.searchQuery;
 
-      this.searchQuery = searchQuery || this.searchQuery;
-      return search(resultSearchQuery);
-    },
+    //   this.searchQuery = searchQuery || this.searchQuery;
+    //   return search(resultSearchQuery);
+    // },
 
     /**
      * the server return the full url path for next and prev, we will use it as is

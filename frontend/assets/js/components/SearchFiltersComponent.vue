@@ -534,7 +534,13 @@ export default {
       if(val === 'searchTerm') {
         this.sourceOfUpdate = null;
       }
-      this.updateFacetsCount();
+    },
+    facets: function(val) {
+      setTimeout(() => {
+        console.log('this.sourceOfUpdate', this.sourceOfUpdate);
+        this.updateFacetsCount();
+      })
+      
     }
   }
 };
