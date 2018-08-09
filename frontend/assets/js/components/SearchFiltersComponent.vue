@@ -3,7 +3,7 @@
     <h4>FILTER RESULTS</h4>
 
     <!-- Select Country -->
-    <h4>Country and region</h4>
+    <h4>Countries and regions</h4>
     <div v-if="countries.length > 0">
       <country-component
         :dataList="countries"
@@ -17,7 +17,7 @@
     <div v-if="facetsData.nuts_level" class="nuts">
       <h4>NUTS levels</h4>
       <check-box-buttons
-        :dataList="facetsData.nuts_level" 
+        :dataList="facetsData.nuts_level"
         :componentName="'nutsLevels'"
         v-on:selected-nutsLevels="handleSelectedNutsLevels"
       ></check-box-buttons>
@@ -122,6 +122,8 @@ const facets = {
   keyword: 'keyword',
 }
 
+const regions = ['EEA39', 'EU28', 'FAO234', 'SOEF46'];
+
 const simpleFacets = {
   resource_type: { name: facets.resource_type, getFunction: fetchResourceTypes },
   nuts_level: { name: facets.nuts_level, getFunction: fetchNutsLevels },
@@ -160,14 +162,10 @@ export default {
 
   created() {
     this.makeSelectedFilterOptions();
-    this.getCollectionsRange();
-    this.getCountries();
     this.getFacets();
-    this.getTypesAndSets();
   },
 
   methods: {
-
     makeSelectedFilterOptions() {
       Object.keys(facets).map(key => {
         if(key === 'country') {
@@ -176,26 +174,6 @@ export default {
           this.selectedFilterOptions[key] = [];
         }
       });
-    },
-
-    getCountries() {
-      fetchCountries()
-        .then(response => {
-          this.countries = response.data;
-        })
-        .catch(error => {
-          console.log(error);
-        });
-    },
-
-    getCollectionsRange() {
-      fetchCollectionsRange()
-        .then(response => {
-          this.collectionsRange = response.data;
-        })
-        .catch(error => {
-          console.log(error);
-        });
     },
 
     getFacets() {
@@ -207,11 +185,15 @@ export default {
         promises.push(this.wrapPromiseGetEntity(entity));
       });
       promises.push(this.searchByTerms());
+      promises.push(fetchCountries());
+      promises.push(fetchCollectionsRange());
+      promises.push(fetchDataTypes());
+      promises.push(fetchDataSets());
 
       Promise.all(promises).then(response => {
         const responseLength = response.length;
-        const entities = response.slice(0, responseLength-1);
-        const facets = response[responseLength-1].data.facets;
+        const entities = response.slice(0, responseLength - 5);
+        const facets = response[responseLength - 5].data.facets;
         
         entities.map(entity => {
           const entityName = entity.name;
@@ -222,8 +204,20 @@ export default {
             entityData
           );
         })
+        const renamedNutsLevel = this.renameLevels(facetsData.nuts_level);
+        facetsData.nuts_level = this.sortObjKeysByPropertyNameAlphabetically(renamedNutsLevel);
+
 
         this.facetsData = JSON.parse(JSON.stringify(facetsData));
+        const countries = response[responseLength - 4].data.slice();
+        this.countries = this.putRegionsAheadOfCountriesSorted(countries);
+        this.collectionsRange = response[responseLength - 3].data;
+        let dataTypes = response[responseLength - 2].data.slice();
+        this.allSets = response[responseLength - 1].data.slice();
+
+        let promisesSearchDataTypes = this.makeDataSetsPromisesForEachDataType(dataTypes);
+
+        this.assignDataSetsToEachDataType(promisesSearchDataTypes, dataTypes);
       })
       .catch(error => {
         console.log(error);
@@ -282,27 +276,6 @@ export default {
       return result;
     },
 
-    /**
-     * will get the dataTypes and set to each one the corresponding dataSets
-     * there isn't a formal constraint on the database regarding which dataSet corresponds to which dataType
-     * there for we will search for each DataType and see which dataSet facets comes back
-     */
-    getTypesAndSets() {
-      let promiseParalel = [];
-
-      promiseParalel.push(fetchDataTypes());
-      promiseParalel.push(fetchDataSets());
-
-      Promise.all(promiseParalel).then(typesAndSetsResponse => {
-        let dataTypes = typesAndSetsResponse[0].data;
-        this.allSets = typesAndSetsResponse[1].data;
-
-        let promisesSearchDataTypes = this.makeDataSetsPromisesForEachDataType(dataTypes);
-
-        this.assignDataSetsToEachDataType(promisesSearchDataTypes, dataTypes);
-      });
-    },
-
     searchByTerms(termType, term) {
       const resultTermType = termType || '';
       const resultTerm = term || '';
@@ -311,6 +284,9 @@ export default {
     },
 
     /**
+     * will get the dataTypes and set to each one the corresponding dataSets
+     * there isn't a formal constraint on the database regarding which dataSet corresponds to which dataType
+     * there for we will search for each DataType and see which dataSet facets comes back
      * will search by dataType name for each dataType
      * @returns {Object[]} - array of promises for each searchByTerms that will return the dataType it's sets
      */
@@ -517,7 +493,86 @@ export default {
         });
         this.dataTypes = JSON.parse(JSON.stringify(dataTypesClone));
       }
-    }
+    },
+
+    renameLevels(levels) {
+      const formattedLevels = JSON.parse(JSON.stringify(levels));
+
+      return Object.keys(formattedLevels).map(function (key, index) {
+        const level = levels[key];
+        level.name = level.name.replace('L','Level');
+
+        return level;
+      });
+    },
+
+    sortObjKeysByPropertyNameAlphabetically(obj) {
+      return Object.keys(obj)
+        .sort((keyA, keyB) => {
+          const itemA = obj[keyA];
+          const itemB = obj[keyB];
+          return itemA.name > itemB.name
+        })
+        .reduce((result, key, currentIndex) => {
+          result[currentIndex] = obj[key];
+          return result;
+        }, {});
+    },
+
+    sortObjKeysAlphabetically(obj) {
+      return Object.keys(obj).sort((a,b) => a > b).reduce((result, key) => {
+        result[key] = obj[key];
+      return result;
+      }, {});
+    },
+
+    sortArrayOfObjectsByValueAlphabetically(arr) {
+      const result = arr.slice();
+
+      result.sort(function(a, b) {
+        const nameA = a.name.toUpperCase(); // ignore upper and lowercase
+        const nameB = b.name.toUpperCase(); // ignore upper and lowercase
+        if (nameA < nameB) {
+          return -1;
+        }
+        if (nameA > nameB) {
+          return 1;
+        }
+        // names must be equal
+        return 0;
+      });
+      return result;
+    },
+
+    putRegionsAheadOfCountriesSorted(countries) {
+      const tempCountries = countries.slice();
+      let regionsList = [];
+      let result = [];
+      //find all regions and insert them at the begining in result
+      for (let i = 0; i < regions.length; i++) {
+        const region = regions[i];
+        var found = tempCountries.find(function(country) {
+          return country.name.toUpperCase() === region.toUpperCase();
+        });
+        regionsList.push(found);
+      }
+      // remove all regions from countries
+      for (let i = tempCountries.length - 1; i >= 0; i--) {
+        const country = tempCountries[i];
+        var found = regions.find(function(region) {
+          return country.name.toUpperCase() === region.toUpperCase();
+        });
+        if(found) {
+          tempCountries[i] = tempCountries[tempCountries.length - 1];
+          tempCountries.pop();
+        }
+      }
+      // concat regions with the remaining countrie sorted
+      const sortedCountries = this.sortArrayOfObjectsByValueAlphabetically(tempCountries);
+      result = [...regionsList, ...sortedCountries];
+
+      return result;
+    },
   },
 
   watch: {
@@ -553,8 +608,8 @@ export default {
 
 .bd-sidebar {
   height: 100vh;
-    overflow: auto;
-    position: sticky;
-    top: 0;
+  overflow: auto;
+  position: sticky;
+  top: 0;
 }
 </style>
