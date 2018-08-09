@@ -131,6 +131,10 @@ const simpleFacets = {
   published_year: { name: facets.published_year, getFunction: fetchPublicationYears },
 }
 
+/**
+ * will create the facets using checkboxes, dropdowns, sliders and graphs
+ * will autoupdate the count on each value of each facet, except for the source of update
+ */
 export default {
   name: 'SearchFiltersComponent',
 
@@ -166,6 +170,11 @@ export default {
   },
 
   methods: {
+    /**
+     * this.selectedFilterOptions will contain the names of all the facets names
+     * here all the selected values from the facets will be available
+     * based on these selections, the search query will be created
+     */
     makeSelectedFilterOptions() {
       Object.keys(facets).map(key => {
         if(key === 'country') {
@@ -176,6 +185,12 @@ export default {
       });
     },
 
+    /**
+     * all requests are done at the same time, using one simple search to get the facets names and count
+     * all facets that will show name and count and are not nested will be in simpleFacets
+     * and will be handled the same way
+     * dataTypes will nest dataSets, country will not show number, collectionRange wil only have min and max
+     */
     getFacets() {
       const promises = [];
       const facetsData = {};
@@ -204,10 +219,10 @@ export default {
             entityData
           );
         })
+        // nuts levels need to be ordered and renamed from L0 to Level0
         const renamedNutsLevel = this.renameLevels(facetsData.nuts_level);
-        facetsData.nuts_level = this.sortObjKeysByPropertyNameAlphabetically(renamedNutsLevel);
-
-
+        facetsData.nuts_level = this.sortObjKeysAlphabetically(renamedNutsLevel);
+        // countries need to be reagions firs ordered and countries second and sorted
         this.facetsData = JSON.parse(JSON.stringify(facetsData));
         const countries = response[responseLength - 4].data.slice();
         this.countries = this.putRegionsAheadOfCountriesSorted(countries);
@@ -279,8 +294,9 @@ export default {
     searchByTerms(termType, term) {
       const resultTermType = termType || '';
       const resultTerm = term || '';
+      const result = !resultTermType && !resultTerm ? '' : `?${resultTermType}=${resultTerm}`;
 
-      return search(`?${resultTermType}=${resultTerm}`);
+      return search(result);
     },
 
     /**
@@ -316,7 +332,7 @@ export default {
     },
 
     /**
-     * aftter all the search requests for each dataType is done, it will assign the dataSets to each dataType
+     * after all the search requests for each dataType is done, it will assign the dataSets to each dataType
      * it's important to wait until the end of all the requests so that the checkboxe components will get
      * the correct list, not undefined 
      * TODO try and give to each checkbox component only what it need and when it's done, don't wait for all
@@ -337,20 +353,20 @@ export default {
 
     handleSelectedDataSetsRaster(ev) {
       this.selectedDataSetsSample = ev.slice();
-      this.handleSelectedDataSets();
+      this.handleSelectedDataSets(ev.length > 0 ? facets.data_type : null);
     },
 
     handleSelectedDataSetsSample(ev) {
       this.selectedDataSetsRaster = ev.slice();
-      this.handleSelectedDataSets();
+      this.handleSelectedDataSets(ev.length > 0 ? facets.data_type : null);
     },
 
-    handleSelectedDataSets() {
+    handleSelectedDataSets(sourceOfUpdate) {
       this.selectedFilterOptions.data_set = [
         ...this.selectedDataSetsSample,
         ...this.selectedDataSetsRaster
       ];
-      this.sourceOfUpdate = facets.data_type;
+      this.sourceOfUpdate = sourceOfUpdate;
 
       let searchQuery = this.makeSearchQuery();
       this.emitSelectedFilter(searchQuery);
@@ -358,42 +374,42 @@ export default {
 
     handleSelectedResourceTypes(ev) {
       this.selectedFilterOptions.resource_type = ev.slice();
-      this.sourceOfUpdate = facets.resource_type;
+      this.sourceOfUpdate = ev.length > 0 ? facets.resource_type : null;
       let searchQuery = this.makeSearchQuery();
       this.emitSelectedFilter(searchQuery);
     },
 
     handleSelectedCountry(ev) {
       this.selectedFilterOptions.country = ev.slice();
-      this.sourceOfUpdate = facets.country;
+      this.sourceOfUpdate = ev.length > 0 ? facets.country : null;
       let searchQuery = this.makeSearchQuery();
       this.emitSelectedFilter(searchQuery);
     },
 
     handleSelectedNutsLevels(ev) {
       this.selectedFilterOptions.nuts_level = ev.slice();
-      this.sourceOfUpdate = facets.nuts_level;
+      this.sourceOfUpdate = ev.length > 0 ? facets.nuts_level : null;
       let searchQuery = this.makeSearchQuery();
       this.emitSelectedFilter(searchQuery);
     },
 
     handleSelectedTopicCategory(ev) {
       this.selectedFilterOptions.topic_category = ev.slice();
-      this.sourceOfUpdate = facets.topic_category;
+      this.sourceOfUpdate = ev.length > 0 ? facets.topic_category : null;
       let searchQuery = this.makeSearchQuery();
       this.emitSelectedFilter(searchQuery);
     },
 
     handleSelectedPublishedYear(ev) {
       this.selectedFilterOptions.published_year = ev.slice();
-      this.sourceOfUpdate = facets.published_year;
+      this.sourceOfUpdate = ev.length > 0 ? facets.published_year : null;
       let searchQuery = this.makeSearchQuery();
       this.emitSelectedFilter(searchQuery);
     },
 
     handleSelectedCollectionYears(ev) {
       this.selectedFilterOptions.collections_range = ev.slice();
-      this.sourceOfUpdate = facets.collections_range;
+      this.sourceOfUpdate = ev.length > 0 ? facets.collections_range : null;
       let searchQuery = this.makeSearchQuery();
       this.emitSelectedFilter(searchQuery);
     },
@@ -472,7 +488,6 @@ export default {
 
           Object.keys(entityClone).map(entityItemName => {
             const entityItem = this.facetsData[faceName][entityItemName];
-            
             entityClone[entityItemName] = Object.assign(entityItem, {
               number: this.facets[faceName][entityItemName] || 0
             });
@@ -498,12 +513,14 @@ export default {
     renameLevels(levels) {
       const formattedLevels = JSON.parse(JSON.stringify(levels));
 
-      return Object.keys(formattedLevels).map(function (key, index) {
-        const level = levels[key];
-        level.name = level.name.replace('L','Level');
+      Object.keys(formattedLevels).map((key, index) => {
+        const level = formattedLevels[key];
+        formattedLevels[key].displayName = level.name.replace('L','Level');
 
         return level;
       });
+
+      return formattedLevels;
     },
 
     sortObjKeysByPropertyNameAlphabetically(obj) {
@@ -514,16 +531,19 @@ export default {
           return itemA.name > itemB.name
         })
         .reduce((result, key, currentIndex) => {
-          result[currentIndex] = obj[key];
+          result[key] = obj[key];
           return result;
         }, {});
     },
 
     sortObjKeysAlphabetically(obj) {
-      return Object.keys(obj).sort((a,b) => a > b).reduce((result, key) => {
-        result[key] = obj[key];
-      return result;
-      }, {});
+      return Object
+        .keys(obj)
+        .sort((a,b) => a > b)
+        .reduce((result, key) => {
+          result[key] = obj[key];
+          return result;
+        }, {});
     },
 
     sortArrayOfObjectsByValueAlphabetically(arr) {
@@ -585,7 +605,7 @@ export default {
       setTimeout(() => {
         console.log('this.sourceOfUpdate', this.sourceOfUpdate);
         this.updateFacetsCount();
-      })
+      },500)
       
     }
   }

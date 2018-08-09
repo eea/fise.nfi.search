@@ -113,21 +113,23 @@ export default {
      * it is called by the result component by pressing the search button
      */
     handleUpdatedSearchTerm(val) {
-      this.searchTerm = val;
-      let resultSearchQuery = this.searchTerm ? `?search=${this.searchTerm}&` : '?';
+      let resultSearchQuery = val ? `?search=${val}&` : '?';
       resultSearchQuery += this.searchQuery;
       this.justStarted = false;
 
       search(resultSearchQuery)
         .then((response) => {
+          if(this.searchTerm !== val) {
+            this.facets = response.data.facets;     
+          }
+          this.updateSource = 'searchTerm'; 
           this.results = response.data.results;
           this.count = response.data.count;
-          this.facets = response.data.facets;
           this.next = response.data.next;
           this.previous = response.data.previous;
-          this.updateSource = 'searchTerm';
-          console.log('this.updateSource', this.updateSource);
+          this.searchTerm = val;
 
+          console.log('this.updateSource', this.updateSource);
         })
         .catch((error) => {
           console.log(error);

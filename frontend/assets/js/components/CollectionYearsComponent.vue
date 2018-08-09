@@ -37,22 +37,29 @@ export default {
   },
 
   methods: {
+    /**
+     * collection year comes as an object with a max and min
+     * we need an array of all the years included between min and max and one with labels
+     */
     makeRange() {
-      let result = { data: new Array(this.myDataList.max - this.myDataList.min + 1).fill(0), labels: [], codes: [] };
+      let result = { data: new Array(this.myDataList.max - this.myDataList.min + 1).fill(0), labels: [] };
       for (let i = this.myDataList.min; i <= this.myDataList.max; i++) {
         result.labels.push(i);
-        result.codes.push(i);
       };
 
       return result;
     },
 
+    /**
+     * the array will start on position 0 with the first year (ex 1920)
+     * the range-slider will send the indexes
+     */
     handleSelectedRangeCollections(ev) {
       this.mySelectedList = [];
 
       if(ev.length > 0) {
-        const firstElement = this.dataset.codes[ev[0]];
-        const secondElement = this.dataset.codes[ev[1]];
+        const firstElement = this.dataset.labels[ev[0]];
+        const secondElement = this.dataset.labels[ev[1]];
 
         this.mySelectedList.push(firstElement);
         this.mySelectedList.push(secondElement);        

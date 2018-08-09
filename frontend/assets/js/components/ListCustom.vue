@@ -54,10 +54,7 @@ export default {
   methods: {
     handleClicked(ev, data) {
       ev.preventDefault();
-      setTimeout(() => {
-        // will emit after the render updates the model
-        this.$emit('selected-result', data);
-      });
+      this.$emit('selected-result', data);
     },
 
     truncate(text,limit) {
