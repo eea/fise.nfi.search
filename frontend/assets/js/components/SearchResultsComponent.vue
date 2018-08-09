@@ -4,7 +4,7 @@
 
     <b-input-group class="mt-5 mb-5 slinput">
       <i class="fa fa-search left-icon"></i>
-      <input 
+      <input
         class="form-control" 
         v-model="searchTerm"
         v-on:keyup.enter="handleClicked"
@@ -40,6 +40,7 @@
         :title="selectedResult.title"
         size="lg"
         v-model="modalShow"
+        ok-only
       >
         <p class="my-4">Country: {{selectedResult.country}}</p>
         <p class="my-4">Data set: {{selectedResult.data_set}}</p>

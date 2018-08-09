@@ -605,11 +605,12 @@ export default {
     }
   }
 }
-
 .bd-sidebar {
   height: 100vh;
   overflow: auto;
   position: sticky;
   top: 0;
+  padding-right: 0;
 }
 </style>
+
