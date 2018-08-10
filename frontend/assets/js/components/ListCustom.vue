@@ -6,19 +6,23 @@
       href="#"
       target="_self"
       class="list-group-item-custom flex-column align-items-start list-group-item-action"
-      v-on:click="handleClicked($event, data)"
+      
     >
     <div class="result-wrapper">
       <img
         class="result-img"
         :src="getImageForResourceType(data.resource_type)"
         alt=""
+        v-on:click="handleClicked($event, data)"
       >
       <div class="result-content">
-        <div class="result-header">
+        <div class="result-header" v-on:click="handleClicked($event, data)">
           <h5 class="mb-1 blue">{{data.title}}</h5>
         </div>
-        <p class="mb-1">
+        <p
+          class="mb-1"
+          v-on:click="handleClicked($event, data)"
+        >
           {{truncate(data.description,200)}}...
         </p>
         <small class="badge badge-primary">{{data.topic_category}}</small>

@@ -159,7 +159,8 @@ export default {
       selectedDataSetsRaster: [],
       collectionsRange: null,
       showDateSets: false,
-      sourceOfUpdate: null,
+      sourceOfUpdate: null, // will not update the source, if the new data is empty, 
+      // then the source is null so that is can update it's count
       selectedFilterOptions: {},
     };
   },
