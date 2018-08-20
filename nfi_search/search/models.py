@@ -566,12 +566,16 @@ class DocumentFile(models.Model):
     @property
     def original_relative_path(self):
         """File path relative to the metadata path."""
+        _path = None
         if self.original_path is not None and self.document.import_batch is not None:
-            return Path(self.original_path).relative_to(
-                self.document.import_batch.original_path_root
-            )
-        else:
-            return None
+            try:
+                _path = Path(self.original_path).relative_to(
+                    self.document.import_batch.original_path_root
+                )
+            except ValueError:
+                pass  # Fall through to None response when original path does not respect the prefix
+
+        return _path
 
     def get_upload_path(self, file_name):
         """Returns the file path relative to storage location"""
@@ -587,6 +591,7 @@ class DocumentFile(models.Model):
             log.error(
                 f"Could not import file id={self.pk}: original path or prefix not found"
             )
+            return
 
         file_name = rel_path.name
 
