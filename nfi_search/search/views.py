@@ -1,7 +1,6 @@
 from django.conf import settings
 from django.views import static
 from rest_framework import status
-from rest_framework import views
 from rest_framework.viewsets import ReadOnlyModelViewSet, ViewSet
 from rest_framework.decorators import detail_route
 from rest_framework.renderers import StaticHTMLRenderer
@@ -13,7 +12,6 @@ from django_elasticsearch_dsl_drf.filter_backends import (
     OrderingFilterBackend,
     DefaultOrderingFilterBackend,
     CompoundSearchFilterBackend,
-    FacetedSearchFilterBackend,
 )
 from django_elasticsearch_dsl_drf.pagination import PageNumberPagination
 from django_elasticsearch_dsl_drf.viewsets import BaseDocumentViewSet
@@ -46,7 +44,6 @@ from .models import (
     DKeyword,
     DLanguage,
     Document,
-    DocumentFile,
 )
 
 
@@ -122,9 +119,18 @@ class SearchPageNumberPagination(PageNumberPagination):
             facets = {}
             for filter_key, data in raw_facets.items():
                 field = filter_key[8:]  # remove '_filter_' prefix
-                facets[field] = {
-                    b["key"]: b["doc_count"] for b in data[field]["buckets"]
-                }
+                # data keys for nested facets don't have the '_filter' prefix:
+                _field = field if field in data else filter_key
+                if field in data:
+                    _data = {
+                        b["key"]: b["doc_count"] for b in data[field]["buckets"]
+                    }
+                else:
+                    _data = {
+                        b["key"]: b["doc_count"] for b in data[filter_key][field]["buckets"]
+                    }
+
+                facets[field] = _data
             return facets
 
 
@@ -141,12 +147,10 @@ class SearchViewSet(BaseDocumentViewSet):
         DefaultOrderingFilterBackend,
         CompoundSearchFilterBackend,
         NestedFacetedSearchFilterBackend,
-        FacetedSearchFilterBackend,
     ]
     search_fields = (
         "title",
         "description",
-        # 'text',
     )
 
     # Facets for DocumentDoc's non-nested fields
@@ -171,11 +175,12 @@ class SearchViewSet(BaseDocumentViewSet):
         "nuts_level": {"field": "nuts_levels.name", "path": "nuts_levels"},
     }
 
-    # Nested facets are added through the custom `NestedFacetedSearchFilterBackend`
+    # Nested facets are added directly in `NestedFacetedSearchFilterBackend.filter_queryset`
     faceted_search_fields = {
         field: {
             "field": field,
             "enabled": True,
+            "global": True,
             "options": {
                 # Dirty hack to force all facet values to show up in results
                 # (setting size=0 does NOT work with aggregations).
