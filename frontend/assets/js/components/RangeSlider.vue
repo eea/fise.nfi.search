@@ -7,43 +7,44 @@
         ref="slider4"
         v-bind="data"
         v-model="data.value"
-        @drag-end="getIndex"
+        @drag-end="getValue"
       ></vue-slider>
     </div>
   </section>
 </template>
 
 <script>
-import vueSlider from "vue-slider-component";
+import vueSlider from 'vue-slider-component';
 
 export default {
-  name: "RangeSlider",
+  name: 'RangeSlider',
 
   props: {
     dataList: {},
-    componentName: "",
-    title: ""
+    componentName: '',
+    selected: '',
+    title: '',
   },
 
   components: {
-    vueSlider
+    vueSlider,
   },
 
   created() {
     const len = this.dataList.length;
-    this.data.value.push(this.dataList[0], this.dataList[len-1]);
+    this.data.value.push(this.dataList[0], this.dataList[len - 1]);
   },
 
   data() {
     return {
       data: {
-        width: "100%",
+        width: '100%',
         height: 4,
         dotSize: 14,
         interval: 3,
         disabled: false,
         show: true,
-        tooltip: "always",
+        tooltip: 'always',
         piecewise: true,
         data: this.dataList.slice(),
         value: [],
@@ -53,8 +54,10 @@ export default {
 
   methods: {
     getValue() {
-      let slider = this.$refs["slider4"];
-      return slider.getValue();
+      let slider = this.$refs['slider4'];
+      const result = slider.getValue();
+
+      this.$emit('selected-' + this.componentName, result);
     },
 
     setValue(val) {
@@ -63,22 +66,31 @@ export default {
     },
 
     getIndex() {
-      let slider = this.$refs["slider4"];
+      let slider = this.$refs['slider4'];
       const indexes = slider.getIndex();
       let result = [];
 
-      if((indexes[0] !== 0) || (indexes[1] !== this.dataList.length -1)) {
+      if (indexes[0] !== 0 || indexes[1] !== this.dataList.length - 1) {
         result = indexes.slice();
       }
 
-      this.$emit("selected-" + this.componentName, result);
+      this.$emit('selected-' + this.componentName, result);
     },
 
     setIndex(index) {
-      let slider = this.$refs["slider4"];
-      return slider.setIndex([0,10]);
-    },
+      let slider = this.$refs['slider4'];
+      return slider.setIndex([0, 10]);
+    }
+  },
 
+  watch: {
+    /**
+     * selected is an array containing the two years
+     * if they are changed by the parent, this will update the slider position
+     */
+    selected: function updateFacetsCount(val) {
+      this.setValue(this.selected);
+    }
   }
 };
 </script>

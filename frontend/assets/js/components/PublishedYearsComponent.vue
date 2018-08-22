@@ -5,6 +5,7 @@
       <range-slider
         :dataList="dataset.labels" 
         :componentName="'year-published'"
+        :selected="mySelectedList"
         v-on:selected-year-published="handleSelectedYearPublished"
       ></range-slider>      
     </div>
@@ -12,12 +13,11 @@
 </template>
 
 <script>
-import * as d3 from "d3";
+import * as d3 from 'd3';
 import RangeSlider from './RangeSlider';
 
-
 export default {
-  name: "PublishedYearsComponent",
+  name: 'PublishedYearsComponent',
 
   components: {
     'range-slider': RangeSlider,
@@ -25,8 +25,8 @@ export default {
 
   props: {
     dataList: {},
-    componentName: "",
-    title: ""
+    componentName: '',
+    title: '',
   },
 
   data() {
@@ -45,8 +45,8 @@ export default {
 
   methods: {
     makeGraph() {
-      const graphContainer = d3.select(".d3--line");
-      const svg = d3.select("svg");
+      const graphContainer = d3.select('.d3--line');
+      const svg = d3.select('svg');
       const margin = { top: 50, right: 50, bottom: 50, left: 50 };
       const duration = 500;
       let width, height, innerWidth, innerHeight;
@@ -58,14 +58,18 @@ export default {
       getDimentions();
       getScaleDomains.call(this);
       getScaleRanges();
-      renderGraph(this.dataset);
+      renderGraph.call(this, this.dataset);
 
-      d3.select(window).on("resize", resize.bind(this));
+      d3.select(window).on('resize', resize.bind(this));
 
+      /**
+       * will create the graph and the brush
+       */
       function renderGraph(dataset) {
         if (!dataset.data.length || !dataset.labels.length) {
           return false;
         }
+        let self = this;
         const area = d3
           .area()
           .x((d, i) => xScale(dataset.labels[i]))
@@ -75,64 +79,78 @@ export default {
         const xAxis = d3
           .axisBottom(xScale)
           .tickFormat((d, i) => dataset.labels[i]);
-
         const yAxis = d3.axisLeft(yScale).ticks(4);
 
-        svg.attr("width", width).attr("height", height);
+        svg.attr('width', width).attr('height', height);
 
-        const inner = svg.selectAll("g.inner").data([null]);
+        const inner = svg.selectAll('g.inner').data([null]);
         inner.exit().remove();
-        inner
+
+        const brush = d3
+          .brushX()
+          .extent([[0, 0], [innerWidth, innerHeight]])
+          .on('end', function() {
+            brushed.call(this, self);
+          });
+        const gBrush = inner
           .enter()
-          .append("g")
-          .attr("class", "inner")
-          .attr("transform", `translate(${margin.top}, ${margin.right})`);
+          .append('g')
+          .attr('class', 'inner')
+          .attr('transform', `translate(${margin.top}, ${margin.right})`)
+          .call(brush);
 
-        // const xa = svg
-        //   .selectAll("g.inner")
-        //   .selectAll("g.x.axis")
-        //   .data([null]);
-        // xa.exit().remove();
-        // xa
-        //   .enter()
-        //   .append("g")
-        //   .attr("class", "x axis")
-        //   .attr("transform", `translate(0, ${innerHeight})`)
-        //   .call(xAxis);
-
-        // const ya = svg
-        //   .selectAll("g.inner")
-        //   .selectAll("g.y.axis")
-        //   .data([null]);
-        // ya.exit().remove();
-        // ya
-        //   .enter()
-        //   .append("g")
-        //   .attr("class", "y axis")
-        //   .call(yAxis);
-
-        const pathArea1 = svg
-          .selectAll("g.inner")
-          .selectAll(".path-area1")
+        const pathArea = svg
+          .selectAll('g.inner')
+          .selectAll('.path-area1')
           .data([null]);
-        pathArea1.exit().remove();
-        pathArea1
+        pathArea.exit().remove();
+        pathArea
           .enter()
-          .append("path")
-          .attr("class", "path-area path-area1")
-          .attr("d", () => area(createZeroDataArray(dataset.data)))
-          .on("click", function handleClicked(params) {
+          .append('path')
+          .attr('class', 'path-area path-area1')
+          .attr('d', () => area(createZeroDataArray(dataset.data)))
+          .on('click', function handleClicked(params) {
             let x = d3.event.x;
             let y = d3.event.y;
           })
           .transition()
           .duration(duration)
           .ease(d3.easePoly.exponent(2))
-          .attr("d", area(dataset.data));
+          .attr('d', area(dataset.data));
+
+        this.xScale = xScale;
+        this.brush = brush;
+        this.gBrush = gBrush;
+
+        function brushed(self) {
+          if (!d3.event.sourceEvent) return; // Only transition after input.
+          if (!d3.event.selection) return; // Ignore empty selections.
+
+          const selection = scaleBandInvert(xScale);
+
+          d3
+            .select(this)
+            .transition()
+            .call(d3.event.target.move, selection.map(xScale));
+
+          self.mySelectedList = [];
+
+          self.mySelectedList.push(selection[0]);
+          self.mySelectedList.push(selection[1]);
+
+          self.emitSelected();
+        }
+
+        function scaleBandInvert(scale) {
+          var eachBand = xScale.step();
+          var index0 = Math.round(d3.event.selection[0] / eachBand);
+          var index1 = Math.round(d3.event.selection[1] / eachBand);
+          return [xScale.domain()[index0], xScale.domain()[index1]];
+        }
       }
 
       function destroyGraph() {
-        svg.selectAll("*").remove();
+        svg.selectAll('*').remove();
       }
 
       function getDimentions() {
@@ -149,7 +167,9 @@ export default {
 
       function getScaleDomains() {
         xScale = d3.scaleBand().domain(this.dataset.labels);
-        yScale = d3.scaleLinear().domain([0, d3.max([d3.max(this.dataset.data)])]);
+        yScale = d3
+          .scaleLinear()
+          .domain([0, d3.max([d3.max(this.dataset.data)])]);
       }
 
       function createZeroDataArray(arr) {
@@ -175,31 +195,37 @@ export default {
       }
     },
 
-    handleClicked() {
-    },
-
+    /**
+     * handler for slider selecting years
+     * @param {Object[]} ev - array containing the two years
+     */
     handleSelectedYearPublished(ev) {
       this.mySelectedList = [];
+      this.mySelectedList.push(ev[0]);
+      this.mySelectedList.push(ev[1]);
 
-      if(ev.length === 2) {
-        const firstElementCode = this.dataset.codes[ev[0]];
-        const firstElement = this.myDataList[firstElementCode];
-        const secondElementCode = this.dataset.codes[ev[1]];
-        const secondElement = this.myDataList[secondElementCode];
-
-        this.mySelectedList.push(firstElement);
-        this.mySelectedList.push(secondElement);        
-      }
-
+      this.updateBrush(ev);
       this.emitSelected();
+    },
+
+    /**
+     * will update the position of the brush, or create make it show
+     */
+    updateBrush(ev) {
+      if (ev.length === 2) {
+        this.gBrush
+          .transition()
+          .duration(350)
+          .call(this.brush.move, ev.map(this.xScale));
+      }
     },
 
     emitSelected() {
       setTimeout(() => {
         // will emit after the render updates the model
-        this.$emit("selected-" + this.componentName, this.mySelectedList);
+        this.$emit('selected-' + this.componentName, this.mySelectedList);
       });
-    },
+    }
   },
 
   watch: {

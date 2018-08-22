@@ -101,7 +101,6 @@ export default {
             this.previous = response.data.previous;
           }
           this.updateSource = 'facet';
-          console.log('this.updateSource', this.updateSource);
         })
         .catch((error) => {
           console.log(error);
@@ -128,8 +127,6 @@ export default {
           this.next = response.data.next;
           this.previous = response.data.previous;
           this.searchTerm = val;
-
-          console.log('this.updateSource', this.updateSource);
         })
         .catch((error) => {
           console.log(error);

@@ -405,6 +405,7 @@ export default {
       this.selectedFilterOptions.published_year = ev.slice();
       this.sourceOfUpdate = ev.length > 0 ? facets.published_year : null;
       let searchQuery = this.makeSearchQuery();
+      // console.log('searchQuery', searchQuery)
       this.emitSelectedFilter(searchQuery);
     },
 
@@ -413,30 +414,6 @@ export default {
       this.sourceOfUpdate = ev.length > 0 ? facets.collections_range : null;
       let searchQuery = this.makeSearchQuery();
       this.emitSelectedFilter(searchQuery);
-    },
-
-    makePublishedYearSearchQuery(listOfYears) {
-      if(listOfYears.length === 0) return '';
-
-      let min = listOfYears[0].name < listOfYears[1].name ? listOfYears[0].name : listOfYears[1].name;
-      let max = listOfYears[0].name > listOfYears[1].name ? listOfYears[0].name : listOfYears[1].name;
-      let searchQuery = '';
-
-      searchQuery += `${facets.published_year_range}=${min}__${max}&`;
-
-      return searchQuery;
-    },
-
-    makeCollectionsRangeSearchQuery(listOfYears) {
-      if(listOfYears.length === 0) return '';
-
-      let min = listOfYears[0] < listOfYears[1] ? listOfYears[0] : listOfYears[1];
-      let max = listOfYears[0] > listOfYears[1] ? listOfYears[0] : listOfYears[1];
-      let searchQuery = '';
-
-      searchQuery += `${facets.data_collection_start_year__lte}=${max}&${facets.data_collection_end_year__gte}=${min}&`;
-
-      return searchQuery;
     },
 
     makeSearchQuery() {
@@ -464,6 +441,30 @@ export default {
             }               
         }
       });
+
+      return searchQuery;
+    },
+
+    makePublishedYearSearchQuery(listOfYears) {
+      if(listOfYears.length === 0) return '';
+
+      let min = listOfYears[0] < listOfYears[1] ? listOfYears[0] : listOfYears[1];
+      let max = listOfYears[0] > listOfYears[1] ? listOfYears[0] : listOfYears[1];
+      let searchQuery = '';
+
+      searchQuery += `${facets.published_year_range}=${min}__${max}&`;
+
+      return searchQuery;
+    },
+
+    makeCollectionsRangeSearchQuery(listOfYears) {
+      if(listOfYears.length === 0) return '';
+
+      let min = listOfYears[0] < listOfYears[1] ? listOfYears[0] : listOfYears[1];
+      let max = listOfYears[0] > listOfYears[1] ? listOfYears[0] : listOfYears[1];
+      let searchQuery = '';
+
+      searchQuery += `${facets.data_collection_start_year__lte}=${max}&${facets.data_collection_end_year__gte}=${min}&`;
 
       return searchQuery;
     },
@@ -604,10 +605,8 @@ export default {
     },
     facets: function(val) {
       setTimeout(() => {
-        console.log('this.sourceOfUpdate', this.sourceOfUpdate);
         this.updateFacetsCount();
-      },500)
-      
+      })
     }
   }
 };
