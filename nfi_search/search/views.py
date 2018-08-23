@@ -155,7 +155,6 @@ class SearchViewSet(BaseDocumentViewSet):
 
     # Facets for DocumentDoc's non-nested fields
     facets = (
-        "country",
         "data_type",
         "data_set",
         "data_source",
@@ -171,6 +170,7 @@ class SearchViewSet(BaseDocumentViewSet):
     filter_fields = {f: f for f in facets}
 
     nested_filter_fields = {
+        "country": {"field": "countries.name", "path": "countries"},
         "keyword": {"field": "keywords.name", "path": "keywords"},
         "nuts_level": {"field": "nuts_levels.name", "path": "nuts_levels"},
     }

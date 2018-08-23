@@ -27,6 +27,11 @@ class NestedFacetedSearchFilterBackend(
 
     def filter_queryset(self, request, queryset, view):
         queryset = super().filter_queryset(request, queryset, view)
+
+        queryset.aggs.bucket("_filter_country", "nested", path="countries").bucket(
+            "country", "terms", field="countries.name"
+        )
+
         queryset.aggs.bucket("_filter_nuts_level", "nested", path="nuts_levels").bucket(
             "nuts_level", "terms", field="nuts_levels.name"
         )

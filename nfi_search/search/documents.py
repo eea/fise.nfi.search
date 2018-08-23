@@ -49,9 +49,10 @@ class DocumentDoc(DocType):
         fielddata=True,
     )
 
-    country = fields.KeywordField(
-        attr='country.name',
-        normalizer=lowercase_normalizer
+    countries = fields.NestedField(
+        properties={
+            'name': fields.KeywordField(normalizer=lowercase_normalizer),
+        }
     )
 
     data_type = fields.KeywordField(
@@ -97,7 +98,7 @@ class DocumentDoc(DocType):
     )
 
     fk_relation_fields = [
-        'country', 'data_type', 'data_set', 'data_source', 'info_level', 'topic_category', 'resource_type',
+        'data_type', 'data_set', 'data_source', 'info_level', 'topic_category', 'resource_type',
     ]
 
     def get_queryset(self):
