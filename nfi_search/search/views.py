@@ -5,6 +5,7 @@ from rest_framework.viewsets import ReadOnlyModelViewSet, ViewSet
 from rest_framework.decorators import detail_route
 from rest_framework.renderers import StaticHTMLRenderer
 from rest_framework.response import Response
+from elasticsearch_dsl import TermsFacet
 from django_elasticsearch_dsl_drf.filter_backends import (
     FilteringFilterBackend,
     NestedFilteringFilterBackend,
@@ -117,19 +118,18 @@ class SearchPageNumberPagination(PageNumberPagination):
         raw_facets = super().get_facets(page)
         if raw_facets is not None:
             facets = {}
+            from pprint import pprint
+            pprint(raw_facets)
             for filter_key, data in raw_facets.items():
                 field = filter_key[8:]  # remove '_filter_' prefix
-                # data keys for nested facets don't have the '_filter' prefix:
-                _field = field if field in data else filter_key
-                if field in data:
+                if filter_key in data[filter_key]:
                     _data = {
-                        b["key"]: b["doc_count"] for b in data[field]["buckets"]
+                        b["key"]: b["doc_count"] for b in data[filter_key][filter_key][field]["buckets"]
                     }
                 else:
                     _data = {
                         b["key"]: b["doc_count"] for b in data[filter_key][field]["buckets"]
                     }
-
                 facets[field] = _data
             return facets
 
@@ -190,7 +190,32 @@ class SearchViewSet(BaseDocumentViewSet):
         for field in facets
     }
 
-    ordering_fields = {f: f for f in facets}
+    nested_faceted_search_fields = {
+        "country": {
+            "field": "countries.name",
+            "path": "countries",
+            "enabled": True,
+            "facet": TermsFacet,
+            "global": True,
+            "options": {
+                "size": 1000
+            },
+            "filter_field": "country",
+        },
+        "nuts_level": {
+            "field": "nuts_levels.name",
+            "path": "nuts_levels",
+            "enabled": True,
+            "facet": TermsFacet,
+            "global": True,
+            "options": {
+                "size": 1000
+            },
+            "filter_field": "nuts_level",
+        },
+    }
+
+    ordering_fields = {f: f for f in facets + ("country",)}
     ordering = ("title",)
 
 
