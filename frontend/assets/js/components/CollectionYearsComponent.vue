@@ -57,13 +57,13 @@ export default {
     handleSelectedRangeCollections(ev) {
       this.mySelectedList = [];
 
-      if(ev.length > 0) {
-        const firstElement = this.dataset.labels[ev[0]];
-        const secondElement = this.dataset.labels[ev[1]];
+      // if(ev.length > 0) {
+      //   const firstElement = this.dataset.labels[ev[0]];
+      //   const secondElement = this.dataset.labels[ev[1]];
 
-        this.mySelectedList.push(firstElement);
-        this.mySelectedList.push(secondElement);        
-      }
+        this.mySelectedList.push(ev[0]);
+        this.mySelectedList.push(ev[1]);        
+      // }
 
       this.$emit("selected-" + this.componentName, this.mySelectedList);
     },
