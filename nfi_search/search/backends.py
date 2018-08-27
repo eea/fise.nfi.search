@@ -3,7 +3,15 @@ from django_elasticsearch_dsl_drf.filter_backends import (
     FacetedSearchFilterBackend,
     FilteringFilterBackend,
 )
-from elasticsearch_dsl.query import Q, Nested, Terms
+from django_elasticsearch_dsl_drf.constants import (
+    LOOKUP_FILTER_TERMS,
+    LOOKUP_FILTER_RANGE,
+    LOOKUP_QUERY_GT,
+    LOOKUP_QUERY_GTE,
+    LOOKUP_QUERY_LT,
+    LOOKUP_QUERY_LTE,
+)
+from elasticsearch_dsl.query import Q, Nested, Terms, Range
 
 from django_elasticsearch_dsl_drf.constants import ALL_LOOKUP_FILTERS_AND_QUERIES
 
@@ -65,14 +73,12 @@ class NestedFacetedSearchFilterBackend(
         for query_param in query_params:
             query_param_list = self.split_lookup_filter(query_param, maxsplit=1)
             field_name = query_param_list[0]
-
             if field_name in filter_fields:
                 lookup_param = None
                 if len(query_param_list) > 1:
                     lookup_param = query_param_list[1]
 
                 valid_lookups = filter_fields[field_name]["lookups"]
-
                 # If we have default lookup given use it as a default and
                 # do not require further suffix specification.
                 default_lookup = None
@@ -190,12 +196,30 @@ class NestedFacetedSearchFilterBackend(
                     else:
                         agg_filter &= Q("terms", **{options["field"]: options["values"]})
                     continue
-                else:
-                    raise RuntimeError("Unhandled non-list options values")
 
-                # for value in options["values"]:
-                #     if options["lookup"] == LOOKUP_FILTER_TERMS:
-                #         agg_filter &= Q("terms", **{options["field"]: value})
+                lookup_filter = Q("match_all")
+                for value in options['values']:
+                    # `terms` filter lookup
+                    if options["lookup"] == LOOKUP_FILTER_TERMS:
+                        lookup_filter &= Q("terms", **{options["field"]: self.split_lookup_complex_value(value)})
+                    # `range` filter lookup
+                    elif options["lookup"] == LOOKUP_FILTER_RANGE:
+                        lookup_filter &= Q("range", **{options["field"]: self.get_range_params(value)})
+                    elif options["lookup"] == LOOKUP_QUERY_GT:
+                        lookup_filter &= Q("range", **{options['field']: self.get_gte_lte_params(value, 'gt')})
+                    elif options["lookup"] == LOOKUP_QUERY_GTE:
+                        lookup_filter &= Q("range", **{options['field']: self.get_gte_lte_params(value, 'gte')})
+                    elif options["lookup"] == LOOKUP_QUERY_LT:
+                        lookup_filter &= Q("range", **{options['field']: self.get_gte_lte_params(value, 'lt')})
+                    elif options["lookup"] == LOOKUP_QUERY_LTE:
+                        lookup_filter &= Q("range", **{options['field']: self.get_gte_lte_params(value, 'lte')})
+
+                if "path" in options:  # Filter term is nested
+                    agg_filter &= Nested(
+                        path=options["path"],
+                        query=lookup_filter)
+                else:
+                    agg_filter &= lookup_filter
 
             if nested_facet:
                 if global_facet:

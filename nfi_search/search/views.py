@@ -16,6 +16,14 @@ from django_elasticsearch_dsl_drf.filter_backends import (
 )
 from django_elasticsearch_dsl_drf.pagination import PageNumberPagination
 from django_elasticsearch_dsl_drf.viewsets import BaseDocumentViewSet
+from django_elasticsearch_dsl_drf.constants import (
+    LOOKUP_FILTER_RANGE,
+    LOOKUP_FILTER_TERMS,
+    LOOKUP_QUERY_GT,
+    LOOKUP_QUERY_GTE,
+    LOOKUP_QUERY_LT,
+    LOOKUP_QUERY_LTE,
+)
 
 
 from .documents import DocumentDoc
@@ -118,8 +126,6 @@ class SearchPageNumberPagination(PageNumberPagination):
         raw_facets = super().get_facets(page)
         if raw_facets is not None:
             facets = {}
-            from pprint import pprint
-            pprint(raw_facets)
             for filter_key, data in raw_facets.items():
                 field = filter_key[8:]  # remove '_filter_' prefix
                 if filter_key in data[filter_key]:
@@ -167,7 +173,20 @@ class SearchViewSet(BaseDocumentViewSet):
         "next_update_year",
     )
 
-    filter_fields = {f: f for f in facets}
+    filter_fields = {
+        f: {
+            "field": f,
+            "lookups": [
+                LOOKUP_FILTER_TERMS,
+                LOOKUP_FILTER_RANGE,
+                LOOKUP_QUERY_GT,
+                LOOKUP_QUERY_GTE,
+                LOOKUP_QUERY_LT,
+                LOOKUP_QUERY_LTE,
+            ]
+        }
+        for f in facets
+    }
 
     nested_filter_fields = {
         "country": {"field": "countries.name", "path": "countries"},
