@@ -1,5 +1,7 @@
+import logging.config
 from pathlib import Path
 from getenv import env
+from django.utils.log import DEFAULT_LOGGING
 
 
 def split_env(var, sep=',', default='', required=False):
@@ -176,3 +178,43 @@ TIKA_TIMEOUT = env('TIKA_TIMEOUT', 10)
 
 NFI_SEARCH_USE_TLS = env('NFI_SEARCH_USE_TLS', False)
 NFI_SEARCH_DOMAIN = env('NFI_SEARCH_DOMAIN')
+
+
+LOGGING_CONFIG = None
+LOGLEVEL = env('LOGLEVEL', 'info').upper()
+ES_LOGLEVEL = env('ES_LOGLEVEL', 'notset').upper()
+logging.config.dictConfig({
+    'version': 1,
+    'disable_existing_loggers': False,
+    'formatters': {
+        'console': {
+            'format': '%(asctime)s %(name)-12s %(levelname)-8s %(message)s',
+        },
+        'django.server': DEFAULT_LOGGING['formatters']['django.server'],
+    },
+    'handlers': {
+        'console': {
+            'class': 'logging.StreamHandler',
+            'formatter': 'console',
+        },
+        'django.server': DEFAULT_LOGGING['handlers']['django.server'],
+    },
+    'loggers': {
+        '': {
+            'level': 'WARNING',
+            'handlers': ['console'],
+        },
+        'nfi_search': {
+            'level': LOGLEVEL,
+            'handlers': ['console'],
+            'propagate': False,
+        },
+        'elasticsearch.trace': {
+            'level': ES_LOGLEVEL,
+            'handlers': ['console'],
+            'propagate': False,
+        },
+        'django.server': DEFAULT_LOGGING['loggers']['django.server'],
+    },
+})
+

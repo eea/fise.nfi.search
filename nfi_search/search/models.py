@@ -1,7 +1,8 @@
 import os
-from pathlib import Path
+from pathlib import Path, PureWindowsPath, PurePosixPath
 import logging
 from datetime import datetime as dt
+from copy import deepcopy
 import pytz
 from django.db import models
 from django.core.files.storage import FileSystemStorage
@@ -46,20 +47,10 @@ class DCountry(models.Model):
 
     @classmethod
     def update_from_metadata(cls, records):
-        """Countries are a peculiar import case, as they come with ids in the metadata."""
-        countries = {
-            r.country_id: r.country
-            for r in records
-            if r.country_id is not None and r.country is not None
-        }
-        existing = cls.objects.filter(id__in=countries.keys())
-        for c in existing:
-            countries.pop(c.pk, None)
-
-        orig_count = cls.objects.count()
-        objs = [cls(id=id, name=name) for id, name in countries.items()]
-        cls.objects.bulk_create(objs, batch_size=100)
-        return cls.objects.count() - orig_count
+        data = set([country for r in records for country in r.countries])
+        existing = [o.name for o in cls.objects.only("name").filter(name__in=data)]
+        data = [d for d in data if d not in existing]
+        return update_data(cls, "name", data)
 
 
 class DResourceType(DictionaryMixin, models.Model):
@@ -265,6 +256,7 @@ class DocumentImportBatch(models.Model):
     created = models.DateTimeField(auto_now_add=True)
     path = models.CharField(max_length=200)
     original_path_root = models.CharField(max_length=200)
+    posix_original_path = models.BooleanField(default=False)
 
     class Meta:
         db_table = "document_batch"
@@ -297,9 +289,11 @@ class Document(models.Model):
     description = models.TextField(blank=True, null=True)
     text = models.TextField(blank=True, null=True)
     parent = models.ForeignKey("self", blank=True, null=True, on_delete=models.CASCADE)
-    country = models.ForeignKey(
-        DCountry, blank=True, null=True, on_delete=models.SET_NULL
+
+    countries = models.ManyToManyField(
+        DCountry, related_name="documents", db_table="document_country"
     )
+
     data_type = models.ForeignKey(
         DDataType, blank=True, null=True, on_delete=models.SET_NULL
     )
@@ -356,119 +350,125 @@ class Document(models.Model):
         cls, rec_id, records, processed_ids=None, import_batch=None, import_file=True
     ):
         processed_ids = processed_ids or []
-        if rec_id not in processed_ids:
-            rec = records[rec_id]
-            parent = None
-            if rec.parent_id is not None and rec.parent_id not in processed_ids:
-                parent, processed_ids = cls.save_metadata_record(
-                    rec.parent_id, records, processed_ids, import_batch, import_file
-                )
+        if rec_id in processed_ids:
+            return None, processed_ids
 
-            doc = attr.asdict(rec)
-            doc = {
-                field: value
-                for field, value in doc.items()
-                if field in rec.relevant_fields()
-            }
-
-            # Prepare FK relations
-            doc["parent"] = parent
-
-            # Map dictionary relation name to a tuple of:
-            # <related model>, (<related model field 1>, <corresponding metadata field 1>, ...)
-            # The specified related model fields must be able to uniquely identify the related instance.
-            fk_rels = {
-                "country": (DCountry, (("name", "country"),)),
-                "data_type": (DDataType, (("name", "data_type"),)),
-                "data_set": (DDataSet, (("name", "data_set"),)),
-                "resource_type": (DResourceType, (("name", "resource_type"),)),
-                "info_level": (DInfoLevel, (("name", "info_level"),)),
-                "topic_category": (DTopicCategory, (("name", "topic_category"),)),
-                "data_source": (DDataSource, (("name", "data_source"),)),
-                "organization": (
-                    Organization,
-                    (("name", "organization"), ("email", "organization_email")),
-                ),
-            }
-
-            for relation, details in fk_rels.items():
-                model, field_pairs = details
-                relation_filter = {p[0]: doc[p[1]] for p in field_pairs}
-                if any(relation_filter.values()):
-                    try:
-                        doc[relation] = model.objects.get(**relation_filter)
-                    except model.DoesNotExist:
-                        print(
-                            f"row={rec_id} {relation_filter} not found in {model.__name__}"
-                        )
-                        return None, processed_ids
-
-                else:
-                    doc.pop(relation, None)
-
-            # Remove non-Document fields (e.g. 'organization_email')
-            discard_fields = [
-                p[1]
-                for v in fk_rels.values()
-                for p in v[1]
-                if p[1] not in fk_rels.keys()
-            ]
-            for f in discard_fields:
-                doc.pop(f)
-
-            # Pop off M2M raw data before creating doc (M2M needs id)
-            nuts_levels = doc.pop("nuts_levels", [])
-            keywords = doc.pop("keywords", [])
-            additional_info = doc.pop("additional_info", [])
-            location = doc.pop("resource_locator_internal", None)
-            external_link = doc.pop("resource_locator_external", None)
-            languages = doc.pop("languages", [])
-            geo_fields = (
-                "bound_north",
-                "bound_east",
-                "bound_south",
-                "bound_west",
-                "projection",
-                "spatial_resolution",
+        rec = records[rec_id]
+        parent = None
+        if rec.parent_id is not None and rec.parent_id not in processed_ids:
+            parent, processed_ids = cls.save_metadata_record(
+                rec.parent_id, records, processed_ids, import_batch, import_file
             )
-            geo_bounds = {field: doc.pop(field, None) for field in geo_fields}
 
-            try:
-                doc = Document.objects.create(**doc)
-            except Exception:
-                log.error(f"Could not create document with metadata: {doc}")
-                raise
+        doc_data = attr.asdict(rec)
+        doc_data = {
+            field: value
+            for field, value in doc_data.items()
+            if field in rec.relevant_fields()
+        }
 
-            doc.import_batch = import_batch
+        # Prepare FK relations
+        doc_data["parent"] = parent
 
-            # Add M2M relations
-            nuts_levels = DNutsLevel.objects.filter(name__in=nuts_levels)
-            keywords = DKeyword.objects.filter(name__in=set(keywords + additional_info))
-            doc.nuts_levels.set(nuts_levels)
-            doc.keywords.set(keywords)
-            doc.save()
+        # Map dictionary relation name to a tuple of:
+        # <related model>, (<related model field 1>, <corresponding metadata field 1>, ...)
+        # The specified related model fields must be able to uniquely identify the related instance.
+        fk_rels = {
+            "data_type": (DDataType, (("name", "data_type"),)),
+            "data_set": (DDataSet, (("name", "data_set"),)),
+            "resource_type": (DResourceType, (("name", "resource_type"),)),
+            "info_level": (DInfoLevel, (("name", "info_level"),)),
+            "topic_category": (DTopicCategory, (("name", "topic_category"),)),
+            "data_source": (DDataSource, (("name", "data_source"),)),
+            "organization": (
+                Organization,
+                (("name", "organization"), ("email", "organization_email")),
+            ),
+        }
 
-            # Create geo bounds if available
-            if any(v for v in geo_bounds.values()):
-                geo_bounds["document"] = doc
-                GeographicBounds.objects.create(**geo_bounds)
+        for relation, details in fk_rels.items():
+            model, field_pairs = details
+            relation_filter = {p[0]: doc_data[p[1]] for p in field_pairs}
+            if any(relation_filter.values()):
+                try:
+                    doc_data[relation] = model.objects.get(**relation_filter)
+                except model.DoesNotExist:
+                    print(
+                        f"row={rec_id} {relation_filter} not found in {model.__name__}"
+                    )
+                    return None, processed_ids
 
-            # Create file and associate languages
-            if location is not None or external_link is not None:
-                file = DocumentFile.objects.create(
-                    document=doc, original_path=location, external_link=external_link
-                )
-                if languages:
-                    languages = DLanguage.objects.filter(name__in=languages)
-                    file.languages.set(languages)
-                    file.save()
-                if location is not None and import_file:
-                    file.import_file()
+            else:
+                doc_data.pop(relation, None)
 
-            processed_ids.append(rec_id)
-            return doc, processed_ids
+        # Remove non-Document fields (e.g. 'organization_email')
+        discard_fields = [
+            p[1]
+            for v in fk_rels.values()
+            for p in v[1]
+            if p[1] not in fk_rels.keys()
+        ]
+        for f in discard_fields:
+            doc_data.pop(f)
 
-        return None, processed_ids
+        # Pop off M2M raw data before creating doc (M2M needs id)
+        countries = doc_data.pop("countries", [])
+        countries = DCountry.objects.filter(name__in=countries)
+
+        nuts_levels = doc_data.pop("nuts_levels", [])
+        nuts_levels = DNutsLevel.objects.filter(name__in=nuts_levels)
+
+        keywords = doc_data.pop("keywords", [])
+        additional_info = doc_data.pop("additional_info", [])
+        keywords = DKeyword.objects.filter(name__in=set(keywords + additional_info))
+
+        location = doc_data.pop("resource_locator_internal2", None)
+        external_link = doc_data.pop("resource_locator_external", None)
+        languages = doc_data.pop("languages", [])
+        geo_fields = (
+            "bound_north",
+            "bound_east",
+            "bound_south",
+            "bound_west",
+            "projection",
+            "spatial_resolution",
+        )
+        geo_bounds = {field: doc_data.pop(field, None) for field in geo_fields}
+
+        doc_data["import_batch"] = import_batch
+
+        try:
+            doc = Document.objects.create(**doc_data)
+        except Exception:
+            log.error(f"Could not create document with metadata: {doc_data}")
+            raise
+
+        # Add M2M relations
+        doc.countries.set(countries)
+        doc.nuts_levels.set(nuts_levels)
+        doc.keywords.set(keywords)
+        doc.save()
+
+        # Create geo bounds if available
+        if any(v for v in geo_bounds.values()):
+            geo_bounds["document"] = doc
+            GeographicBounds.objects.create(**geo_bounds)
+
+        # Create file and associate languages
+        if location is not None or external_link is not None:
+            file = DocumentFile.objects.create(
+                document=doc, original_path=location, external_link=external_link
+            )
+            if languages:
+                languages = DLanguage.objects.filter(name__in=languages)
+                file.languages.set(languages)
+                file.save()
+            # Only import file once per original metadata record
+            if import_file and location is not None:
+                file.import_file()
+
+        processed_ids.append(rec_id)
+        return doc, processed_ids
 
     @classmethod
     def save_metadata_records(cls, records, import_batch=None, import_files=True):
@@ -556,22 +556,20 @@ class DocumentFile(models.Model):
     def size(self):
         return self.file.size
 
-    # @property
-    # def download_url(self):
-    #     return reverse(
-    #         "search:document-download",
-    #         kwargs={"document_pk": self.document_id, "pk": self.pk},
-    #     )
-
     @property
     def original_relative_path(self):
         """File path relative to the metadata path."""
         _path = None
         if self.original_path is not None and self.document.import_batch is not None:
             try:
-                _path = Path(self.original_path).relative_to(
-                    self.document.import_batch.original_path_root
-                )
+                if self.document.import_batch.posix_original_path:
+                    _path = PurePosixPath(self.original_path).relative_to(
+                        self.document.import_batch.original_path_root
+                    )
+                else:
+                    _path = PureWindowsPath(self.original_path).relative_to(
+                        self.document.import_batch.original_path_root
+                    )
             except ValueError:
                 pass  # Fall through to None response when original path does not respect the prefix
 
@@ -579,7 +577,7 @@ class DocumentFile(models.Model):
 
     def get_upload_path(self, file_name):
         """Returns the file path relative to storage location"""
-        upload_path = self.document.import_batch.path / self.original_relative_path
+        upload_path = Path(self.document.import_batch.path) / self.original_relative_path
         abs_upload_path = Path(self.file.storage.location) / upload_path
         abs_upload_path.parent.mkdir(parents=True, exist_ok=True)  # Ensure path dirs exist
         return str(upload_path)

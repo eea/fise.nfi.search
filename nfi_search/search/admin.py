@@ -69,7 +69,7 @@ class OrganizationAdmin(admin.ModelAdmin):
 
 class DocumentAdmin(admin.ModelAdmin):
     search_fields = ['title', ]
-    list_display = ['id', 'title', 'country']
+    list_display = ['id', 'title']
 
 
 class DocumentFileAdmin(admin.ModelAdmin):
