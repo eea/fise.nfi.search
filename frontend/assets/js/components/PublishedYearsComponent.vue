@@ -34,6 +34,8 @@ export default {
       mySelectedList: [],
       myDataList: JSON.parse(JSON.stringify(this.dataList)),
       dataset: {},
+      xScale: null,
+      yScale: null,
     };
   },
 
@@ -58,27 +60,27 @@ export default {
       getDimentions();
       getScaleDomains.call(this);
       getScaleRanges();
-      renderGraph.call(this, this.dataset);
+      renderGraph.call(this);
 
       d3.select(window).on('resize', resize.bind(this));
 
       /**
        * will create the graph and the brush
        */
-      function renderGraph(dataset) {
-        if (!dataset.data.length || !dataset.labels.length) {
+      function renderGraph() {
+        if (!this.dataset.data.length || !this.dataset.labels.length) {
           return false;
         }
         let self = this;
         const area = d3
           .area()
-          .x((d, i) => xScale(dataset.labels[i]))
+          .x((d, i) => xScale(this.dataset.labels[i]))
           .y0(innerHeight)
           .y1(d => yScale(d));
 
         const xAxis = d3
           .axisBottom(xScale)
-          .tickFormat((d, i) => dataset.labels[i]);
+          .tickFormat((d, i) => this.dataset.labels[i]);
         const yAxis = d3.axisLeft(yScale).ticks(4);
 
         svg.attr('width', width).attr('height', height);
@@ -108,7 +110,7 @@ export default {
           .enter()
           .append('path')
           .attr('class', 'path-area path-area1')
-          .attr('d', () => area(createZeroDataArray(dataset.data)))
+          .attr('d', () => area(createZeroDataArray(this.dataset.data)))
           .on('click', function handleClicked(params) {
             let x = d3.event.x;
             let y = d3.event.y;
@@ -116,7 +118,7 @@ export default {
           .transition()
           .duration(duration)
           .ease(d3.easePoly.exponent(2))
-          .attr('d', area(dataset.data));
+          .attr('d', area(this.dataset.data));
 
         this.xScale = xScale;
         this.brush = brush;
@@ -191,7 +193,7 @@ export default {
         destroyGraph();
         getDimentions();
         getScaleRanges();
-        renderGraph(this.dataset);
+        renderGraph.call(this, this.dataset);
       }
     },
 

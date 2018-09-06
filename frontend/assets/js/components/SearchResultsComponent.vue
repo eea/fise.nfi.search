@@ -101,10 +101,6 @@ export default {
     };
   },
 
-  created() {
-    console.log('this.myDataList', this.myDataList)
-  },
-
   methods: {
     handleClicked() {
       setTimeout(() => {
