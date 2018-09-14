@@ -1,5 +1,5 @@
 <template>
-  <div class="search">
+  <div class="search-fise">
     <!-- Search term -->
 
     <b-input-group class="mt-5 mb-5 slinput">
@@ -166,5 +166,8 @@ export default {
   transform:translateY(-50%);
   color:#666666;
   z-index: 4;
+}
+.result-content {
+  width: 100%;
 }
 </style>

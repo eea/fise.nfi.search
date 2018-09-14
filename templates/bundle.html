@@ -3,8 +3,21 @@
 <html lang="en">
 <head>
     <meta charset="UTF-8">
-    <title>FISE</title>
-    {% load render_bundle from webpack_loader %}
+
+  <meta http-equiv="Content-Type" content="text/html; charset=utf-8">
+  <meta content="FISE presents available data related to the implementation of policies where forests are concerned" name="DC.description">
+  <meta content="FISE presents available data related to the implementation of policies where forests are concerned" name="description">
+  <meta content="text/plain" name="DC.format">
+  <meta content="Folder" name="DC.type">
+  <meta content="2018/06/08 - " name="DC.date.valid_range">
+  <meta content="2018-08-08T08:25:20+02:00" name="DC.date.modified">
+  <meta content="2018-06-08T15:10:26+02:00" name="DC.date.created">
+  <meta content="en" name="DC.language">
+  <meta name="viewport" content="width=device-width, initial-scale=0.6666, maximum-scale=1.0, minimum-scale=0.6666">
+  <meta name="generator" content="Plone - http://plone.org">
+
+  <title>FISE</title>
+  {% load render_bundle from webpack_loader %}
 </head>
 <body>
   {% csrf_token %}
@@ -12,3 +25,4 @@
   {% render_bundle 'app' %}
 </body>
 </html>
+
