@@ -206,7 +206,12 @@
                         </a>
                       </li>
                     </ul>
-    
+
+                    <div class="header-info">
+                      <ul id="portal-siteactions">
+                        <li><a href="/nfi_search">NFI search</a></li>
+                      </ul>
+                    </div>
                     <div class="header-info">
                       <ul id="portal-siteactions">
                       </ul>
@@ -268,7 +273,7 @@
     
                   <div class="header-image">
                     <img src="https://demo-forests.eea.europa.eu/data-and-maps/header-image.jpg" alt="">
-                    <h1 class="header-image-title">Data and maps</h1>
+                    <h1 class="header-image-title">Search National Forest Inventories</h1>
                   </div>
                 </div>
               </div>
@@ -296,7 +301,6 @@
                   <ul class="list">
                     <li><a href="https://demo-forests.eea.europa.eu/legal/">Legal notice</a></li>
                     <li><a href="https://demo-forests.eea.europa.eu/legal/privacy">Privacy policy</a></li>
-                    <li><a href="https://demo-forests.eea.europa.eu/legal/cookies">Cookies</a></li>
                     <li><a href="https://demo-forests.eea.europa.eu/legal/credits">Credits</a></li>
                   </ul>
                 </div>
@@ -336,5 +340,13 @@ export default {
   -webkit-font-smoothing: antialiased;
   -moz-osx-font-smoothing: grayscale;
   color: #333;
+}
+h1, h2, h3, h4, h5, h6, .h1, .h2, .h3, .h4, .h5, .h6 {
+  margin-bottom: 0.8rem;
+  margin-top: 0.8rem;
+  font-family: inherit;
+  font-weight: 500;
+  line-height: 1.3;
+  color: inherit;
 }
 </style>

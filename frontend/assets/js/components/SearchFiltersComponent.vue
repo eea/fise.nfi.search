@@ -1,9 +1,8 @@
 <template>
   <div class="jumbotron">
-    <h4>FILTER RESULTS</h4>
-
+    <h4 class="filter-heading">Filter results by</h4>
     <!-- Select Country -->
-    <h4>Countries and regions</h4>
+    <h4 class="filter-heading">Countries and regions</h4>
     <div v-if="countries.length > 0">
       <country-component
         :dataList="countries"
@@ -15,7 +14,7 @@
 
     <!-- Select Nuts Levels -->
     <div v-if="facetsData.nuts_level" class="nuts">
-      <h4>NUTS levels</h4>
+      <h4 class="filter-heading">NUTS levels</h4>
       <check-box-buttons
         :dataList="facetsData.nuts_level"
         :componentName="'nutsLevels'"
@@ -25,7 +24,7 @@
     
     <!-- Select Published Year -->
     <div v-if="facetsData.published_year">
-      <h4>Published year</h4>
+      <h4 class="filter-heading">Published year</h4>
       <published-years
         :dataList="facetsData.published_year" 
         :componentName="'published-year'"
@@ -35,7 +34,7 @@
 
     <!-- Select Collection Years -->
     <div v-if="collectionsRange">
-      <h4>Collection years</h4>
+      <h4 class="filter-heading">Collection years</h4>
       <collection-years
         :dataList="collectionsRange"
         :componentName="'collections-range'"
@@ -66,7 +65,7 @@
 
     <!-- Select Topic Category -->
     <div v-if="facetsData.topic_category">
-      <h4>Topic category</h4>
+      <h4 class="filter-heading">Topic</h4>
       <check-box-buttons
         :dataList="facetsData.topic_category" 
         :componentName="'topicCategory'"
@@ -76,7 +75,7 @@
 
     <!-- Select Result Formats -->
     <div v-if="facetsData.resource_type">
-      <h4>Result format</h4>
+      <h4 class="filter-heading">Result format</h4>
       <check-box-buttons
         :dataList="facetsData.resource_type" 
         :componentName="'resourceTypes'"
@@ -626,11 +625,13 @@ export default {
   }
 }
 .bd-sidebar {
-  height: 100vh;
-  overflow: auto;
-  position: sticky;
+  height: 100%;
   top: 0;
   padding-right: 0;
+}
+.filter-heading {
+  font-size: 1.1rem;
+  color: #0b8442;
 }
 </style>
 

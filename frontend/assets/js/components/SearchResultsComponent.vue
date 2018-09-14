@@ -42,13 +42,13 @@
         v-model="modalShow"
         ok-only
       >
-        <p class="my-4">Country: {{selectedResult.country}}</p>
+        <p class="my-4">Country: {{selectedResult.country|| "n/a"}} </p>
         <p class="my-4">Data set: {{selectedResult.data_set}}</p>
         <p class="my-4">Data type: {{selectedResult.data_type}}</p>
         <p class="my-4">Description: {{selectedResult.description}}</p>
         <p class="my-4">Info level: {{selectedResult.info_level}}</p>
         <p class="my-4">Resource type: {{selectedResult.resource_type}}</p>
-        <p class="my-4">Topic category:  {{selectedResult.topic_category}}</p>
+        <p class="my-4">Topic:  {{selectedResult.topic_category}}</p>
         <div v-if="selectedResult.download_url">
           <b-link :href="selectedResult.download_url">Download</b-link>
         </div>

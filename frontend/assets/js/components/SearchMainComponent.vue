@@ -12,7 +12,7 @@
 
       <!-- result section -->
       <div class="pb-md-3 bd-content col-md-8 col-xl-8 col-12"> 
-        <div class="container">
+        <div>
           <div class="bd-content">
 
             <search-results 
@@ -175,15 +175,14 @@ a {
 
 .bd-sidebar {
   padding-left: 0;
+  height: 100%;
 }
 
 .bd-sidebar .jumbotron {
   margin-bottom: 0;
-  min-height: 100vh;
-  background-color: #e6e6e6;
-  position: sticky;
-    top: 0;
-    border-radius: 0;
+  background-color: #F7F7F7;
+  border-radius: 0;
+  border: 1px solid #D6D6D9;
 }
 
 </style>

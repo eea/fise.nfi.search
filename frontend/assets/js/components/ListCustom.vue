@@ -10,6 +10,7 @@
     >
     <div class="result-wrapper">
       <img
+        :title="data.resource_type"
         class="result-img"
         :src="getImageForResourceType(data.resource_type)"
         alt=""
@@ -25,7 +26,7 @@
         >
           {{truncate(data.description,200)}}...
         </p>
-        <small class="badge badge-primary">{{data.topic_category}}</small>
+        Topics: <small class="badge badge-primary">{{data.topic_category}}</small>
         <div v-if="data.download_url">
           <b-link class="btn btn-primary result-btn" :href="data.download_url">Download</b-link>
         </div>
@@ -122,5 +123,8 @@ small {
   float: right;
   transform: scale;
   margin-top: -2rem;
+}
+.result-content {
+  width: 100%;
 }
 </style>
