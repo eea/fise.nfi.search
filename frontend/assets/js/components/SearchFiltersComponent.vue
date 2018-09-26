@@ -167,6 +167,7 @@ export default {
   created() {
     this.makeSelectedFilterOptions();
     this.getFacets();
+    console.log("process.env", process.env)
   },
 
   methods: {
