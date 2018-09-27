@@ -1,9 +1,31 @@
 <template>
-  <div class="container-fluid">
-    <div class="row flex-xl-nowrap2">
+  <div class="container">
+    <!-- Search term input -->
+    <div class="row flex-xl-nowrap2 search-input-wrapper">
+      <b-input-group class="slinput">
+        <input
+          class="form-control"
+          placeholder="Search term"
+          v-model="searchTerm"
+          v-on:keyup.enter="handleClicked"
+        >
+          <b-input-group-append>
+            <b-btn
+              variant="primary"
+              v-on:click="handleClicked"
+            >Explore</b-btn>
+          </b-input-group-append>
+          <i
+            class="fa fa-close right-icon"
+            v-on:click="removeSearchTerm"
+          ></i>
+      </b-input-group>
+    </div>
+
+    <div class="row flex-xl-nowrap2 mt-5">
       <!-- facets section -->
-      <div class="bd-sidebar col-md-4 col-xl-4 col-12">
-        <search-filters 
+      <div class="bd-sidebar col-md-4 col-xl-3 col-12 order-md-12">
+        <search-filters
           v-on:updated-filters="handleUpdatedFilter"
           :updateSource="updateSource"
           :facets="facets"
@@ -11,11 +33,11 @@
       </div>
 
       <!-- result section -->
-      <div class="pb-md-3 bd-content col-md-8 col-xl-8 col-12"> 
+      <div class="pb-md-3 bd-content col-md-8 col-xl-9 col-12 order-md-1"> 
         <div>
           <div class="bd-content">
 
-            <search-results 
+            <search-results
               v-on:updated-search-term="handleUpdatedSearchTerm"
               :results="results"
               :count="count"
@@ -24,13 +46,13 @@
             <!-- prev/next page -->
             <div>
               <b-button-group>
-                <b-button 
+                <b-button
                   v-if="previous"
                   variant="primary"
                   v-on:click="getPrevNextResults('previous')"
                 >Prev
                 </b-button>
-                <b-button 
+                <b-button
                   v-if="next"
                   variant="primary"
                   v-on:click="getPrevNextResults('next')"
@@ -76,10 +98,20 @@ export default {
       searchQuery: '',
       updateSource: '',
       justStarted: true,
+      searchTerm: '',
     };
   },
 
   methods: {
+    handleClicked() {
+      this.handleUpdatedSearchTerm(this.searchTerm);
+    },
+
+    removeSearchTerm() {
+      this.searchTerm = '';
+      this.handleUpdatedSearchTerm(this.searchTerm);
+    },
+
     /**
      * this will issue the search but will only update the facets
      * it is called by the filter component (facets)
@@ -156,7 +188,7 @@ export default {
 </script>
 
 <!-- Add "scoped" attribute to limit CSS to this component only -->
-<style scoped>
+<style scoped lang="scss">
 h1,
 h2 {
   font-weight: normal;
@@ -185,4 +217,67 @@ a {
   border: 1px solid #D6D6D9;
 }
 
+.nav-tabs .nav-link {
+  border: 0;
+}
+
+.search-input-wrapper {
+  background-color: #078548;
+  padding: 2rem 10rem;
+  position: relative;
+  z-index: 89;
+}
+
+.slinput {
+  position: relative;
+  border: 1px solid #fff;
+  background-color: #fff;
+
+  .input-group-append {
+    margin-left: 0;
+    order: 2;
+  }
+
+  input {
+    padding-left: 2rem;
+    box-shadow: none;
+    border: none;
+    border-radius: 0;
+  }
+
+  button {
+    min-width: 150px;
+    background-color:#8DC84C;
+    color: #000;
+    font-weight: bold;
+    border-color: transparent;
+    z-index: 4;
+  }
+
+  .fa-search {
+    position: absolute;
+    left: 1rem;
+    z-index: 1;
+    top: 50%;
+    transform: translateY(-50%);
+    font-size: 2rem;
+    color:#666666;
+    z-index: 4;
+  }
+
+  .fa-close {
+    color:#666666;
+    z-index: 4;
+    order: 1;
+    display: flex;
+    align-items: center;
+    padding: 0 1em;
+  }
+}
+
+.result-content {
+  width: 100%;
+}
+
 </style>
+

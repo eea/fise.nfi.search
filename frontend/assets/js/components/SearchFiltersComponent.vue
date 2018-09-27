@@ -1,6 +1,9 @@
 <template>
-  <div class="jumbotron">
-    <h4 class="filter-heading">Filter results by</h4>
+  <div class="">
+    <h4 class="filters-title">Filters</h4>
+
+    <hr>
+
     <!-- Select Country -->
     <h4 class="filter-heading">Countries and regions</h4>
     <div v-if="countries.length > 0">
@@ -12,21 +15,27 @@
       ></country-component>
     </div>
 
+    <hr>
+
     <!-- Select Nuts Levels -->
     <div v-if="facetsData.nuts_level" class="nuts">
-      <h4 class="filter-heading">NUTS levels</h4>
       <check-box-buttons
         :dataList="facetsData.nuts_level"
         :componentName="'nutsLevels'"
         v-on:selected-nutsLevels="handleSelectedNutsLevels"
+        :title="'NUTS levels'"
       ></check-box-buttons>
     </div>
-    
+
+    <hr>
+
+    <div class="filter-heading">Date</div>
+
     <!-- Select Published Year -->
     <div v-if="facetsData.published_year">
-      <h4 class="filter-heading">Published year</h4>
+      <h4 class="filter-heading--date">Published year</h4>
       <published-years
-        :dataList="facetsData.published_year" 
+        :dataList="facetsData.published_year"
         :componentName="'published-year'"
         v-on:selected-published-year="handleSelectedPublishedYear"
       ></published-years>
@@ -34,7 +43,7 @@
 
     <!-- Select Collection Years -->
     <div v-if="collectionsRange">
-      <h4 class="filter-heading">Collection years</h4>
+      <h4 class="filter-heading--date">Collection years</h4>
       <collection-years
         :dataList="collectionsRange"
         :componentName="'collections-range'"
@@ -42,44 +51,47 @@
       ></collection-years>
     </div>
 
-    <!-- Select Data Sets -->
-      <b-row v-if="showDateSets">
-      <b-col>
-        <check-box-buttons
-          :dataList="dataTypes[0].dataSets" 
-          :componentName="'dataSets-0'"
-          :title="dataTypes[0].name"
-          v-on:selected-dataSets-0="handleSelectedDataSetsRaster"
-        ></check-box-buttons>
-      </b-col>
+    <hr>
 
-      <b-col>
-        <check-box-buttons
-          :dataList="dataTypes[1].dataSets" 
-          :componentName="'dataSets-1'"
-          :title="dataTypes[1].name"
-          v-on:selected-dataSets-1="handleSelectedDataSetsSample"
-        ></check-box-buttons>
-      </b-col>
-    </b-row>
-
-    <!-- Select Topic Category -->
-    <div v-if="facetsData.topic_category">
-      <h4 class="filter-heading">Topic</h4>
+    <div v-if="showDateSets">
       <check-box-buttons
-        :dataList="facetsData.topic_category" 
-        :componentName="'topicCategory'"
-        v-on:selected-topicCategory="handleSelectedTopicCategory"
+        :dataList="dataTypes[0].dataSets"
+        :componentName="'dataSets-0'"
+        :title="dataTypes[0].name"
+        v-on:selected-dataSets-0="handleSelectedDataSetsRaster"
+      ></check-box-buttons>
+
+      <hr>
+
+      <check-box-buttons
+        :dataList="dataTypes[1].dataSets"
+        :componentName="'dataSets-1'"
+        :title="dataTypes[1].name"
+        v-on:selected-dataSets-1="handleSelectedDataSetsSample"
       ></check-box-buttons>
     </div>
 
+    <hr>
+
+    <!-- Select Topic Category -->
+    <div v-if="facetsData.topic_category">
+      <check-box-buttons
+        :dataList="facetsData.topic_category"
+        :componentName="'topicCategory'"
+        v-on:selected-topicCategory="handleSelectedTopicCategory"
+        :title="'Topic'"
+      ></check-box-buttons>
+    </div>
+
+    <hr>
+
     <!-- Select Result Formats -->
     <div v-if="facetsData.resource_type">
-      <h4 class="filter-heading">Result format</h4>
       <check-box-buttons
-        :dataList="facetsData.resource_type" 
+        :dataList="facetsData.resource_type"
         :componentName="'resourceTypes'"
         v-on:selected-resourceTypes="handleSelectedResourceTypes"
+        :title="'Result format'"
       ></check-box-buttons>
     </div>
 
@@ -630,9 +642,20 @@ export default {
   top: 0;
   padding-right: 0;
 }
+.filters-title {
+  color: #8DC84C;
+  margin: 0;
+  line-height: 2rem;
+}
+
 .filter-heading {
   font-size: 1.1rem;
-  color: #0b8442;
+  font-weight: bold;
+  margin-bottom: 1em;
+  .fa-angle-down {
+    font-size: 1.6em;
+    color: #999;
+  }
 }
 </style>
 

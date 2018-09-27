@@ -95,9 +95,28 @@ export default {
 };
 </script>
 
-<style>
+<style lang="scss">
 .range-slider {
   margin-left: 50px;
   margin-right: 50px;
+}
+.vue-slider-component .vue-slider-tooltip {
+  display: block;
+  font-size: 14px;
+  white-space: nowrap;
+  padding: 2px 5px;
+  min-width: 20px;
+  text-align: center;
+  color: #fff;
+  border-radius: 5px;
+  border: 1px solid var(--fise-dark-green);
+  background-color: var(--fise-dark-green);
+}
+.vue-slider-component .vue-slider-process {
+  position: absolute;
+  border-radius: 15px;
+  background-color: var(--fise-dark-green);
+  transition: all 0s;
+  z-index: 1;
 }
 </style>

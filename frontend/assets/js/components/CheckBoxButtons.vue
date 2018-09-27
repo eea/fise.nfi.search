@@ -1,27 +1,36 @@
 <template>
-  <div role="group" class="filter-group">
-    <div>
-      <h5>{{title}}</h5>
-    </div>
-    <label 
-      style="display:flex"
-      v-for="dataItem in myDataList"
-      :key="componentName + dataItem.id"
-    >
-      <b-form-checkbox
-        stacked
-        :id="componentName + dataItem.id"
-        v-model="mySelectedList"
-        :value="dataItem"
-        v-on:change="handleClicked()"
-        lazy
-      ></b-form-checkbox>
-      <span class="filter-item-name">
-        {{dataItem.displayName || dataItem.name}}
-        <span class="badge badge-primary">{{dataItem.number}}</span>
-      </span>
+  <div>
+    <a role="button" v-b-toggle="'collapse-' + componentName">
+      <div class="filter-heading h5 d-flex align-items-center justify-content-between">
+        {{title}}
+        <span class="fa fa-angle-down"></span>
+      </div>
+      <div class="preview-text">{{summary}}</div>
+    </a>
+    <b-collapse :id="'collapse-' + componentName">
+      <div role="group" class="filter-group">
+        <label
+          style="display:flex"
+          v-for="dataItem in myDataList"
+          :key="componentName + dataItem.id"
+        >
+          <b-form-checkbox
+            stacked
+            :id="componentName + dataItem.id"
+            v-model="mySelectedList"
+            :value="dataItem"
+            v-on:change="handleClicked()"
+            lazy
+          ></b-form-checkbox>
+          <span class="filter-item-name">
+            {{dataItem.displayName || dataItem.name}}
+            <span class="badge badge-primary">{{dataItem.number}}</span>
+          </span>
 
-    </label>
+        </label>
+      </div>
+
+    </b-collapse>
   </div>
 </template>
 
@@ -40,6 +49,21 @@ export default {
       mySelectedList: [],
       myDataList: JSON.parse(JSON.stringify(this.dataList)),
     };
+  },
+
+  computed: {
+    summary() {
+      let result = '';
+      const noOfResultsInSummary = 2;
+      const myDataListItems = Object.keys(this.myDataList);
+      const remainingNumberOfResults = myDataListItems.length - noOfResultsInSummary;
+
+      myDataListItems.slice(0, noOfResultsInSummary).map((key) => {
+        result += this.myDataList[key].name + ', ';
+      });
+      result += '.. + ' + remainingNumberOfResults + ' more';
+      return result;
+    }
   },
 
   methods: {
@@ -80,7 +104,7 @@ export default {
 };
 </script>
 
-<style scoped>
+<style scoped lang="scss">
 .btn-group {
   position: relative;
   display: -ms-inline-flexbox;
@@ -103,6 +127,22 @@ export default {
 }
 .filter-group > label {
   cursor: pointer;
+  margin-bottom: 0;
 }
+
+.preview-text {
+  min-height: 0;
+  opacity: 0;
+  transition: .2s;
+  height: 0;
+  color: #999;
+  font-size: .8em;
+  .collapsed & {
+    display: block;
+    min-height: 3em;
+    opacity: 1;
+  }
+}
+
 
 </style>

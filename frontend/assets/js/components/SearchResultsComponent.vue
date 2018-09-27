@@ -1,29 +1,12 @@
+
 <template>
   <div class="search-fise">
-    <!-- Search term -->
-
-    <b-input-group class="mt-5 mb-5 slinput">
-      <i class="fa fa-search left-icon"></i>
-      <input
-        class="form-control" 
-        v-model="searchTerm"
-        v-on:keyup.enter="handleClicked"
-        placeholder="Type something"
-      >
-        <b-input-group-append>
-          <b-btn variant="primary"
-            v-on:click="handleClicked"
-          >Search</b-btn>
-        </b-input-group-append>
-        <i
-          class="fa fa-close right-icon"
-          v-on:click="removeSearchTerm"
-        ></i>
-    </b-input-group>
 
     <!-- result count -->
-      <p href="#" target="_self">Number of results {{count}}</p>
+    <div class="result-count">
+      <p href="#" target="_self">{{count}} Results</p>
       <hr>
+    </div>
 
     <!-- search results -->
     <list-custom
@@ -41,34 +24,82 @@
         size="lg"
         v-model="modalShow"
         ok-only
+        class="fise-search-modal"
       >
-        <p class="my-4">Country: {{selectedResult.country|| "n/a"}} </p>
-        <p class="my-4">Data set: {{selectedResult.data_set}}</p>
-        <p class="my-4">Data type: {{selectedResult.data_type}}</p>
-        <p class="my-4">Description: {{selectedResult.description}}</p>
-        <p class="my-4">Info level: {{selectedResult.info_level}}</p>
-        <p class="my-4">Resource type: {{selectedResult.resource_type}}</p>
-        <p class="my-4">Topic:  {{selectedResult.topic_category}}</p>
-        <div v-if="selectedResult.download_url">
-          <b-link :href="selectedResult.download_url">Download</b-link>
-        </div>
-        <div>
-          NUTS levels:
-          <b-badge
-            v-for="nut in selectedResult.nuts_levels"
-            variant="light"
-            :key="nut"
-          >{{nut}}</b-badge>
-        </div>
-        <div>
-          Keywords:
-          <b-badge
-            v-for="keyword in selectedResult.keywords"
-            variant="light"
-            :key="keyword"
-          >{{keyword}}</b-badge>
+        <template slot="modal-title">
+          <div class="d-flex align-items-start">
+            <img
+              :src="report"
+              alt="report"
+              width="60"
+              height="70"
+            >
+            {{ selectedResult.title }}
+          </div>
+        </template>
+        <template slot="modal-header-close">× Close</template>
+        <template slot="modal-footer">
+          <div v-if="selectedResult.download_url">
+            <b-link :href="selectedResult.download_url" class="btn fise-search-download-link"><i class="fa fa-download"></i> Download document</b-link>
+          </div>
+        </template>
+
+        <div class="form-group row align-items-start">
+          <div class="col-sm-2 col-form-label">Country</div>
+          <div class="col-sm-10 col-form-label">{{selectedResult.country|| "n/a"}} </div>
         </div>
 
+        <div class="form-group row align-items-start">
+          <div class="col-sm-2 col-form-label">Data set</div>
+          <div class="col-sm-10 col-form-label">{{selectedResult.data_set}}</div>
+        </div>
+
+        <div class="form-group row align-items-start">
+          <div class="col-sm-2 col-form-label">Data type</div>
+          <div class="col-sm-10 col-form-label">{{selectedResult.data_type}}</div>
+        </div>
+
+        <div class="form-group row align-items-start">
+          <div class="col-sm-2 col-form-label">Description</div>
+          <div class="col-sm-10 col-form-label">{{selectedResult.description}}</div>
+        </div>
+
+        <div class="form-group row align-items-start">
+          <div class="col-sm-2 col-form-label">Info level</div>
+          <div class="col-sm-10 col-form-label">{{selectedResult.info_level}}</div>
+        </div>
+
+        <div class="form-group row align-items-start">
+          <div class="col-sm-2 col-form-label">Resource type</div>
+          <div class="col-sm-10 col-form-label">{{selectedResult.resource_type}}</div>
+        </div>
+
+        <div class="form-group row align-items-start">
+          <div class="col-sm-2 col-form-label">Topic</div>
+          <div class="col-sm-10 col-form-label">{{selectedResult.topic_category}}</div>
+        </div>
+
+        <div class="form-group row align-items-start">
+          <div class="col-sm-2 col-form-label">NUTS levels</div>
+          <div class="col-sm-10 col-form-label">
+            <b-badge
+              v-for="nut in selectedResult.nuts_levels"
+              :key="nut"
+              variant="default"
+            >{{nut}}</b-badge>
+          </div>
+        </div>
+        <div class="form-group row align-items-start">
+          <div class="col-sm-2 col-form-label">Keywords:</div>
+          <div class="col-sm-10 col-form-label badge-container">
+            <b-badge
+              v-for="keyword in selectedResult.keywords"
+              :key="keyword"
+              variant="default"
+              class="badge-outline"
+            >{{keyword}}</b-badge>
+          </div>
+        </div>
       </b-modal>
     </div>
 
@@ -76,8 +107,8 @@
 </template>
 
 <script>
+import report from '../assets/report-icon.png';
 import ListCustom from './ListCustom';
-
 
 export default {
   name: 'SearchResultsComponent',
@@ -93,30 +124,18 @@ export default {
 
   data() {
     return {
-      searchTerm: '',
       prestineForm: true,
       selectedResult: null,
       modalShow: false,
       myDataList: JSON.parse(JSON.stringify(this.results)),
+      report,
     };
   },
 
   methods: {
-    handleClicked() {
-      setTimeout(() => {
-        // will emit after the render updates the model
-        this.$emit("updated-search-term", this.searchTerm);
-      });
-    },
-
     handleSelectedResult(ev) {
       this.selectedResult = ev;
       this.modalShow = true;
-    },
-
-    removeSearchTerm() {
-      this.searchTerm = '';
-      this.$emit("updated-search-term", this.searchTerm);
     },
   },
 
@@ -128,46 +147,49 @@ export default {
 };
 </script>
 
-<style scoped>
+<style scoped lang="scss">
+
 .nav-tabs .nav-link {
   border: 0;
 }
-.slinput {
-  position: relative;
-}
-.slinput input {
-  font-size: 1.6rem;
-  padding-left: 4rem;
-}
-.slinput button {
-  position: absolute;
-  right: .5rem;
-  top: 50%;
-  transform: translateY(-50%);
-  min-width: 120px;
-  background-color:#666666;
-  border-color: transparent;
-  z-index: 4;
-}
-.slinput .fa-search {
-  position: absolute;
-  left: 1rem;
-  z-index: 1;
-  top: 50%;
-  transform: translateY(-50%);
-  font-size: 2rem;
-  color:#666666;
-  z-index: 4;
-}
-.slinput .fa-close {
-  position: absolute;
-  right: calc(1.2rem + 120px + 1rem);
-  top:50%;
-  transform:translateY(-50%);
-  color:#666666;
-  z-index: 4;
-}
+
 .result-content {
   width: 100%;
+}
+
+.result-count {
+  font-size: .8rem;
+  color: #999;
+  line-height: 2rem;
+
+  hr {
+    width: 15rem;
+  }
+}
+
+svg path {
+  fill: white;
+  transform: rotate(0.1deg);
+}
+.fise-search-download-link {
+  background-color: var(--fise-yellow);
+  color: #111;
+}
+.badge-container {
+  margin-left: -.5rem;
+  margin-top: -.5rem;
+}
+.badge {
+  font-size: inherit;
+  font-weight: normal;
+  color: #111;
+}
+.badge-outline {
+  border: 1px solid #ddd;
+  background-color: transparent;
+  padding: .5em 1em;
+  border-radius: 1em;
+  margin-left: .5rem;
+  margin-top: .5rem;
 }
 </style>
