@@ -19,7 +19,7 @@
             >
             <div class="result-content">
               <div class="result-header">
-                <h5 class="mb-1"><sup>[file type]</sup> {{data.title}}</h5>
+                <h5 class="mb-1"><sup v-if="data.document_type">[ {{data.resource_type}} ]</sup> {{data.title}}</h5>
               </div>
               <p
                 class="mb-1 result-body"

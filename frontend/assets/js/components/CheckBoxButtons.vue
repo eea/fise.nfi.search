@@ -23,7 +23,7 @@
             lazy
           ></b-form-checkbox>
           <span class="filter-item-name">
-            {{dataItem.displayName || dataItem.name}}
+            {{dataItem.name | renameLevel | nfiExplain}}
             <span class="badge badge-primary">{{dataItem.number}}</span>
           </span>
 
@@ -44,6 +44,18 @@ export default {
     title: '',
   },
 
+  filters: {
+    nfiExplain(value) {
+      if (!value || value.toLowerCase() !== 'nfi') return value;
+      return value + ' (National Forest Inventory)';
+    },
+    renameLevel(nut) {
+      console.log(nut)
+      if (!nut) return '';
+      return nut.replace('L','Level ');
+    },
+  },
+
   data() {
     return {
       mySelectedList: [],
@@ -53,13 +65,15 @@ export default {
 
   computed: {
     summary() {
+      console.log('my data list', this.myDataList)
       let result = '';
       const noOfResultsInSummary = 2;
       const myDataListItems = Object.keys(this.myDataList);
       const remainingNumberOfResults = myDataListItems.length - noOfResultsInSummary;
 
       myDataListItems.slice(0, noOfResultsInSummary).map((key) => {
-        result += this.myDataList[key].name + ', ';
+        let name = this.myDataList[key].name.replace('L','Level ');
+        result += name + ', ';
       });
       result += '.. + ' + remainingNumberOfResults + ' more';
       return result;

@@ -51,7 +51,7 @@
 
         <div class="form-group row align-items-start">
           <div class="col-sm-2 col-form-label">Data set</div>
-          <div class="col-sm-10 col-form-label">{{selectedResult.data_set}}</div>
+          <div class="col-sm-10 col-form-label">{{selectedResult.data_set | nfiExplain}}</div>
         </div>
 
         <div class="form-group row align-items-start">
@@ -65,12 +65,7 @@
         </div>
 
         <div class="form-group row align-items-start">
-          <div class="col-sm-2 col-form-label">Info level</div>
-          <div class="col-sm-10 col-form-label">{{selectedResult.info_level}}</div>
-        </div>
-
-        <div class="form-group row align-items-start">
-          <div class="col-sm-2 col-form-label">Resource type</div>
+          <div class="col-sm-2 col-form-label">Resource format</div>
           <div class="col-sm-10 col-form-label">{{selectedResult.resource_type}}</div>
         </div>
 
@@ -86,9 +81,12 @@
               v-for="nut in selectedResult.nuts_levels"
               :key="nut"
               variant="default"
-            >{{nut}}</b-badge>
+            >
+              {{ nut | renameLevel }}
+            </b-badge>
           </div>
         </div>
+
         <div class="form-group row align-items-start">
           <div class="col-sm-2 col-form-label">Keywords:</div>
           <div class="col-sm-10 col-form-label badge-container">
@@ -97,8 +95,13 @@
               :key="keyword"
               variant="default"
               class="badge-outline"
-            >{{keyword}}</b-badge>
+            >{{ keyword }}</b-badge>
           </div>
+        </div>
+
+        <div class="form-group row align-items-start">
+          <div class="col-sm-2 col-form-label">Info level</div>
+          <div class="col-sm-10 col-form-label">{{selectedResult.info_level}}</div>
         </div>
       </b-modal>
     </div>
@@ -120,6 +123,17 @@ export default {
   props: {
     results: {},
     count: null,
+  },
+
+  filters: {
+    renameLevel(nut) {
+      if (!nut) return '';
+      return nut.replace('L','Level ');
+    },
+    nfiExplain(value) {
+      if (!value || value.toLowerCase() !== 'nfi') return value;
+      return value + ' (National Forest Inventory)';
+    },
   },
 
   data() {

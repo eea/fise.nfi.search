@@ -232,9 +232,8 @@ export default {
             entityData
           );
         })
-        // nuts levels need to be ordered and renamed from L0 to Level0
-        const renamedNutsLevel = this.renameLevels(facetsData.nuts_level);
-        facetsData.nuts_level = this.sortObjKeysAlphabetically(renamedNutsLevel);
+        // nuts levels need to be ordered
+        facetsData.nuts_level = this.sortObjKeysAlphabetically(facetsData.nuts_level);
         // countries need to be reagions firs ordered and countries second and sorted
         this.facetsData = JSON.parse(JSON.stringify(facetsData));
         const countries = response[responseLength - 4].data.slice();
@@ -529,7 +528,7 @@ export default {
 
       Object.keys(formattedLevels).map((key, index) => {
         const level = formattedLevels[key];
-        formattedLevels[key].displayName = level.name.replace('L','Level');
+        formattedLevels[key].displayName = level.name.replace('L','Level ');
 
         return level;
       });
