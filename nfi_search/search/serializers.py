@@ -96,6 +96,9 @@ class DocumentDocSerializer(DocumentSerializer):
     nuts_levels = SerializerMethodField()
     keywords = SerializerMethodField()
     download_url = SerializerMethodField()
+    file_name = SerializerMethodField()
+    file_size = SerializerMethodField()
+    countries = SerializerMethodField()
 
     class Meta:
         document = DocumentDoc
@@ -114,7 +117,9 @@ class DocumentDocSerializer(DocumentSerializer):
             'data_collection_end_year',
             'published_year',
             'next_update_year',
-
+            'file_name',
+            'file_size',
+            'countries',
         )
 
     @staticmethod
@@ -137,3 +142,21 @@ class DocumentDocSerializer(DocumentSerializer):
             return None
 
         return doc.fq_download_url
+
+    def get_file_name(self, obj):
+        doc = self.Meta.document._doc_type.model.objects.get(pk=obj.id)
+        if not doc.file or not doc.file.file:
+            return None
+
+        return doc.file.name
+
+    def get_file_size(self, obj):
+        doc = self.Meta.document._doc_type.model.objects.get(pk=obj.id)
+        if not doc.file or not doc.file.file:
+            return None
+
+        return doc.file.size
+
+    def get_countries(self, obj):
+        doc = self.Meta.document._doc_type.model.objects.get(pk=obj.id)
+        return sorted([c.name for c in doc.countries.all()])
