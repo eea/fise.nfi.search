@@ -144,7 +144,7 @@ const simpleFacets = {
 
 /**
  * will create the facets using checkboxes, dropdowns, sliders and graphs
- * will autoupdate the count on each value of each facet, except for the source of update
+ * will autoupdate the count on each value of each facet
  */
 export default {
   name: 'SearchFiltersComponent',
@@ -158,7 +158,6 @@ export default {
 
   props: {
     facets: {},
-    updateSource: ''
   },
 
   data() {
@@ -170,8 +169,6 @@ export default {
       selectedDataSetsRaster: [],
       collectionsRange: null,
       showDateSets: false,
-      sourceOfUpdate: null, // will not update the source, if the new data is empty, 
-      // then the source is null so that is can update it's count
       selectedFilterOptions: {},
     };
   },
@@ -344,9 +341,8 @@ export default {
 
     /**
      * after all the search requests for each dataType is done, it will assign the dataSets to each dataType
-     * it's important to wait until the end of all the requests so that the checkboxe components will get
+     * it's important to wait until the end of all the requests so that the checkbox components will get
      * the correct list, not undefined 
-     * TODO try and give to each checkbox component only what it need and when it's done, don't wait for all
      * it will update this.dataTypes not the clone (test for performance)
      */
     assignDataSetsToEachDataType(promisesSetsForEachType, dataTypes) {
@@ -364,20 +360,19 @@ export default {
 
     handleSelectedDataSetsRaster(ev) {
       this.selectedDataSetsSample = ev.slice();
-      this.handleSelectedDataSets(ev.length > 0 ? facets.data_type : null);
+      this.handleSelectedDataSets();
     },
 
     handleSelectedDataSetsSample(ev) {
       this.selectedDataSetsRaster = ev.slice();
-      this.handleSelectedDataSets(ev.length > 0 ? facets.data_type : null);
+      this.handleSelectedDataSets();
     },
 
-    handleSelectedDataSets(sourceOfUpdate) {
+    handleSelectedDataSets() {
       this.selectedFilterOptions.data_set = [
         ...this.selectedDataSetsSample,
         ...this.selectedDataSetsRaster
       ];
-      this.sourceOfUpdate = sourceOfUpdate;
 
       let searchQuery = this.makeSearchQuery();
       this.emitSelectedFilter(searchQuery);
@@ -385,42 +380,36 @@ export default {
 
     handleSelectedResourceTypes(ev) {
       this.selectedFilterOptions.resource_type = ev.slice();
-      this.sourceOfUpdate = ev.length > 0 ? facets.resource_type : null;
       let searchQuery = this.makeSearchQuery();
       this.emitSelectedFilter(searchQuery);
     },
 
     handleSelectedCountry(ev) {
       this.selectedFilterOptions.country = ev.slice();
-      this.sourceOfUpdate = ev.length > 0 ? facets.country : null;
       let searchQuery = this.makeSearchQuery();
       this.emitSelectedFilter(searchQuery);
     },
 
     handleSelectedNutsLevels(ev) {
       this.selectedFilterOptions.nuts_level = ev.slice();
-      this.sourceOfUpdate = ev.length > 0 ? facets.nuts_level : null;
       let searchQuery = this.makeSearchQuery();
       this.emitSelectedFilter(searchQuery);
     },
 
     handleSelectedTopicCategory(ev) {
       this.selectedFilterOptions.topic_category = ev.slice();
-      this.sourceOfUpdate = ev.length > 0 ? facets.topic_category : null;
       let searchQuery = this.makeSearchQuery();
       this.emitSelectedFilter(searchQuery);
     },
 
     handleSelectedPublishedYear(ev) {
       this.selectedFilterOptions.published_year = ev.slice();
-      this.sourceOfUpdate = ev.length > 0 ? facets.published_year : null;
       let searchQuery = this.makeSearchQuery();
       this.emitSelectedFilter(searchQuery);
     },
 
     handleSelectedCollectionYears(ev) {
       this.selectedFilterOptions.collections_range = ev.slice();
-      this.sourceOfUpdate = ev.length > 0 ? facets.collections_range : null;
       let searchQuery = this.makeSearchQuery();
       this.emitSelectedFilter(searchQuery);
     },
@@ -483,7 +472,7 @@ export default {
     },
 
     /**
-     * - will update data for all child componentes except for the one that started the update
+     * - will update data for all child componentes
      * - !!the server returns only the data sets that have a value (everything that is 0, will not be received)
      * but we look for all received datasets and replace the existing number with the new one or with 0
      * this way the check-box-buttons component will always receive the same list, the count of each will differ
@@ -493,31 +482,27 @@ export default {
       Object.keys(simpleFacets).map(key => {
         const faceName = simpleFacets[key].name;
 
-        if(this.sourceOfUpdate !== faceName) {
-          let entityClone = JSON.parse(JSON.stringify(this.facetsData[faceName]));
+        let entityClone = JSON.parse(JSON.stringify(this.facetsData[faceName]));
 
-          Object.keys(entityClone).map(entityItemName => {
-            const entityItem = this.facetsData[faceName][entityItemName];
-            entityClone[entityItemName] = Object.assign(entityItem, {
-              number: this.facets[faceName][entityItemName] || 0
-            });
-          });
-
-          this.facetsData[faceName] = JSON.parse(JSON.stringify(entityClone));
-        }
-      });
-
-      if(this.sourceOfUpdate !== facets.data_type) {
-        let dataTypesClone = JSON.parse(JSON.stringify(this.dataTypes));
-        dataTypesClone.map(dataType => {
-          Object.keys(dataType.dataSets).map(key => {
-            dataType.dataSets[key] = Object.assign(dataType.dataSets[key], {
-              number: this.facets.data_set[key] || 0
-            });
+        Object.keys(entityClone).map(entityItemName => {
+          const entityItem = this.facetsData[faceName][entityItemName];
+          entityClone[entityItemName] = Object.assign(entityItem, {
+            number: this.facets[faceName][entityItemName] || 0
           });
         });
-        this.dataTypes = JSON.parse(JSON.stringify(dataTypesClone));
-      }
+
+        this.facetsData[faceName] = JSON.parse(JSON.stringify(entityClone));
+      });
+
+      let dataTypesClone = JSON.parse(JSON.stringify(this.dataTypes));
+      dataTypesClone.map(dataType => {
+        Object.keys(dataType.dataSets).map(key => {
+          dataType.dataSets[key] = Object.assign(dataType.dataSets[key], {
+            number: this.facets.data_set[key] || 0
+          });
+        });
+      });
+      this.dataTypes = JSON.parse(JSON.stringify(dataTypesClone));
     },
 
     renameLevels(levels) {
@@ -561,7 +546,7 @@ export default {
 
       result.sort(function(a, b) {
         const nameA = a.name.toUpperCase(); // ignore upper and lowercase
-        const nameB = b.name.toUpperCase(); // ignore upper and lowercase
+        const nameB = b.name.toUpperCase();
         if (nameA < nameB) {
           return -1;
         }
@@ -578,7 +563,7 @@ export default {
       const tempCountries = countries.slice();
       let regionsList = [];
       let result = [];
-      //find all regions and insert them at the begining in result
+      // find all regions and insert them at the begining in result
       for (let i = 0; i < regions.length; i++) {
         const region = regions[i];
         var found = tempCountries.find(function(country) {
@@ -606,11 +591,6 @@ export default {
   },
 
   watch: {
-    updateSource: function(val) {
-      if(val === 'searchTerm') {
-        this.sourceOfUpdate = null;
-      }
-    },
     facets: function(val) {
       setTimeout(() => {
         this.updateFacetsCount();

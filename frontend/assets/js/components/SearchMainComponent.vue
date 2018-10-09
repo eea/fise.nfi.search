@@ -27,7 +27,6 @@
       <div class="bd-sidebar col-md-4 col-xl-3 col-12 order-md-12">
         <search-filters
           v-on:updated-filters="handleUpdatedFilter"
-          :updateSource="updateSource"
           :facets="facets"
         ></search-filters>
       </div>
@@ -92,7 +91,6 @@ export default {
       next: '',
       previous: '',
       searchQuery: '',
-      updateSource: '',
       justStarted: true,
       searchTerm: '',
       resultsPerPage: 20,
@@ -118,16 +116,11 @@ export default {
 
         search(resultSearchQuery)
           .then((response) => {
-            if(this.justStarted) {
-              this.facets = response.data.facets;
-            } else {
-              this.facets = response.data.facets;
-              this.results = response.data.results;
-              this.count = response.data.count;
-              this.next = response.data.next;
-              this.previous = response.data.previous;
-            }
-            this.updateSource = 'facet';
+            this.facets = response.data.facets;
+            this.results = response.data.results;
+            this.count = response.data.count;
+            this.next = response.data.next;
+            this.previous = response.data.previous;
           })
           .catch((error) => {
             console.log(error);
@@ -153,16 +146,11 @@ export default {
 
       search(resultSearchQuery)
         .then((response) => {
-          if(this.justStarted) {
-            this.facets = response.data.facets;
-          } else {
-            this.facets = response.data.facets;
-            this.results = response.data.results;
-            this.count = response.data.count;
-            this.next = response.data.next;
-            this.previous = response.data.previous;
-          }
-          this.updateSource = 'facet';
+          this.facets = response.data.facets;
+          this.results = response.data.results;
+          this.count = response.data.count;
+          this.next = response.data.next;
+          this.previous = response.data.previous;
         })
         .catch((error) => {
           console.log(error);
@@ -184,18 +172,15 @@ export default {
      */
     handleUpdatedSearchTerm(searchTerm) {
       const resultSearchQuery = this.updatedSearchTerm(searchTerm);
+      this.searchTerm = searchTerm;
 
       search(resultSearchQuery)
         .then((response) => {
-          if(this.searchTerm !== searchTerm) {
-            this.facets = response.data.facets;     
-          }
-          this.updateSource = 'searchTerm'; 
+          this.facets = response.data.facets;
           this.results = response.data.results;
           this.count = response.data.count;
           this.next = response.data.next;
           this.previous = response.data.previous;
-          this.searchTerm = searchTerm;
         })
         .catch((error) => {
           console.log(error);
