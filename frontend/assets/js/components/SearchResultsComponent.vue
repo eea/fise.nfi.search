@@ -146,7 +146,8 @@ export default {
   computed: {
     showingResults() {
       const startCount = (this.currentPage - 1) * 20;
-      const endCount = this.currentPage * 20;
+      const tempEndCount = this.currentPage * 20;
+      const endCount = this.count > tempEndCount ? tempEndCount : this.count;
       const result = this.count ? 
         'Showing ' + startCount + ' - ' + endCount + ' of ' + this.count + ' results' :
         '0 results';
