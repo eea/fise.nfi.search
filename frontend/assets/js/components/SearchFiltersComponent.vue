@@ -179,7 +179,6 @@ export default {
   created() {
     this.makeSelectedFilterOptions();
     this.getFacets();
-    console.log("process.env", process.env)
   },
 
   methods: {
@@ -416,7 +415,6 @@ export default {
       this.selectedFilterOptions.published_year = ev.slice();
       this.sourceOfUpdate = ev.length > 0 ? facets.published_year : null;
       let searchQuery = this.makeSearchQuery();
-      // console.log('searchQuery', searchQuery)
       this.emitSelectedFilter(searchQuery);
     },
 
@@ -481,7 +479,6 @@ export default {
     },
 
     emitSelectedFilter(searchQuery) {
-      // console.log('SEARCH QUERY',  searchQuery)
       this.$emit('updated-filters', searchQuery);
     },
 

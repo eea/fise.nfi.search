@@ -3,8 +3,8 @@
   <div class="search-fise">
 
     <!-- result count -->
-    <div class="result-count">
-      <p href="#" target="_self">{{count}} Results</p>
+    <div class="result-count" v-if="count">
+      <p href="#" target="_self">{{ showingResults }}</p>
       <hr>
     </div>
 
@@ -40,13 +40,27 @@
         <template slot="modal-header-close">× Close</template>
         <template slot="modal-footer">
           <div v-if="selectedResult.download_url">
-            <b-link :href="selectedResult.download_url" class="btn fise-search-download-link"><i class="fa fa-download"></i> Download document</b-link>
+            <b-link
+              :href="selectedResult.download_url"
+              class="btn fise-search-download-link"
+            >
+              <i class="fa fa-download"></i>
+              Download document ( {{ selectedResult.file_size | bytesToSize }} )
+            </b-link>
           </div>
         </template>
 
         <div class="form-group row align-items-start">
           <div class="col-sm-2 col-form-label">Country</div>
-          <div class="col-sm-10 col-form-label">{{selectedResult.country|| "n/a"}} </div>
+          <div class="col-sm-10 col-form-label">
+            <b-badge
+              v-for="country in selectedResult.countries"
+              :key="country"
+              variant="default"
+            >
+              {{ country }}
+            </b-badge>
+          </div>
         </div>
 
         <div class="form-group row align-items-start">
@@ -112,6 +126,7 @@
 <script>
 import report from '../assets/report-icon.png';
 import ListCustom from './ListCustom';
+import filters from '../mixins/filters';
 
 export default {
   name: 'SearchResultsComponent',
@@ -123,17 +138,18 @@ export default {
   props: {
     results: {},
     count: null,
+    currentPage: null
   },
 
-  filters: {
-    renameLevel(nut) {
-      if (!nut) return '';
-      return nut.replace('L','Level ');
-    },
-    nfiExplain(value) {
-      if (!value || value.toLowerCase() !== 'nfi') return value;
-      return value + ' (National Forest Inventory)';
-    },
+  mixins: [filters],
+
+  computed: {
+    showingResults() {
+      const startCount = (this.currentPage - 1) * 20;
+      const endCount = this.currentPage * 20;
+      const result = 'Showing ' + startCount + ' - ' + endCount + ' of ' + this.count + ' results';
+      return result;
+    }
   },
 
   data() {

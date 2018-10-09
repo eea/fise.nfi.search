@@ -38,28 +38,24 @@
           <div class="bd-content">
 
             <search-results
-              v-on:updated-search-term="handleUpdatedSearchTerm"
               :results="results"
               :count="count"
+              :currentPage="currentPage"
             ></search-results>
 
-            <!-- prev/next page -->
+            <!-- pagination -->
             <div>
-              <b-button-group>
-                <b-button
-                  v-if="previous"
-                  variant="primary"
-                  v-on:click="getPrevNextResults('previous')"
-                >Prev
-                </b-button>
-                <b-button
-                  v-if="next"
-                  variant="primary"
-                  v-on:click="getPrevNextResults('next')"
-                >Next
-                </b-button>
-              </b-button-group>
-              <br><br>
+
+              <b-pagination
+                v-if="results.length > 0"
+                size="sm"
+                :total-rows="count"
+                v-model="currentPage"
+                :per-page="resultsPerPage"
+                align="center"
+                v-on:change="handlePageChange()"
+              ></b-pagination>
+
             </div>
 
           </div>
@@ -99,17 +95,52 @@ export default {
       updateSource: '',
       justStarted: true,
       searchTerm: '',
+      resultsPerPage: 20,
+      currentPage: 1
     };
   },
 
   methods: {
     handleClicked() {
+      this.currentPage = 1;
       this.handleUpdatedSearchTerm(this.searchTerm);
     },
 
     removeSearchTerm() {
+      this.currentPage = 1;
       this.searchTerm = '';
       this.handleUpdatedSearchTerm(this.searchTerm);
+    },
+
+    handlePageChange(ev) {
+      setTimeout(() => {
+        const resultSearchQuery = this.updateSearchQuery();
+
+        search(resultSearchQuery)
+          .then((response) => {
+            if(this.justStarted) {
+              this.facets = response.data.facets;
+            } else {
+              this.facets = response.data.facets;
+              this.results = response.data.results;
+              this.count = response.data.count;
+              this.next = response.data.next;
+              this.previous = response.data.previous;
+            }
+            this.updateSource = 'facet';
+          })
+          .catch((error) => {
+            console.log(error);
+          });
+      })
+    },
+
+    updateSearchQuery() {
+      let resultSearchQuery = this.searchTerm ? `?search=${this.searchTerm}&` : '?';
+      resultSearchQuery += this.searchQuery;
+      let pagination = resultSearchQuery ? 'page=' + this.currentPage : '?page=' + this.currentPage;
+
+      return resultSearchQuery + '' + pagination;
     },
 
     /**
@@ -117,9 +148,8 @@ export default {
      * it is called by the filter component (facets)
      */
     handleUpdatedFilter(searchQuery) {
-      let resultSearchQuery = this.searchTerm ? `?search=${this.searchTerm}&` : '?';
-      resultSearchQuery += searchQuery;
-      this.searchQuery = searchQuery;
+      this.currentPage = 1;
+      const resultSearchQuery = this.updateFilter(searchQuery);
 
       search(resultSearchQuery)
         .then((response) => {
@@ -139,18 +169,25 @@ export default {
         });
     },
 
+    updateFilter(searchQuery) {
+      let resultSearchQuery = this.searchTerm ? `?search=${this.searchTerm}&` : '?';
+      resultSearchQuery += searchQuery;
+      let pagination = resultSearchQuery ? 'page=' + this.currentPage : '?page=' + this.currentPage;
+      this.searchQuery = searchQuery;
+
+      return resultSearchQuery + '' + pagination;
+    },
+
     /**
      * this will issue the search and update both the facets and the results
      * it is called by the result component by pressing the search button
      */
-    handleUpdatedSearchTerm(val) {
-      let resultSearchQuery = val ? `?search=${val}&` : '?';
-      resultSearchQuery += this.searchQuery;
-      this.justStarted = false;
+    handleUpdatedSearchTerm(searchTerm) {
+      const resultSearchQuery = this.updatedSearchTerm(searchTerm);
 
       search(resultSearchQuery)
         .then((response) => {
-          if(this.searchTerm !== val) {
+          if(this.searchTerm !== searchTerm) {
             this.facets = response.data.facets;     
           }
           this.updateSource = 'searchTerm'; 
@@ -158,30 +195,21 @@ export default {
           this.count = response.data.count;
           this.next = response.data.next;
           this.previous = response.data.previous;
-          this.searchTerm = val;
+          this.searchTerm = searchTerm;
         })
         .catch((error) => {
           console.log(error);
         });
     },
 
-    /**
-     * the server return the full url path for next and prev, we will use it as is
-     */
-    getPrevNextResults(prevNext) {
-      const nextPrevUrl = this[prevNext];
+    updatedSearchTerm(searchTerm) {
+      this.currentPage = 1;
+      let resultSearchQuery = searchTerm ? `?search=${searchTerm}&` : '?';
+      resultSearchQuery += this.searchQuery;
+      let pagination = resultSearchQuery ? 'page=' + this.currentPage : '?page=' + this.currentPage;
+      this.justStarted = false;
 
-      if(nextPrevUrl) {
-        searchFullUrl(nextPrevUrl)
-          .then((response) => {
-            this.results = response.data.results;
-            this.next = response.data.next;
-            this.previous = response.data.previous;
-          })
-          .catch((error) => {
-            console.log(error);
-          });        
-      }
+      return resultSearchQuery + '' + pagination;
     },
   },
 };

@@ -35,6 +35,8 @@
 </template>
 
 <script>
+import filters from '../mixins/filters';
+
 export default {
   name: 'CheckBoxButtons',
 
@@ -44,17 +46,7 @@ export default {
     title: '',
   },
 
-  filters: {
-    nfiExplain(value) {
-      if (!value || value.toLowerCase() !== 'nfi') return value;
-      return value + ' (National Forest Inventory)';
-    },
-    renameLevel(nut) {
-      console.log(nut)
-      if (!nut) return '';
-      return nut.replace('L','Level ');
-    },
-  },
+  mixins: [filters],
 
   data() {
     return {
@@ -65,7 +57,6 @@ export default {
 
   computed: {
     summary() {
-      console.log('my data list', this.myDataList)
       let result = '';
       const noOfResultsInSummary = 2;
       const myDataListItems = Object.keys(this.myDataList);

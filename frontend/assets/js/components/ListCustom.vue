@@ -19,7 +19,7 @@
             >
             <div class="result-content">
               <div class="result-header">
-                <h5 class="mb-1"><sup v-if="data.document_type">[ {{data.resource_type}} ]</sup> {{data.title}}</h5>
+                <h5 class="mb-1"><sup v-if="data.file_name">{{data.file_name | fileType}}</sup> {{data.title}}</h5>
               </div>
               <p
                 class="mb-1 result-body"
@@ -46,7 +46,7 @@
             :href="data.download_url"
             v-on:click="stopPropagation($event)"
           >
-            <i class="fa fa-download"></i> Download
+            <i class="fa fa-download"></i> Download ( {{ data.file_size | bytesToSize }} )
           </b-link>
         </div>
     </div>
@@ -58,12 +58,13 @@ import documentation from '../assets/documentation.png';
 import rasterdata from '../assets/rasterData.png';
 import report from '../assets/report.png';
 import tabulardata from '../assets/tabularData.png';
+import filters from '../mixins/filters';
 
 const resultFormatImages = {
   'documentation': documentation,
   'rasterdata': rasterdata,
   'report': report,
-  'tabulardata': tabulardata
+  'tabulardata': tabulardata,
 }
 export default {
   name: 'ListCustom',
@@ -71,6 +72,8 @@ export default {
   props: {
     dataList: {},
   },
+
+  mixins: [filters],
 
   methods: {
     handleClicked(ev, data) {
