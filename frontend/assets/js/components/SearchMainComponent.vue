@@ -7,12 +7,12 @@
           class="form-control"
           placeholder="Search term"
           v-model="searchTerm"
-          v-on:keyup.enter="handleClicked"
+          v-on:keyup.enter="handleClickedSearchTerm"
         >
           <b-input-group-append>
             <b-btn
               variant="primary"
-              v-on:click="handleClicked"
+              v-on:click="handleClickedSearchTerm"
             >Explore</b-btn>
           </b-input-group-append>
           <i
@@ -88,8 +88,6 @@ export default {
       facets: {},
       results: [],
       count: null,
-      next: '',
-      previous: '',
       searchQuery: '',
       justStarted: true,
       searchTerm: '',
@@ -99,102 +97,73 @@ export default {
   },
 
   methods: {
-    handleClicked() {
+    handleClickedSearchTerm() {
       this.currentPage = 1;
-      this.handleUpdatedSearchTerm(this.searchTerm);
+      this.handleUpdatedSearchTerm();
     },
 
     removeSearchTerm() {
       this.currentPage = 1;
       this.searchTerm = '';
-      this.handleUpdatedSearchTerm(this.searchTerm);
-    },
-
-    handlePageChange(ev) {
-      setTimeout(() => {
-        const resultSearchQuery = this.updateSearchQuery();
-
-        search(resultSearchQuery)
-          .then((response) => {
-            this.facets = response.data.facets;
-            this.results = response.data.results;
-            this.count = response.data.count;
-            this.next = response.data.next;
-            this.previous = response.data.previous;
-          })
-          .catch((error) => {
-            console.log(error);
-          });
-      })
-    },
-
-    updateSearchQuery() {
-      let resultSearchQuery = this.searchTerm ? `?search=${this.searchTerm}&` : '?';
-      resultSearchQuery += this.searchQuery;
-      let pagination = resultSearchQuery ? 'page=' + this.currentPage : '?page=' + this.currentPage;
-
-      return resultSearchQuery + '' + pagination;
+      this.handleUpdatedSearchTerm();
     },
 
     /**
-     * this will issue the search but will only update the facets
+     * it is called by the result component by pressing the search button
+     */
+    handleUpdatedSearchTerm(searchTerm) {
+      const resultSearchQuery = this.makeSearchQuery();
+
+      this.doSearch(resultSearchQuery);
+    },
+
+    /**
      * it is called by the filter component (facets)
      */
     handleUpdatedFilter(searchQuery) {
       this.currentPage = 1;
-      const resultSearchQuery = this.updateFilter(searchQuery);
+      this.searchQuery = searchQuery;
+      const resultSearchQuery = this.makeSearchQuery();
 
-      search(resultSearchQuery)
-        .then((response) => {
-          this.facets = response.data.facets;
-          this.results = response.data.results;
-          this.count = response.data.count;
-          this.next = response.data.next;
-          this.previous = response.data.previous;
-        })
-        .catch((error) => {
-          console.log(error);
-        });
+      this.doSearch(resultSearchQuery);
     },
 
-    updateFilter(searchQuery) {
+    /**
+     * used timeout because the change event precedes the model bind,
+     * this means that the values of the current page is not the new one0
+     * this way we move it at the end of the call stack, so that the value is correct
+     */
+    handlePageChange(ev) {
+      setTimeout(() => {
+        const resultSearchQuery = this.makeSearchQuery();
+        this.doSearch(resultSearchQuery);
+      })
+    },
+
+    /**
+     * composes the search query based on search term, search query from filters and pagination
+     */
+    makeSearchQuery() {
       let resultSearchQuery = this.searchTerm ? `?search=${this.searchTerm}&` : '?';
-      resultSearchQuery += searchQuery;
+      resultSearchQuery += this.searchQuery;
       let pagination = resultSearchQuery ? 'page=' + this.currentPage : '?page=' + this.currentPage;
-      this.searchQuery = searchQuery;
 
       return resultSearchQuery + '' + pagination;
     },
 
     /**
-     * this will issue the search and update both the facets and the results
-     * it is called by the result component by pressing the search button
+     * the actual search and updates the faces and result to the children components
      */
-    handleUpdatedSearchTerm(searchTerm) {
-      const resultSearchQuery = this.updatedSearchTerm(searchTerm);
-      this.searchTerm = searchTerm;
-
+    doSearch(resultSearchQuery) {
       search(resultSearchQuery)
         .then((response) => {
           this.facets = response.data.facets;
           this.results = response.data.results;
           this.count = response.data.count;
-          this.next = response.data.next;
-          this.previous = response.data.previous;
         })
         .catch((error) => {
           console.log(error);
         });
-    },
-
-    updatedSearchTerm(searchTerm) {
-      this.currentPage = 1;
-      let resultSearchQuery = searchTerm ? `?search=${searchTerm}&` : '?';
-      resultSearchQuery += this.searchQuery;
-      let pagination = resultSearchQuery ? 'page=' + this.currentPage : '?page=' + this.currentPage;
-      this.justStarted = false;
-
-      return resultSearchQuery + '' + pagination;
     },
   },
 };
