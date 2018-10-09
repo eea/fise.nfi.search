@@ -3,7 +3,7 @@
   <div class="search-fise">
 
     <!-- result count -->
-    <div class="result-count" v-if="count">
+    <div class="result-count" v-if="showResultsCount">
       <p href="#" target="_self">{{ showingResults }}</p>
       <hr>
     </div>
@@ -147,9 +147,14 @@ export default {
     showingResults() {
       const startCount = (this.currentPage - 1) * 20;
       const endCount = this.currentPage * 20;
-      const result = 'Showing ' + startCount + ' - ' + endCount + ' of ' + this.count + ' results';
+      const result = this.count ? 
+        'Showing ' + startCount + ' - ' + endCount + ' of ' + this.count + ' results' :
+        '0 results';
       return result;
-    }
+    },
+    showResultsCount() {
+      return typeof this.count === 'number';
+    },
   },
 
   data() {
