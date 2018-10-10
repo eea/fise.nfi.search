@@ -22,6 +22,8 @@
       </b-input-group>
     </div>
 
+    <button id="sidebarTrigger" ref="sidebarTrigger" class="btn btn-default">Open Filters</button>
+
     <div class="row flex-xl-nowrap2 mt-5">
       <!-- facets section -->
       <div class="bd-sidebar col-md-4 col-xl-3 col-12 order-md-12">
@@ -61,6 +63,7 @@
         </div>
       </div>
     </div>
+    <div ref="backdrop" id="backdrop"></div>
   </div>
 </template>
 
@@ -96,10 +99,24 @@ export default {
     };
   },
 
+  mounted(){
+    this.handleMobileSidebar()
+  },
+
   methods: {
     handleClickedSearchTerm() {
       this.currentPage = 1;
       this.handleUpdatedSearchTerm();
+    },
+
+    handleMobileSidebar(){
+      let triggers = [this.$refs.sidebarTrigger, this.$refs.backdrop]
+      let body = document.querySelector('body')
+      triggers.forEach( function(element, index) {
+        element.addEventListener('click', () => {
+          body.classList.toggle('sidebaropen')
+        })
+      });
     },
 
     removeSearchTerm() {
