@@ -29,11 +29,10 @@
 
     <hr>
 
-    <div class="filter-heading">Date</div>
 
     <!-- Select Published Year -->
     <div v-if="facetsData.published_year">
-      <h6 class="filter-heading--date">Published year</h6>
+      <div class="filter-heading">Published year</div>
       <published-years
         :dataList="facetsData.published_year"
         :componentName="'published-year'"
@@ -43,7 +42,7 @@
 
     <!-- Select Collection Years -->
     <div v-if="collectionsRange">
-      <h6 class="filter-heading--date">Collection years</h6>
+      <div class="filter-heading">Collection years</div>
       <collection-years
         :dataList="collectionsRange"
         :componentName="'collections-range'"
@@ -607,7 +606,7 @@ export default {
 .nuts {
   label {
     display: inline-flex!important;
-    margin-right: 2rem;
+    margin-right: 3rem;
     .custom-control {
       max-width: 0px;
     }
@@ -626,10 +625,10 @@ export default {
 }
 
 .filter-heading {
-  font-size: 1.1rem;
-  font-weight: bold;
-  margin-bottom: 1em;
-  color: var(--fise-dark-green);
+    font-weight: bold;
+    margin-bottom: 1em;
+    color: #444;
+    font-size: 1rem;
   .fa-angle-down {
     font-size: 1.6em;
     color: #999;

@@ -24,7 +24,7 @@
 
     <button id="sidebarTrigger" ref="sidebarTrigger" class="btn btn-default">Open Filters</button>
 
-    <div class="row flex-xl-nowrap2 mt-5">
+    <div class="row flex-xl-nowrap2 mt-3">
       <!-- facets section -->
       <div class="bd-sidebar col-md-4 col-xl-3 col-12 order-md-12">
         <search-filters

@@ -49,7 +49,7 @@
             :href="data.download_url"
             v-on:click="stopPropagation($event)"
           >
-            <i class="fa fa-download"></i> Download ( {{ data.file_size | bytesToSize }} )
+            <i class="fa fa-download"></i> Download ({{ data.file_size | bytesToSize }})
           </b-link>
         </div>
     </div>
@@ -123,8 +123,8 @@ export default {
   width: 100%;
   color: #333;
   text-align: inherit;
-  padding-top: 1.5rem;
-  padding-bottom: 1.5rem;
+  padding-top: .5rem;
+  padding-bottom: .5rem;
   &:hover, &:focus {
     background-color: #F4F4F4;
     .result-header {
@@ -143,12 +143,14 @@ small {
   display: flex;
   justify-content: flex-start;
   align-items: center;
+  padding-left: 44px;
 }
 .result-img {
-  height: 100px;
-  width: 100px;
-  margin-left: -20px;
-  margin-top: -18px;
+    position: absolute;
+    max-width: 67px;
+    height: auto;
+    top: 0;
+    left: 0;
 }
 .result-wrapper {
   display: flex;
@@ -160,6 +162,7 @@ small {
 }
 .result-body {
   font-size: .9em;
+  padding-left: 44px;
 }
 .fise-search-list-link {
   color: #333;
@@ -187,7 +190,7 @@ small {
   padding-left: .8em;
   color: #666;
   margin-top: 1em;
-
+  font-size: smaller;
   &-item {
     display: inline-block;
   }
@@ -202,5 +205,13 @@ small {
   &-value {
     text-transform: capitalize;
   }
+}
+
+.result-btn {
+      position: absolute;
+    right: .5rem;
+    bottom: .5rem;
+    font-size: smaller;
+    padding: .3rem .5rem;
 }
 </style>

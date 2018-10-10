@@ -4,7 +4,7 @@
 
     <!-- result count -->
     <div class="result-count" v-if="showResultsCount">
-      <p href="#" target="_self">{{ showingResults }}</p>
+      <div href="#" target="_self">{{ showingResults }}</div>
       <hr>
     </div>
 
