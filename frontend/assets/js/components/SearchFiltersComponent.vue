@@ -33,7 +33,7 @@
 
     <!-- Select Published Year -->
     <div v-if="facetsData.published_year">
-      <h4 class="filter-heading--date">Published year</h4>
+      <h6 class="filter-heading--date">Published year</h6>
       <published-years
         :dataList="facetsData.published_year"
         :componentName="'published-year'"
@@ -43,7 +43,7 @@
 
     <!-- Select Collection Years -->
     <div v-if="collectionsRange">
-      <h4 class="filter-heading--date">Collection years</h4>
+      <h6 class="filter-heading--date">Collection years</h6>
       <collection-years
         :dataList="collectionsRange"
         :componentName="'collections-range'"
@@ -619,19 +619,25 @@ export default {
   padding-right: 0;
 }
 .filters-title {
-  color: #8DC84C;
   margin: 0;
   line-height: 2rem;
+  font-weight: bold;
+  color: #444;
 }
 
 .filter-heading {
   font-size: 1.1rem;
   font-weight: bold;
   margin-bottom: 1em;
+  color: var(--fise-dark-green);
   .fa-angle-down {
     font-size: 1.6em;
     color: #999;
   }
+}
+
+.filter-heading--date {
+  color: var(--fise-dark-green)
 }
 </style>
 
