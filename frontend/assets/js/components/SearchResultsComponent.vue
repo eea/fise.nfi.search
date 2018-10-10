@@ -117,6 +117,10 @@
           <div class="col-sm-2 col-form-label">Info level</div>
           <div class="col-sm-10 col-form-label">{{selectedResult.info_level}}</div>
         </div>
+        <div v-if="selectedResult.file_name" class="form-group row align-items-start">
+          <div class="col-sm-2 col-form-label">File format</div>
+          <div class="col-sm-10 col-form-label"><span class="file-type">{{getFileFormat(selectedResult.file_name)}}</span></div>
+        </div>
       </b-modal>
     </div>
 
@@ -173,6 +177,12 @@ export default {
       this.selectedResult = ev;
       this.modalShow = true;
     },
+
+    getFileFormat(file_name) {
+      let file_format = file_name.split('.')
+      return file_format[file_format.length - 1].toLowerCase()
+    },
+
   },
 
   watch: {

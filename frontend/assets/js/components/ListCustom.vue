@@ -35,6 +35,10 @@
                   <span class="result-information-title">Format: </span>
                   <span class="result-information-value">{{ data.resource_type }}</span>
                 </div>
+                 <div v-if="data.file_name" class="result-information-item">
+                  <span class="result-information-title">File type: </span>
+                  <span><span class="file-type">{{getFileFormat(data.file_name)}}</span></span>
+                </div>
               </div>
             </div>
           </div>
@@ -79,6 +83,11 @@ export default {
     handleClicked(ev, data) {
       ev.preventDefault();
       this.$emit('selected-result', data);
+    },
+
+    getFileFormat(file_name) {
+      let file_format = file_name.split('.')
+      return file_format[file_format.length - 1].toLowerCase()
     },
 
     stopPropagation(ev) {
@@ -199,5 +208,4 @@ small {
     text-transform: capitalize;
   }
 }
-
 </style>
