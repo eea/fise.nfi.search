@@ -19,7 +19,10 @@
             >
             <div class="result-content">
               <div class="result-header">
-                <h5 class="mb-1"><sup v-if="data.file_name">{{data.file_name | fileType}}</sup> {{data.title}}</h5>
+                <h5 class="mb-1">
+                  <sup v-if="data.file_name">
+                    {{data.file_name | fileType}}
+                  </sup> {{data.title}}</h5>
               </div>
               <p
                 class="mb-1 result-body"
@@ -34,10 +37,6 @@
                 <div class="result-information-item">
                   <span class="result-information-title">Format: </span>
                   <span class="result-information-value">{{ data.resource_type }}</span>
-                </div>
-                 <div v-if="data.file_name" class="result-information-item">
-                  <span class="result-information-title">File type: </span>
-                  <span><span class="file-type">{{getFileFormat(data.file_name)}}</span></span>
                 </div>
               </div>
             </div>
@@ -83,11 +82,6 @@ export default {
     handleClicked(ev, data) {
       ev.preventDefault();
       this.$emit('selected-result', data);
-    },
-
-    getFileFormat(file_name) {
-      let file_format = file_name.split('.')
-      return file_format[file_format.length - 1].toLowerCase()
     },
 
     stopPropagation(ev) {
@@ -169,6 +163,7 @@ small {
 }
 .fise-search-list-link {
   color: #333;
+  flex-grow: 1;
   &:hover,
   &:focus {
     text-decoration: none;
