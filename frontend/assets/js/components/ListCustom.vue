@@ -113,7 +113,7 @@ export default {
   position: relative;
   display: block;
   padding: 0.75rem 1.25rem;
-  margin-bottom: -1px;
+  margin-bottom: 1rem;
   border: none;
 }
 .list-group-item-action {

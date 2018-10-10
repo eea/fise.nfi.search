@@ -135,7 +135,7 @@ body {
   }
 }
 
-  .sidebarTrigger {
+  #sidebarTrigger {
     display: none;
   }
   #backdrop {
@@ -196,4 +196,8 @@ body {
   }
 
 
+}
+
+.result-header h5 {
+  font-size: 1.1rem;
 }
