@@ -1,14 +1,23 @@
 <template>
   <div class="container">
+
     <!-- Search term input -->
     <div class="row flex-xl-nowrap2 search-input-wrapper">
       <b-input-group class="slinput">
-        <input
-          class="form-control"
-          placeholder="Search term"
-          v-model="searchTerm"
-          v-on:keyup.enter="handleClickedSearchTerm"
-        >
+          <div id="keywords-multiselect">
+            <multiselect
+              v-model="selectedKeywords"
+              :options="keywords"
+              :multiple="true"
+              track-by="name"
+              :custom-label="customLabel"
+              :taggable="true"
+              @tag="addTag"
+              tag-placeholder="Add this as new keyword"
+              placeholder="Search or add a keyword"
+            >
+            </multiselect>
+          </div>
           <b-input-group-append>
             <b-btn
               variant="primary"
@@ -25,6 +34,7 @@
     <button id="sidebarTrigger" ref="sidebarTrigger" class="btn btn-default">Open Filters</button>
 
     <div class="row flex-xl-nowrap2 mt-3">
+
       <!-- facets section -->
       <div class="bd-sidebar col-md-4 col-xl-3 col-12 order-md-12">
         <search-filters
@@ -46,7 +56,6 @@
 
             <!-- pagination -->
             <div>
-
               <b-pagination
                 v-if="results.length > 0"
                 size="sm"
@@ -56,7 +65,6 @@
                 align="center"
                 v-on:change="handlePageChange()"
               ></b-pagination>
-
             </div>
 
           </div>
@@ -70,7 +78,8 @@
 <script>
 import SearchResultsComponent from './SearchResultsComponent';
 import SearchFiltersComponent from './SearchFiltersComponent';
-import { search, searchFullUrl } from '../api';
+import Multiselect from "vue-multiselect";
+import { search, searchFullUrl, fetchKeywords, fetchTopicCategories } from '../api';
 
 
 /**
@@ -83,6 +92,7 @@ export default {
   components: {
     'search-results': SearchResultsComponent,
     'search-filters': SearchFiltersComponent,
+    'multiselect': Multiselect,
   },
 
   data() {
@@ -93,28 +103,63 @@ export default {
       count: null,
       searchQuery: '',
       justStarted: true,
-      searchTerm: '',
       resultsPerPage: 20,
-      currentPage: 1
+      currentPage: 1,
+      keywords: [],
+      selectedKeywords: [],
     };
   },
 
   mounted(){
-    this.handleMobileSidebar()
+    this.handleMobileSidebar();
+    this.initiateKeywords();
   },
 
   methods: {
+    initiateKeywords() {
+      const promises = [];
+      let result = [];
+
+      promises.push(fetchKeywords());
+      promises.push(fetchTopicCategories());
+
+      Promise.all(promises).then(response => {
+        const keywords = response[0].data;
+        const topics = response[1].data;
+        result = [...keywords, ...topics];
+
+        this.keywords = result.slice();
+      })
+      .catch(error => {
+        console.log(error);
+      });
+    },
+
+    customLabel(option) {
+      return `${option.name}`;
+    },
+
+    addTag (newTag) {
+      const tag = {
+        name: newTag,
+        code: newTag.substring(0, 2) + Math.floor((Math.random() * 10000000))
+      }
+      this.keywords.push(tag)
+      this.selectedKeywords.push(tag)
+    },
+
     handleClickedSearchTerm() {
       this.currentPage = 1;
       this.handleUpdatedSearchTerm();
     },
 
     handleMobileSidebar(){
-      let triggers = [this.$refs.sidebarTrigger, this.$refs.backdrop]
-      let body = document.querySelector('body')
+      let triggers = [this.$refs.sidebarTrigger, this.$refs.backdrop];
+      let body = document.querySelector('body');
+
       triggers.forEach( function(element, index) {
         element.addEventListener('click', () => {
-          body.classList.toggle('sidebaropen')
+          body.classList.toggle('sidebaropen');
         })
       });
     },
@@ -122,13 +167,14 @@ export default {
     removeSearchTerm() {
       this.currentPage = 1;
       this.searchTerm = '';
+      this.selectedKeywords = [];
       this.handleUpdatedSearchTerm();
     },
 
     /**
      * it is called by the result component by pressing the search button
      */
-    handleUpdatedSearchTerm(searchTerm) {
+    handleUpdatedSearchTerm() {
       const resultSearchQuery = this.makeSearchQuery();
 
       this.doSearch(resultSearchQuery);
@@ -161,11 +207,22 @@ export default {
      * composes the search query based on search term, search query from filters and pagination
      */
     makeSearchQuery() {
-      let resultSearchQuery = this.searchTerm ? `?search=${this.searchTerm}&` : '?';
-      resultSearchQuery += this.searchQuery;
+      this.makeSearchTerm();
+
+      let resultSearchQuery = this.searchTerm + this.searchQuery;
       let pagination = resultSearchQuery ? 'page=' + this.currentPage : '?page=' + this.currentPage;
 
       return resultSearchQuery + '' + pagination;
+    },
+
+    makeSearchTerm() {
+      let result = '?';
+
+      this.selectedKeywords.map((keyword) => {
+        result += `search=${keyword.name}&`;
+      });
+
+      this.searchTerm = result;
     },
 
     /**
@@ -278,5 +335,10 @@ a {
   width: 100%;
 }
 
-</style>
+#keywords-multiselect {
+  position: relative;
+  z-index: 6;
+  flex-grow: 1;
+}
 
+</style>

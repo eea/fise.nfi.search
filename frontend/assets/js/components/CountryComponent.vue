@@ -37,6 +37,7 @@ export default {
   methods: {
     handleEmit() {
       setTimeout(() => {
+        console.log('mydatalist', this.myDataList)
         // will emit after the render updates the model
         this.$emit("selected-" + this.componentName, this.selected);
       });

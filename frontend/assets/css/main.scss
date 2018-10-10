@@ -220,8 +220,16 @@ body {
     color: white;
 }
 
-
 hr {
    margin-top: .5rem;
    margin-bottom: .5rem;
+}
+
+.slinput {
+  .multiselect__tags{
+    border-color:transparent;
+  }
+  .multiselect__select {
+    display: none;
+  }
 }
