@@ -153,6 +153,8 @@ body {
     padding: .5rem!important;
     top: 0;
     right: 0;
+    max-height: 100vh;
+    overflow-y:auto;
     width: 80%;
     z-index: 1000;
     padding: .5rem;
@@ -179,6 +181,9 @@ body {
     background: rgba(0, 0, 0, 0.5);
   }
 
+  .collapse.show {
+    display: block;
+  }
 
   .sidebaropen {
     overflow: hidden;
