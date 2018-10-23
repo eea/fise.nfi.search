@@ -4,18 +4,31 @@ from django_elasticsearch_dsl_drf.filter_backends import (
     FilteringFilterBackend,
 )
 from django_elasticsearch_dsl_drf.constants import (
-    LOOKUP_FILTER_TERMS,
+    LOOKUP_FILTER_PREFIX,
     LOOKUP_FILTER_RANGE,
+    LOOKUP_FILTER_TERMS,
+    LOOKUP_FILTER_EXISTS,
+    LOOKUP_FILTER_WILDCARD,
+    LOOKUP_QUERY_CONTAINS,
+    LOOKUP_QUERY_IN,
     LOOKUP_QUERY_GT,
     LOOKUP_QUERY_GTE,
     LOOKUP_QUERY_LT,
     LOOKUP_QUERY_LTE,
+    LOOKUP_QUERY_STARTSWITH,
+    LOOKUP_QUERY_ENDSWITH,
+    LOOKUP_QUERY_ISNULL,
+    LOOKUP_QUERY_EXCLUDE,
 )
-from elasticsearch_dsl.query import Q, Nested, Terms, Range
 
+from elasticsearch_dsl.query import Q, Nested, Terms, MatchPhrase
+from django_elasticsearch_dsl_drf.filter_backends import NestedFilteringFilterBackend
 from django_elasticsearch_dsl_drf.constants import ALL_LOOKUP_FILTERS_AND_QUERIES
 
-__all__ = ("NestedFacetedSearchFilterBackend",)
+__all__ = ("NestedFacetedSearchFilterBackend", "DefaultAwareNestedFilteringFilterBackend", "LOOKUP_QUERY_MATCH_PHRASE")
+
+
+LOOKUP_QUERY_MATCH_PHRASE = "match_phrase"
 
 
 class NestedFacetedSearchFilterBackend(
@@ -29,6 +42,8 @@ class NestedFacetedSearchFilterBackend(
         https://github.com/barseghyanartur/django-elasticsearch-dsl-drf/issues/52
 
     is resolved.
+
+    The 'default_lookup' option for nested filter fields is honored.
 
     There is no toggling of facets using query params, the facets are always on.
 
@@ -111,11 +126,17 @@ class NestedFacetedSearchFilterBackend(
                     lookup_param = query_param_list[1]
 
                 valid_lookups = nested_filter_fields[field_name]["lookups"]
+                default_lookup = nested_filter_fields[field_name].get("default_lookup")
+
                 nested_path = self.get_filter_field_nested_path(
                     nested_filter_fields, field_name
                 )
 
                 if lookup_param is None or lookup_param in valid_lookups:
+
+                    if lookup_param is None and default_lookup is not None:
+                        lookup_param = str(default_lookup)
+
                     values = [
                         __value.strip()
                         for __value in query_params.getlist(query_param)
@@ -148,7 +169,7 @@ class NestedFacetedSearchFilterBackend(
                         __field: {
                             "facet": nested_faceted_fields[__field]["facet"](
                                 field=nested_faceted_fields[__field]["field"],
-                                **nested_faceted_fields[__field]["options"]
+                                **nested_faceted_fields[__field]["options"],
                             ),
                             "filter_field": nested_faceted_fields[__field][
                                 "filter_field"
@@ -172,15 +193,15 @@ class NestedFacetedSearchFilterBackend(
             nested_facet = "path" in __facet
             for options in filter_query_params:
                 if nested_facet:
-                    if (
-                        __facet["filter_field"] == options["field"] or
-                        __facet["filter_field"] == options.get("filter_field")
+                    if __facet["filter_field"] == options["field"] or __facet[
+                        "filter_field"
+                    ] == options.get(
+                        "filter_field"
                     ):  # Don't filter nested aggregation on its own field
                         continue
                 else:
-                    if (
-                        __field == options["field"] or
-                        __field == options.get("filter_field")
+                    if __field == options["field"] or __field == options.get(
+                        "filter_field"
                     ):  # Don't filter aggregation on its own field
                         continue
 
@@ -189,64 +210,258 @@ class NestedFacetedSearchFilterBackend(
                     and options["lookup"] is None
                 ):
                     if "path" in options:  # Filter term is nested
-                        agg_filter &= Nested(
-                            path=options["path"],
-                            query=Terms(**{options["field"]: options["values"]})
+                        if options["path"] == "keywords":
+                            for val in options["values"]:
+                                agg_filter &= Nested(
+                                    path=options["path"],
+                                    query=MatchPhrase(**{options["field"]: val}),
+                                )
+                        else:
+                            agg_filter &= Nested(
+                                path=options["path"],
+                                query=Terms(**{options["field"]: options["values"]}),
+                            )
+                    elif options["path"] == "keywords":
+                        agg_filter &= Q(
+                            "match_phrase", **{options["field"]: options["values"]}
                         )
                     else:
-                        agg_filter &= Q("terms", **{options["field"]: options["values"]})
+                        agg_filter &= Q(
+                            "terms", **{options["field"]: options["values"]}
+                        )
                     continue
 
                 lookup_filter = Q("match_all")
-                for value in options['values']:
-                    # `terms` filter lookup
+                for value in options["values"]:
                     if options["lookup"] == LOOKUP_FILTER_TERMS:
-                        lookup_filter &= Q("terms", **{options["field"]: self.split_lookup_complex_value(value)})
-                    # `range` filter lookup
+                        lookup_filter &= Q(
+                            "terms",
+                            **{
+                                options["field"]: self.split_lookup_complex_value(value)
+                            },
+                        )
                     elif options["lookup"] == LOOKUP_FILTER_RANGE:
-                        lookup_filter &= Q("range", **{options["field"]: self.get_range_params(value)})
+                        lookup_filter &= Q(
+                            "range", **{options["field"]: self.get_range_params(value)}
+                        )
                     elif options["lookup"] == LOOKUP_QUERY_GT:
-                        lookup_filter &= Q("range", **{options['field']: self.get_gte_lte_params(value, 'gt')})
+                        lookup_filter &= Q(
+                            "range",
+                            **{options["field"]: self.get_gte_lte_params(value, "gt")},
+                        )
                     elif options["lookup"] == LOOKUP_QUERY_GTE:
-                        lookup_filter &= Q("range", **{options['field']: self.get_gte_lte_params(value, 'gte')})
+                        lookup_filter &= Q(
+                            "range",
+                            **{options["field"]: self.get_gte_lte_params(value, "gte")},
+                        )
                     elif options["lookup"] == LOOKUP_QUERY_LT:
-                        lookup_filter &= Q("range", **{options['field']: self.get_gte_lte_params(value, 'lt')})
+                        lookup_filter &= Q(
+                            "range",
+                            **{options["field"]: self.get_gte_lte_params(value, "lt")},
+                        )
                     elif options["lookup"] == LOOKUP_QUERY_LTE:
-                        lookup_filter &= Q("range", **{options['field']: self.get_gte_lte_params(value, 'lte')})
+                        lookup_filter &= Q(
+                            "range",
+                            **{options["field"]: self.get_gte_lte_params(value, "lte")},
+                        )
+                    elif options["lookup"] == "match_phrase":
+                        lookup_filter &= MatchPhrase(**{options["field"]: value})
 
                 if "path" in options:  # Filter term is nested
-                    agg_filter &= Nested(
-                        path=options["path"],
-                        query=lookup_filter)
+                    agg_filter &= Nested(path=options["path"], query=lookup_filter)
                 else:
                     agg_filter &= lookup_filter
 
             if nested_facet:
                 if global_facet:
-                    queryset.aggs.bucket(
-                        "_filter_" + __field, "global"
-                    ).bucket(
+                    queryset.aggs.bucket("_filter_" + __field, "global").bucket(
                         # Filter must appear BEFORE nested aggregation to have effect
-                        "_filter_" + __field, "filter", filter=agg_filter
+                        "_filter_" + __field,
+                        "filter",
+                        filter=agg_filter,
                     ).bucket(
-                        "_filter_" + __field, "nested", path=__facet["path"],
-                    ).bucket(__field, agg)
+                        "_filter_" + __field, "nested", path=__facet["path"]
+                    ).bucket(
+                        __field, agg
+                    )
                 else:
                     queryset.aggs.bucket(
                         "_filter_" + __field, "filter", filter=agg_filter
                     ).bucket(
                         "_filter_" + __field, "nested", path=__facet["path"]
-                    ).bucket(__field, agg)
+                    ).bucket(
+                        __field, agg
+                    )
             else:
                 if global_facet:
-                    queryset.aggs.bucket(
-                        "_filter_" + __field, "global"
-                    ).bucket(
+                    queryset.aggs.bucket("_filter_" + __field, "global").bucket(
                         "_filter_" + __field, "filter", filter=agg_filter
                     ).bucket(__field, agg)
                 else:
                     queryset.aggs.bucket(
                         "_filter_" + __field, "filter", filter=agg_filter
                     ).bucket(__field, agg)
+
+        return queryset
+
+
+class DefaultAwareNestedFilteringFilterBackend(NestedFilteringFilterBackend):
+    """
+    Nested filtering backend that adds two features to the builtin one:
+     - honors the 'default_lookup' options
+     - supports the 'match_phrase' query/lookup.
+    """
+
+    def get_filter_query_params(self, request, view):
+
+        query_params = request.query_params.copy()
+
+        filter_query_params = {}
+        filter_fields = self.prepare_filter_fields(view)
+        for query_param in query_params:
+            query_param_list = self.split_lookup_filter(query_param, maxsplit=1)
+            field_name = query_param_list[0]
+
+            if field_name in filter_fields:
+                lookup_param = None
+                if len(query_param_list) > 1:
+                    lookup_param = query_param_list[1]
+
+                valid_lookups = filter_fields[field_name]["lookups"]
+                default_lookup = filter_fields[field_name].get("default_lookup")
+
+                nested_path = self.get_filter_field_nested_path(
+                    filter_fields, field_name
+                )
+
+                if lookup_param is None or lookup_param in valid_lookups:
+                    if lookup_param is None and default_lookup is not None:
+                        lookup_param = str(default_lookup)
+
+                    values = [
+                        __value.strip()
+                        for __value in query_params.getlist(query_param)
+                        if __value.strip() != ""
+                    ]
+
+                    if values:
+                        filter_query_params[query_param] = {
+                            "lookup": lookup_param,
+                            "values": values,
+                            "field": filter_fields[field_name].get("field", field_name),
+                            "type": view.mapping,
+                            "path": nested_path,
+                        }
+
+        return filter_query_params
+
+    @classmethod
+    def apply_filter(cls, queryset, options=None, args=None, kwargs=None):
+        if options is None:
+            raise ImproperlyConfigured(
+                "You should provide an `path` argument in the field options."
+            )
+
+        path = options.get("path")
+
+        if args is None:
+            args = []
+        if kwargs is None:
+            kwargs = {}
+
+        return queryset.query("nested", path=path, query=Q(*args, **kwargs))
+
+    @classmethod
+    def apply_filter_match_phrase(cls, queryset, options, value):
+        return cls.apply_filter(
+            queryset=queryset,
+            options=options,
+            args=["match_phrase"],
+            kwargs={options["field"]: value},
+        )
+
+    def filter_queryset(self, request, queryset, view):
+        filter_query_params = self.get_filter_query_params(request, view)
+        for options in filter_query_params.values():
+            # When no specific lookup given, in case of multiple values
+            # we apply `terms` filter by default and proceed to the next
+            # query param.
+            if (
+                isinstance(options["values"], (list, tuple))
+                and options["lookup"] is None
+            ):
+                queryset = self.apply_filter_terms(queryset, options, options["values"])
+                continue
+
+            # For all other cases, when we don't have multiple values,
+            # we follow the normal flow.
+            for value in options["values"]:
+                # `terms` filter lookup
+                if options["lookup"] == LOOKUP_FILTER_TERMS:
+                    queryset = self.apply_filter_terms(queryset, options, value)
+
+                # `prefix` filter lookup
+                elif options["lookup"] in (
+                    LOOKUP_FILTER_PREFIX,
+                    LOOKUP_QUERY_STARTSWITH,
+                ):
+                    queryset = self.apply_filter_prefix(queryset, options, value)
+
+                # `range` filter lookup
+                elif options["lookup"] == LOOKUP_FILTER_RANGE:
+                    queryset = self.apply_filter_range(queryset, options, value)
+
+                # `exists` filter lookup
+                elif options["lookup"] == LOOKUP_FILTER_EXISTS:
+                    queryset = self.apply_query_exists(queryset, options, value)
+
+                # `wildcard` filter lookup
+                elif options["lookup"] == LOOKUP_FILTER_WILDCARD:
+                    queryset = self.apply_query_wildcard(queryset, options, value)
+
+                # `contains` filter lookup
+                elif options["lookup"] == LOOKUP_QUERY_CONTAINS:
+                    queryset = self.apply_query_contains(queryset, options, value)
+
+                # `in` functional query lookup
+                elif options["lookup"] == LOOKUP_QUERY_IN:
+                    queryset = self.apply_query_in(queryset, options, value)
+
+                # `gt` functional query lookup
+                elif options["lookup"] == LOOKUP_QUERY_GT:
+                    queryset = self.apply_query_gt(queryset, options, value)
+
+                # `gte` functional query lookup
+                elif options["lookup"] == LOOKUP_QUERY_GTE:
+                    queryset = self.apply_query_gte(queryset, options, value)
+
+                # `lt` functional query lookup
+                elif options["lookup"] == LOOKUP_QUERY_LT:
+                    queryset = self.apply_query_lt(queryset, options, value)
+
+                # `lte` functional query lookup
+                elif options["lookup"] == LOOKUP_QUERY_LTE:
+                    queryset = self.apply_query_lte(queryset, options, value)
+
+                # `endswith` filter lookup
+                elif options["lookup"] == LOOKUP_QUERY_ENDSWITH:
+                    queryset = self.apply_query_endswith(queryset, options, value)
+
+                # `isnull` functional query lookup
+                elif options["lookup"] == LOOKUP_QUERY_ISNULL:
+                    queryset = self.apply_query_isnull(queryset, options, value)
+
+                # `exclude` functional query lookup
+                elif options["lookup"] == LOOKUP_QUERY_EXCLUDE:
+                    queryset = self.apply_query_exclude(queryset, options, value)
+
+                # `match_phrase` functional query lookup
+                elif options["lookup"] == LOOKUP_QUERY_MATCH_PHRASE:
+                    queryset = self.apply_filter_match_phrase(queryset, options, value)
+
+                # `term` filter lookup. This is default if no `default_lookup`
+                # option has been given or explicit lookup provided.
+                else:
+                    queryset = self.apply_filter_term(queryset, options, value)
 
         return queryset

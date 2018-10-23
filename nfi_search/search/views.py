@@ -8,11 +8,9 @@ from rest_framework.response import Response
 from elasticsearch_dsl import TermsFacet
 from django_elasticsearch_dsl_drf.filter_backends import (
     FilteringFilterBackend,
-    NestedFilteringFilterBackend,
     IdsFilterBackend,
     OrderingFilterBackend,
     DefaultOrderingFilterBackend,
-    CompoundSearchFilterBackend,
 )
 from django_elasticsearch_dsl_drf.pagination import PageNumberPagination
 from django_elasticsearch_dsl_drf.viewsets import BaseDocumentViewSet
@@ -27,7 +25,11 @@ from django_elasticsearch_dsl_drf.constants import (
 
 
 from .documents import DocumentDoc
-from .backends import NestedFacetedSearchFilterBackend
+from .backends import (
+    NestedFacetedSearchFilterBackend,
+    DefaultAwareNestedFilteringFilterBackend,
+    LOOKUP_QUERY_MATCH_PHRASE,
+)
 from .serializers import (
     InfoLevelSerializer,
     CountrySerializer,
@@ -130,11 +132,13 @@ class SearchPageNumberPagination(PageNumberPagination):
                 field = filter_key[8:]  # remove '_filter_' prefix
                 if filter_key in data[filter_key]:
                     _data = {
-                        b["key"]: b["doc_count"] for b in data[filter_key][filter_key][field]["buckets"]
+                        b["key"]: b["doc_count"]
+                        for b in data[filter_key][filter_key][field]["buckets"]
                     }
                 else:
                     _data = {
-                        b["key"]: b["doc_count"] for b in data[filter_key][field]["buckets"]
+                        b["key"]: b["doc_count"]
+                        for b in data[filter_key][field]["buckets"]
                     }
                 facets[field] = _data
             return facets
@@ -147,17 +151,13 @@ class SearchViewSet(BaseDocumentViewSet):
     lookup_field = "id"
     filter_backends = [
         FilteringFilterBackend,
-        NestedFilteringFilterBackend,
+        DefaultAwareNestedFilteringFilterBackend,
         IdsFilterBackend,
         OrderingFilterBackend,
         DefaultOrderingFilterBackend,
-        CompoundSearchFilterBackend,
         NestedFacetedSearchFilterBackend,
     ]
-    search_fields = (
-        "title",
-        "description",
-    )
+    search_fields = ("title", "description")
 
     # Facets for DocumentDoc's non-nested fields
     facets = (
@@ -183,18 +183,23 @@ class SearchViewSet(BaseDocumentViewSet):
                 LOOKUP_QUERY_GTE,
                 LOOKUP_QUERY_LT,
                 LOOKUP_QUERY_LTE,
-            ]
+                LOOKUP_QUERY_MATCH_PHRASE,
+            ],
         }
         for f in facets
     }
 
     nested_filter_fields = {
         "country": {"field": "countries.name", "path": "countries"},
-        "keyword": {"field": "keywords.name", "path": "keywords"},
+        "keyword": {
+            "field": "keywords.name",
+            "path": "keywords",
+            "default_lookup": LOOKUP_QUERY_MATCH_PHRASE,
+            "lookups": [LOOKUP_QUERY_MATCH_PHRASE],
+        },
         "nuts_level": {"field": "nuts_levels.name", "path": "nuts_levels"},
     }
 
-    # Nested facets are added directly in `NestedFacetedSearchFilterBackend.filter_queryset`
     faceted_search_fields = {
         field: {
             "field": field,
@@ -216,9 +221,7 @@ class SearchViewSet(BaseDocumentViewSet):
             "enabled": True,
             "facet": TermsFacet,
             "global": True,
-            "options": {
-                "size": 1000
-            },
+            "options": {"size": 1000},
             "filter_field": "country",
         },
         "nuts_level": {
@@ -227,9 +230,7 @@ class SearchViewSet(BaseDocumentViewSet):
             "enabled": True,
             "facet": TermsFacet,
             "global": True,
-            "options": {
-                "size": 1000
-            },
+            "options": {"size": 1000},
             "filter_field": "nuts_level",
         },
     }
