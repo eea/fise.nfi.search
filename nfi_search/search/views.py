@@ -235,7 +235,7 @@ class SearchViewSet(BaseDocumentViewSet):
     }
 
     ordering_fields = {f: f for f in facets + ("country",)}
-    ordering = ("title",)
+    ordering = ("_score", "title", "description")
 
 
 class DocumentViewSet(ReadOnlyModelViewSet):
