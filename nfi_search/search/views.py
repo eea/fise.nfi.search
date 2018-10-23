@@ -10,6 +10,7 @@ from django_elasticsearch_dsl_drf.filter_backends import (
     FilteringFilterBackend,
     IdsFilterBackend,
     OrderingFilterBackend,
+    CompoundSearchFilterBackend,
     DefaultOrderingFilterBackend,
 )
 from django_elasticsearch_dsl_drf.pagination import PageNumberPagination
@@ -154,6 +155,7 @@ class SearchViewSet(BaseDocumentViewSet):
         DefaultAwareNestedFilteringFilterBackend,
         IdsFilterBackend,
         OrderingFilterBackend,
+        CompoundSearchFilterBackend,
         DefaultOrderingFilterBackend,
         NestedFacetedSearchFilterBackend,
     ]
@@ -236,7 +238,7 @@ class SearchViewSet(BaseDocumentViewSet):
     }
 
     ordering_fields = {f: f for f in facets + ("country",)}
-    ordering = ("_score", "title", "description")
+    ordering = ("_score",)
 
 
 class DocumentViewSet(ReadOnlyModelViewSet):
