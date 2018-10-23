@@ -1,7 +1,7 @@
 from django.conf import settings
 from django_elasticsearch_dsl import DocType, Index, fields
-from elasticsearch_dsl.analysis import analyzer, normalizer, char_filter
-from .models import Document
+from elasticsearch_dsl.analysis import analyzer, normalizer, char_filter, token_filter
+from .models import Document, DKeyword
 
 
 nfi = Index(settings.ELASTICSEARCH_INDEX)
@@ -24,6 +24,37 @@ no_digits_analyzer = analyzer(
     filter=["standard", "lowercase", "stop"],
     char_filter=[no_digits_char_filter],
 )
+
+
+def _autophrase_term(term):
+    return "_".join(term.split(" "))
+
+
+def _autophrased_synonyms(terms):
+    return [f"{t} => {_autophrase_term(t)}" for t in terms]
+
+
+def _keywords_filter(keywords):
+    return token_filter(
+        "keywords_autophrase_syn",
+        type="synonym",
+        synonyms=_autophrased_synonyms(keywords),
+    )
+
+
+def _keywords_analyzer(keywords):
+    return analyzer(
+        name_or_instance="keywords_analyzer",
+        tokenizer="lowercase",
+        filter=[_keywords_filter(keywords)],
+    )
+
+
+def _get_keywords():
+    return [kw.name.strip().lower() for kw in DKeyword.objects.all()]
+
+
+keywords_analyzer = _keywords_analyzer(_get_keywords())
 
 
 @nfi.doc_type
@@ -64,7 +95,14 @@ class DocumentDoc(DocType):
     )
 
     keywords = fields.NestedField(
-        properties={"name": fields.KeywordField(normalizer=lowercase_normalizer)}
+        properties={
+            "name": fields.StringField(
+                analyzer=keywords_analyzer,
+                fields={
+                    "name": fields.KeywordField()
+                }
+            )
+        }
     )
 
     nuts_levels = fields.NestedField(
