@@ -158,6 +158,8 @@ ELASTICSEARCH_INDEX = env("ELASTICSEARCH_INDEX", "nfi")
 MAX_RESULT_WINDOW = 10000  # This is ElasticSearch's default, but we define it
 # here explicitly to minimize refactoring in case we ever change it.
 
+# If this is True, multiple "keyword" filters will be OR'ed, otherwise they'll be AND'ed
+KEYWORDS_DISJUNCTION = env("KEYWORDS_DISJUNCTION", True)
 
 # Imported files directory
 FILES_DIR = env("FILES_DIR", required=True)

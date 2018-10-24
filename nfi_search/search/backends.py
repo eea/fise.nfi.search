@@ -1,3 +1,5 @@
+import operator
+from functools import reduce
 from django.core.exceptions import ImproperlyConfigured
 from django_elasticsearch_dsl_drf.filter_backends import (
     FacetedSearchFilterBackend,
@@ -25,7 +27,11 @@ from elasticsearch_dsl.query import Q, Nested, Terms, MatchPhrase
 from django_elasticsearch_dsl_drf.filter_backends import NestedFilteringFilterBackend
 from django_elasticsearch_dsl_drf.constants import ALL_LOOKUP_FILTERS_AND_QUERIES
 
-__all__ = ("NestedFacetedSearchFilterBackend", "DefaultAwareNestedFilteringFilterBackend", "LOOKUP_QUERY_MATCH_PHRASE")
+__all__ = (
+    "NestedFacetedSearchFilterBackend",
+    "DefaultAwareNestedFilteringFilterBackend",
+    "LOOKUP_QUERY_MATCH_PHRASE",
+)
 
 
 LOOKUP_QUERY_MATCH_PHRASE = "match_phrase"
@@ -351,6 +357,7 @@ class DefaultAwareNestedFilteringFilterBackend(NestedFilteringFilterBackend):
                             "field": filter_fields[field_name].get("field", field_name),
                             "type": view.mapping,
                             "path": nested_path,
+                            "disjunction": filter_fields[field_name].get("disjunction", True)
                         }
 
         return filter_query_params
@@ -380,6 +387,21 @@ class DefaultAwareNestedFilteringFilterBackend(NestedFilteringFilterBackend):
             kwargs={options["field"]: value},
         )
 
+    @classmethod
+    def apply_filter_match_phrases(cls, queryset, options, values):
+        __queries = []
+        for __value in values:
+            __queries.append(Q("match_phrase", **{options["field"]: __value}))
+
+        if __queries:
+            queryset = cls.apply_filter(
+                queryset=queryset,
+                options=options,
+                args=[reduce(operator.or_, __queries)],
+            )
+
+        return queryset
+
     def filter_queryset(self, request, queryset, view):
         filter_query_params = self.get_filter_query_params(request, view)
         for options in filter_query_params.values():
@@ -391,6 +413,15 @@ class DefaultAwareNestedFilteringFilterBackend(NestedFilteringFilterBackend):
                 and options["lookup"] is None
             ):
                 queryset = self.apply_filter_terms(queryset, options, options["values"])
+                continue
+            elif (
+                isinstance(options["values"], (list, tuple))
+                and options["lookup"] == LOOKUP_QUERY_MATCH_PHRASE
+                and options["disjunction"]
+            ):
+                queryset = self.apply_filter_match_phrases(
+                    queryset, options, options["values"]
+                )
                 continue
 
             # For all other cases, when we don't have multiple values,

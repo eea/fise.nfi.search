@@ -198,6 +198,7 @@ class SearchViewSet(BaseDocumentViewSet):
             "path": "keywords",
             "default_lookup": LOOKUP_QUERY_MATCH_PHRASE,
             "lookups": [LOOKUP_QUERY_MATCH_PHRASE],
+            "disjunction": settings.KEYWORDS_DISJUNCTION,
         },
         "nuts_level": {"field": "nuts_levels.name", "path": "nuts_levels"},
     }
