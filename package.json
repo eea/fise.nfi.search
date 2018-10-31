@@ -18,6 +18,7 @@
     "d3": "^5.5.0",
     "hawk": "7.0.7",
     "hoek": "5.0.3",
+    "lodash.throttle": "^4.1.1",
     "node-sass": "^4.9.0",
     "postcss-load-config": "^1.0.0",
     "sass-loader": "^7.0.1",

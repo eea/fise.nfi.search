@@ -17,6 +17,7 @@
               placeholder="Search or add a keyword"
             >
             </multiselect>
+            <search></search>
           </div>
           <b-input-group-append>
             <b-btn
@@ -79,6 +80,7 @@
 import SearchResultsComponent from './SearchResultsComponent';
 import SearchFiltersComponent from './SearchFiltersComponent';
 import Multiselect from "vue-multiselect";
+import Search from "../search";
 import { search, searchFullUrl, fetchKeywords, fetchTopicCategories } from '../api';
 
 
@@ -93,6 +95,7 @@ export default {
     'search-results': SearchResultsComponent,
     'search-filters': SearchFiltersComponent,
     'multiselect': Multiselect,
+    'search': Search,
   },
 
   data() {
