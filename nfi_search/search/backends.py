@@ -227,10 +227,6 @@ class NestedFacetedSearchFilterBackend(
                                 path=options["path"],
                                 query=Terms(**{options["field"]: options["values"]}),
                             )
-                    elif options["path"] == "keywords":
-                        agg_filter &= Q(
-                            "match_phrase", **{options["field"]: options["values"]}
-                        )
                     else:
                         agg_filter &= Q(
                             "terms", **{options["field"]: options["values"]}
