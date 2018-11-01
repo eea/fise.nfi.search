@@ -94,6 +94,18 @@ class DocumentDoc(DocType):
         attr="topic_category.name", normalizer=lowercase_normalizer
     )
 
+    external_link = fields.TextField(
+        attr="file.external_link", fielddata=True
+    )
+
+    organization_name = fields.TextField(
+        attr="organization.name", fielddata=True
+    )
+
+    organization_email = fields.TextField(
+        attr="organization.email", fielddata=True
+    )
+
     keywords = fields.NestedField(
         properties={
             "name": fields.StringField(
@@ -116,6 +128,8 @@ class DocumentDoc(DocType):
         "info_level",
         "topic_category",
         "resource_type",
+        "organization",
+        "file",
     ]
 
     def get_queryset(self):
