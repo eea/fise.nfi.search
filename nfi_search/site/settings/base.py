@@ -69,7 +69,7 @@ DATABASES = {
         "NAME": env("POSTGRES_DBNAME", "nfi"),
         "USER": env("POSTGRES_DBUSER", "nfi"),
         "PASSWORD": env("POSTGRES_DBPASS", "nfi"),
-        "PORT": "5432",
+        "PORT": env("POSTGRES_PORT", "5432"),
     }
 }
 
