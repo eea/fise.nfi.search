@@ -1,5 +1,5 @@
 <template>
-<div>
+<div class="custom-search">
   <input
     type="text"
     class="search-input"
@@ -16,7 +16,10 @@
     @blur.prevent="deactivate"
     style="width: 100%;"
   >
-  <div v-for="(item, index) in suggestedKeywords" @click="onKeywordClicked(index)">{{item}}</div>
+  <div v-if="active && suggestedKeywords.length > 0" class="search-results">
+    <div v-for="(item, index) in suggestedKeywords" @click="onKeywordClicked(index)">{{item}}</div>
+  </div>
+
 </div>
 
 </template>
@@ -130,6 +133,7 @@ export default {
     onKeywordClicked(index) {
       this.indexOfKeyword = index;
       this.updateWithSelected();
+      this.makeKeywordsAndFreeTexts();
       this.reset();
     },
     /**
@@ -293,13 +297,53 @@ export default {
     },
     /**
      * will hide the dropdown of suggestions
+     * the dissable happens before the cick => the wait for 100 ms
      */
     deactivate() {
-      this.active = false;
+      setTimeout(() => {
+        console.log('blur')
+        this.active = false;
+        this.makeKeywordsAndFreeTexts();
+      }, 100);
+
     }
   }
 };
 </script>
 
 <style>
+.custom-search {
+  position: relative;
+  height: 100%;
+}
+.custom-search input {
+  width: 100%;
+  height: 100%;
+  border: none;
+  padding-left: 1rem;
+}
+
+.search-results {
+  position: absolute;
+  background: white;
+  width: 100%;
+  top: 39px;
+  left: -1px;
+  border: 1px solid white;
+  padding: 1rem;
+  padding-top: 0;
+  max-height: 300px;
+  overflow: auto;
+  box-shadow: 1px 1px 3px #aaa;
+}
+
+.search-results div {
+  cursor: pointer;
+  border: 1px solid #fff;
+}
+
+.search-results div:hover {
+  border: 1px solid #eee;
+}
+
 </style>
