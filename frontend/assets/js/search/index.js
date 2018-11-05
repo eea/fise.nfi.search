@@ -1,4 +1,3 @@
-// import search from './search';
-import search from './search2';
+import search from './search';
 
 export default search;

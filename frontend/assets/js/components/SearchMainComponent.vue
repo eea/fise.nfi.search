@@ -18,6 +18,7 @@
             >
             </multiselect> -->
             <search
+              v-if='keywords.length > 0'
               :allKeywords="keywords"
               @madeKeywords="handleSearch"
             ></search>
