@@ -22,7 +22,7 @@
             <b-btn
               variant="primary"
               v-on:click="handleClickedSearchTerm"
-            >Explore</b-btn>
+            >Data Search</b-btn>
           </b-input-group-append>
           <i
             class="fa fa-close right-icon"
@@ -120,15 +120,15 @@ export default {
       const promises = [];
       let result = [];
 
-      promises.push(fetchKeywords());
-      promises.push(fetchTopicCategories());
+      fetchKeywords().then(response => {
+        const keywords = response.data;
+        const keywordsNames = [];
+        for (let i = 0; i < keywords.length; i++) {
+          const element = keywords[i];
+          keywordsNames.push(element.name);
+        }
 
-      Promise.all(promises).then(response => {
-        const keywords = response[0].data;
-        const topics = response[1].data;
-        result = [...keywords, ...topics];
-
-        this.keywords = result.slice();
+        this.keywords = keywordsNames.sort();
       })
       .catch(error => {
         console.log(error);
