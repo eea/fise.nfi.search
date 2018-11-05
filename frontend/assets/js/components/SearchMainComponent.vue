@@ -5,7 +5,7 @@
     <div class="row flex-xl-nowrap2 search-input-wrapper">
       <b-input-group class="slinput">
           <div id="keywords-multiselect">
-            <multiselect
+            <!-- <multiselect
               v-model="selectedKeywords"
               :options="keywords"
               :multiple="true"
@@ -16,8 +16,11 @@
               tag-placeholder="Add this as new keyword"
               placeholder="Search or add a keyword"
             >
-            </multiselect>
-            <search></search>
+            </multiselect> -->
+            <search
+              :allKeywords="keywords"
+              @madeKeywords="handleSearch"
+            ></search>
           </div>
           <b-input-group-append>
             <b-btn
@@ -25,10 +28,10 @@
               v-on:click="handleClickedSearchTerm"
             >Go</b-btn>
           </b-input-group-append>
-          <i
+          <!-- <i
             class="fa fa-close right-icon"
             v-on:click="removeSearchTerm"
-          ></i>
+          ></i> -->
       </b-input-group>
     </div>
 
@@ -138,6 +141,7 @@ export default {
       resultsPerPage: 20,
       currentPage: 1,
       keywords: [],
+      searchKeywords: '',
       selectedKeywords: [],
       pageSize: 20,
       loadingResults: false,
@@ -170,6 +174,13 @@ export default {
   },
 
   methods: {
+    handleSearch(result) {
+      console.log('handle search!!!!!!', result);
+
+      this.searchTerm = result.freeText.length > 0 ? '?search=' + result.freeText + '&' : '?';
+      this.selectedKeywords = result.selectedKeywords.slice();
+      console.log('this.searchTerm', this.searchTerm);
+    },
     initiateKeywords() {
       const promises = [];
       let result = [];
@@ -194,14 +205,14 @@ export default {
       return `${option.name}`;
     },
 
-    addTag (newTag) {
-      const tag = {
-        name: newTag,
-        code: newTag.substring(0, 2) + Math.floor((Math.random() * 10000000))
-      }
-      this.keywords.push(tag)
-      this.selectedKeywords.push(tag)
-    },
+    // addTag (newTag) {
+    //   const tag = {
+    //     name: newTag,
+    //     code: newTag.substring(0, 2) + Math.floor((Math.random() * 10000000))
+    //   }
+    //   this.keywords.push(tag)
+    //   this.selectedKeywords.push(tag)
+    // },
 
     handleClickedSearchTerm() {
       this.currentPage = 1;
@@ -219,12 +230,12 @@ export default {
       });
     },
 
-    removeSearchTerm() {
-      this.currentPage = 1;
-      this.searchTerm = '';
-      this.selectedKeywords = [];
-      this.handleUpdatedSearchTerm();
-    },
+    // removeSearchTerm() {
+    //   this.currentPage = 1;
+    //   this.searchTerm = '';
+    //   this.selectedKeywords = [];
+    //   this.handleUpdatedSearchTerm();
+    // },
 
     /**
      * it is called by the result component by pressing the search button
@@ -275,13 +286,15 @@ export default {
     },
 
     makeSearchTerm() {
-      let result = this.selectedKeywords.length > 0 ? '&search=' : '';
+      let result = '';
 
       this.selectedKeywords.map((keyword) => {
-        result += `${keyword.name}&`;
+        result += `keyword=${keyword}&`;
       });
 
-      this.searchTerm = result;
+      this.searchKeywords = result;
+
+      console.log('this.searchKeywords', this.searchKeywords);
     },
 
     /**
