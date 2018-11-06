@@ -1,7 +1,6 @@
 <template>
   <div class="">
     <h4 class="filters-title">Filters</h4>
-
     <hr>
 
     <!-- Select Country -->

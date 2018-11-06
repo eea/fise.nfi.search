@@ -22,7 +22,7 @@
             <b-btn
               variant="primary"
               v-on:click="handleClickedSearchTerm"
-            >Data Search</b-btn>
+            >Go</b-btn>
           </b-input-group-append>
           <i
             class="fa fa-close right-icon"
@@ -48,22 +48,52 @@
         <div>
           <div class="bd-content">
 
+            <!-- result count -->
+            <div 
+              class="result-count"
+              v-if="showResultsCount"
+            >
+              <div 
+                href="#" 
+                target="_self" 
+              >{{ showingResults }}
+              </div>
+              
+              <!-- select page size -->
+              <b-input-group prepend="results per page">
+                <b-form-select 
+                  v-model="pageSize"
+                  :options="resultPerPage"
+                  class="mb-3"
+                  size="sm"
+                  @change="handlePageChange()"
+                />
+              </b-input-group>
+
+            </div>
+            <hr style="width: 15rem;">
+
+            <!-- loading result spinner -->
+            <div v-if="loadingResults" class="spinner">
+              <div class="loader"></div>
+            </div>
+
             <search-results
               :results="results"
               :count="count"
               :currentPage="currentPage"
+              :pageSize="resultsPerPage"
             ></search-results>
 
             <!-- pagination -->
-            <div>
+            <div v-if="results.length > 0">
               <b-pagination
-                v-if="results.length > 0"
                 size="sm"
                 :total-rows="count"
                 v-model="currentPage"
                 :per-page="resultsPerPage"
                 align="center"
-                v-on:change="handlePageChange()"
+                @change="handlePageChange()"
               ></b-pagination>
             </div>
 
@@ -102,12 +132,33 @@ export default {
       results: [],
       count: null,
       searchQuery: '',
-      justStarted: true,
       resultsPerPage: 20,
       currentPage: 1,
       keywords: [],
       selectedKeywords: [],
+      pageSize: 20,
+      loadingResults: false,
+      resultPerPage: [
+        { value: 20, text: '20' },
+        { value: 50, text: '50' },
+        { value: 100, text: '100' },
+      ]
     };
+  },
+
+  computed: {
+    showingResults() {
+      const startCount = (this.currentPage - 1) * this.pageSize;
+      const tempEndCount = this.currentPage * this.pageSize;
+      const endCount = this.count > tempEndCount ? tempEndCount : this.count;
+      const result = this.count ? 
+        'Showing ' + startCount + ' - ' + endCount + ' of ' + this.count + ' results' :
+        '0 results';
+      return result;
+    },
+    showResultsCount() {
+      return typeof this.count === 'number';
+    },
   },
 
   mounted(){
@@ -121,14 +172,15 @@ export default {
       let result = [];
 
       fetchKeywords().then(response => {
-        const keywords = response.data;
-        const keywordsNames = [];
-        for (let i = 0; i < keywords.length; i++) {
-          const element = keywords[i];
-          keywordsNames.push(element.name);
-        }
+        // const keywords = response.data;
+        // const keywordsNames = [];
+        // for (let i = 0; i < keywords.length; i++) {
+        //   const element = keywords[i];
+        //   keywordsNames.push(element.name);
+        // }
 
-        this.keywords = keywordsNames.sort();
+        // this.keywords = keywordsNames.sort();
+        this.keywords = response.data;
       })
       .catch(error => {
         console.log(error);
@@ -175,8 +227,9 @@ export default {
      * it is called by the result component by pressing the search button
      */
     handleUpdatedSearchTerm() {
+      this.loadingResults = true;
+      console.log(this.loadingResults)
       const resultSearchQuery = this.makeSearchQuery();
-
       this.doSearch(resultSearchQuery);
     },
 
@@ -184,6 +237,7 @@ export default {
      * it is called by the filter component (facets)
      */
     handleUpdatedFilter(searchQuery) {
+      this.loadingResults = true;
       this.currentPage = 1;
       this.searchQuery = searchQuery;
       const resultSearchQuery = this.makeSearchQuery();
@@ -197,6 +251,8 @@ export default {
      * this way we move it at the end of the call stack, so that the value is correct
      */
     handlePageChange(ev) {
+      this.loadingResults = true;
+
       setTimeout(() => {
         const resultSearchQuery = this.makeSearchQuery();
         this.doSearch(resultSearchQuery);
@@ -208,18 +264,18 @@ export default {
      */
     makeSearchQuery() {
       this.makeSearchTerm();
-
+      let pagination = '?page=' + this.currentPage;
+      let pageSizeQuery = this.pageSize !== 20 ? '&page_size=' + this.pageSize + '&' : '&';
       let resultSearchQuery = this.searchTerm + this.searchQuery;
-      let pagination = resultSearchQuery ? 'page=' + this.currentPage : '?page=' + this.currentPage;
 
-      return resultSearchQuery + '' + pagination;
+      return pagination + pageSizeQuery + resultSearchQuery;
     },
 
     makeSearchTerm() {
-      let result = '?';
+      let result = this.selectedKeywords.length > 0 ? '&search=' : '';
 
       this.selectedKeywords.map((keyword) => {
-        result += `search=${keyword.name}&`;
+        result += `${keyword.name}&`;
       });
 
       this.searchTerm = result;
@@ -234,9 +290,11 @@ export default {
           this.facets = response.data.facets;
           this.results = response.data.results;
           this.count = response.data.count;
+          this.loadingResults = false;
         })
         .catch((error) => {
           console.log(error);
+          this.loadingResults = false;
         });
     },
   },
@@ -339,6 +397,62 @@ a {
   position: relative;
   z-index: 6;
   flex-grow: 1;
+}
+
+.result-count {
+  font-size: .8rem;
+  color: #999;
+  line-height: 2rem;
+  display: flex;
+  justify-content: space-between;
+  .input-group {
+    max-width: 15rem;
+    max-height: 31px;
+  }
+  .input-group-text {
+    font-size: .7rem;
+  }
+}
+
+
+.spinner {
+  z-index: 9999;
+  position: absolute;
+  top: -.5rem;
+  bottom: 0;
+  left: 0;
+  right: .4rem;
+  background: rgba(0, 0, 0, 0.03);
+  display: flex;
+  justify-content: flex-start;
+  align-items: center;
+  flex-direction: column;
+  padding-top: 9rem;
+  border-radius: .5rem;
+}
+
+.loader {
+  border: 16px solid #f3f3f3;
+  border-radius: 50%;
+  border-top: 16px solid blue;
+  border-right: 16px solid green;
+  border-bottom: 16px solid red;
+  border-left: 16px solid pink;
+  width: 120px;
+  height: 120px;
+  -webkit-animation: spin 2s linear infinite; /* Safari */
+  animation: spin 2s linear infinite;
+}
+
+/* Safari */
+@-webkit-keyframes spin {
+  0% { -webkit-transform: rotate(0deg); }
+  100% { -webkit-transform: rotate(360deg); }
+}
+
+@keyframes spin {
+  0% { transform: rotate(0deg); }
+  100% { transform: rotate(360deg); }
 }
 
 </style>

@@ -2,12 +2,6 @@
 <template>
   <div class="search-fise">
 
-    <!-- result count -->
-    <div class="result-count" v-if="showResultsCount">
-      <div href="#" target="_self">{{ showingResults }}</div>
-      <hr>
-    </div>
-
     <!-- search results -->
     <list-custom
       v-if="myDataList.length > 0"
@@ -89,6 +83,21 @@
         </div>
 
         <div class="form-group row align-items-start">
+          <div class="col-sm-2 col-form-label">Source</div>
+          <div class="col-sm-10 col-form-label">{{selectedResult.external_link}}</div>
+        </div>
+
+        <div class="form-group row align-items-start">
+          <div class="col-sm-2 col-form-label">Organisation name</div>
+          <div class="col-sm-10 col-form-label">{{selectedResult.organization_name}}</div>
+        </div>
+
+        <div class="form-group row align-items-start">
+          <div class="col-sm-2 col-form-label">Organisation email</div>
+          <div class="col-sm-10 col-form-label">{{selectedResult.organization_email}}</div>
+        </div>
+
+        <div class="form-group row align-items-start">
           <div class="col-sm-2 col-form-label">NUTS levels</div>
           <div class="col-sm-10 col-form-label">
             <b-badge
@@ -142,25 +151,11 @@ export default {
   props: {
     results: {},
     count: null,
-    currentPage: null
+    currentPage: null,
+    pageSize: null
   },
 
   mixins: [filters],
-
-  computed: {
-    showingResults() {
-      const startCount = (this.currentPage - 1) * 20;
-      const tempEndCount = this.currentPage * 20;
-      const endCount = this.count > tempEndCount ? tempEndCount : this.count;
-      const result = this.count ? 
-        'Showing ' + startCount + ' - ' + endCount + ' of ' + this.count + ' results' :
-        '0 results';
-      return result;
-    },
-    showResultsCount() {
-      return typeof this.count === 'number';
-    },
-  },
 
   data() {
     return {
@@ -201,16 +196,6 @@ export default {
 
 .result-content {
   width: 100%;
-}
-
-.result-count {
-  font-size: .8rem;
-  color: #999;
-  line-height: 2rem;
-
-  hr {
-    width: 15rem;
-  }
 }
 
 svg path {

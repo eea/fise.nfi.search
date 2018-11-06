@@ -2,11 +2,11 @@
   filters: {
     renameLevel(nut) {
       if (!nut) return '';
-      return nut.replace('L','Level ');
+      return nut.replace(/L\d+/, "Level ");
     },
     nfiExplain(value) {
       if (!value || value.toLowerCase() !== 'nfi') return value;
-      return value + ' (National Forest Inventory)';
+      return value.replace(/nfi/gi, "National Forest Inventory");
     },
     bytesToSize(bytes) {
       if(typeof bytes == 'number') {
