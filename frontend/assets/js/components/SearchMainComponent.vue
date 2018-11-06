@@ -4,35 +4,22 @@
     <!-- Search term input -->
     <div class="row flex-xl-nowrap2 search-input-wrapper">
       <b-input-group class="slinput">
+          <!-- search input -->
           <div id="keywords-multiselect">
-            <!-- <multiselect
-              v-model="selectedKeywords"
-              :options="keywords"
-              :multiple="true"
-              track-by="name"
-              :custom-label="customLabel"
-              :taggable="true"
-              @tag="addTag"
-              tag-placeholder="Add this as new keyword"
-              placeholder="Search or add a keyword"
-            >
-            </multiselect> -->
             <search
               v-if='keywords.length > 0'
               :allKeywords="keywords"
               @madeKeywords="handleSearch"
             ></search>
           </div>
+          <!-- search button -->
           <b-input-group-append>
             <b-btn
               variant="primary"
               v-on:click="handleClickedSearchTerm"
             >Go</b-btn>
           </b-input-group-append>
-          <!-- <i
-            class="fa fa-close right-icon"
-            v-on:click="removeSearchTerm"
-          ></i> -->
+
       </b-input-group>
     </div>
 
@@ -176,26 +163,22 @@ export default {
 
   methods: {
     handleSearch(result) {
-      console.log('handle search!!!!!!', result);
-
       this.searchTerm = result.freeText.length > 0 ? '?search=' + result.freeText + '&' : '?';
       this.selectedKeywords = result.selectedKeywords.slice();
-      console.log('this.searchTerm', this.searchTerm);
     },
     initiateKeywords() {
       const promises = [];
       let result = [];
 
       fetchKeywords().then(response => {
-        // const keywords = response.data;
-        // const keywordsNames = [];
-        // for (let i = 0; i < keywords.length; i++) {
-        //   const element = keywords[i];
-        //   keywordsNames.push(element.name);
-        // }
+        const keywords = response.data;
+        const keywordsNames = [];
+        for (let i = 0; i < keywords.length; i++) {
+          const element = keywords[i];
+          keywordsNames.push(element.name);
+        }
 
-        // this.keywords = keywordsNames.sort();
-        this.keywords = response.data;
+        this.keywords = keywordsNames.sort();
       })
       .catch(error => {
         console.log(error);
@@ -206,17 +189,9 @@ export default {
       return `${option.name}`;
     },
 
-    // addTag (newTag) {
-    //   const tag = {
-    //     name: newTag,
-    //     code: newTag.substring(0, 2) + Math.floor((Math.random() * 10000000))
-    //   }
-    //   this.keywords.push(tag)
-    //   this.selectedKeywords.push(tag)
-    // },
-
     handleClickedSearchTerm() {
       this.currentPage = 1;
+
       this.handleUpdatedSearchTerm();
     },
 
@@ -231,20 +206,13 @@ export default {
       });
     },
 
-    // removeSearchTerm() {
-    //   this.currentPage = 1;
-    //   this.searchTerm = '';
-    //   this.selectedKeywords = [];
-    //   this.handleUpdatedSearchTerm();
-    // },
-
     /**
      * it is called by the result component by pressing the search button
      */
     handleUpdatedSearchTerm() {
       this.loadingResults = true;
-      console.log(this.loadingResults)
       const resultSearchQuery = this.makeSearchQuery();
+
       this.doSearch(resultSearchQuery);
     },
 
@@ -281,7 +249,7 @@ export default {
       this.makeSearchTerm();
       let pagination = '?page=' + this.currentPage;
       let pageSizeQuery = this.pageSize !== 20 ? '&page_size=' + this.pageSize + '&' : '&';
-      let resultSearchQuery = this.searchTerm + this.searchQuery;
+      let resultSearchQuery = this.searchTerm + this.searchQuery + this.searchKeywords;
 
       return pagination + pageSizeQuery + resultSearchQuery;
     },
@@ -294,8 +262,6 @@ export default {
       });
 
       this.searchKeywords = result;
-
-      console.log('this.searchKeywords', this.searchKeywords);
     },
 
     /**

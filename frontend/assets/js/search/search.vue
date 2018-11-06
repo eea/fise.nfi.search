@@ -49,6 +49,7 @@ export default {
       const element = this.allKeywords[i];
       this.keywords.push(element.name);
     }
+    this.keywords = this.allKeywords.sort().slice();
     this.suggestedKeywords = this.keywords.slice();
   },
   methods: {
@@ -301,11 +302,9 @@ export default {
      */
     deactivate() {
       setTimeout(() => {
-        console.log('blur')
         this.active = false;
         this.makeKeywordsAndFreeTexts();
       }, 100);
-
     }
   }
 };
