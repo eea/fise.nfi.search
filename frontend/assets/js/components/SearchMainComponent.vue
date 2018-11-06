@@ -162,7 +162,7 @@ export default {
 
   methods: {
     handleSearch(result) {
-      this.searchTerm = result.freeText.length > 0 ? '?search=' + result.freeText + '&' : '?';
+      this.searchTerm = result.freeText.length > 0 ? 'search=' + result.freeText + '&' : '';
       this.selectedKeywords = result.selectedKeywords.slice();
     },
     initiateKeywords() {
@@ -393,6 +393,9 @@ a {
   }
   .input-group-text {
     font-size: .7rem;
+  }
+  .input-group-prepend {
+    max-height: 100%;
   }
 }
 

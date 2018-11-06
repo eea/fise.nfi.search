@@ -301,10 +301,10 @@ export default {
      * the dissable happens before the cick => the wait for 100 ms
      */
     deactivate() {
+      this.makeKeywordsAndFreeTexts();
       setTimeout(() => {
         this.active = false;
-        this.makeKeywordsAndFreeTexts();
-      }, 100);
+      }, 200);
     }
   }
 };
