@@ -11,6 +11,7 @@
     @keyup.self.up.prevent="onKeyUpArrow"
     @keyup.delete="onKeyDelete"
     @keyup.space="onKeySpace"
+    @keyup.enter="onKeyEnter"
     @keyup.esc="deactivate"
     @focus.prevent="activate"
     @blur.prevent="deactivate"
@@ -181,7 +182,11 @@ export default {
         this.updateWithSelected();
       }
     },
-
+    onKeyEnter() {
+      this.intermSerchTerm = this.searchTerm.trim();
+      this.makeKeywordsAndFreeTexts();
+      this.reset();
+    },
     /**
      * handle for space key
      * reset and make list of keywords

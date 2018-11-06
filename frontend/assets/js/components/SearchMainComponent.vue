@@ -73,7 +73,6 @@
               :results="results"
               :count="count"
               :currentPage="currentPage"
-              :pageSize="resultsPerPage"
             ></search-results>
 
             <!-- pagination -->
@@ -82,7 +81,7 @@
                 size="sm"
                 :total-rows="count"
                 v-model="currentPage"
-                :per-page="resultsPerPage"
+                :per-page="pageSize"
                 align="center"
                 @change="handlePageChange()"
               ></b-pagination>
@@ -125,7 +124,6 @@ export default {
       results: [],
       count: null,
       searchQuery: '',
-      resultsPerPage: 20,
       currentPage: 1,
       keywords: [],
       searchKeywords: '',

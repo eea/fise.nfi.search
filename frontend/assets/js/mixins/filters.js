@@ -2,7 +2,7 @@
   filters: {
     renameLevel(nut) {
       if (!nut) return '';
-      return nut.replace(/L\d+/, "Level ");
+      return nut.replace(/(L)(\d+)/, 'Level ' + '$2');
     },
     nfiExplain(value) {
       if (!value || value.toLowerCase() !== 'nfi') return value;

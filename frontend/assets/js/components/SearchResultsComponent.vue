@@ -152,7 +152,6 @@ export default {
     results: {},
     count: null,
     currentPage: null,
-    pageSize: null
   },
 
   mixins: [filters],
