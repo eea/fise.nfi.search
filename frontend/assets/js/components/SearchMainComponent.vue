@@ -19,7 +19,6 @@
               v-on:click="handleClickedSearchTerm"
             >Go</b-btn>
           </b-input-group-append>
-
       </b-input-group>
     </div>
 
