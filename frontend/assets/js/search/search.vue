@@ -297,6 +297,8 @@ export default {
         const lastWord = allWords[allWords.length - 1];
 
         this.whatToLookFor = lastWord;
+        // make this.intermSerchTerm be this.searchTerm minus the last word (or partial word)
+        this.intermSerchTerm = allWords.length > 1 ? allWords.slice(0, allWords.length - 1).join().replace(/,/gi, ' ') : '';
         this.suggestedKeywords = this.filterResults().slice();
       } else {
         this.reset(); // all words have been deleted
