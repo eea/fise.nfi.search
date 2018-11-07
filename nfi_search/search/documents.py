@@ -1,7 +1,16 @@
+import logging
 from django.conf import settings
+from django.db.utils import ProgrammingError
 from django_elasticsearch_dsl import DocType, Index, fields
 from elasticsearch_dsl.analysis import analyzer, normalizer, char_filter, token_filter
 from .models import Document, DKeyword
+
+
+log = logging.getLogger(__name__)
+info = log.info
+debug = log.debug
+warn = log.warning
+error = log.error
 
 
 nfi = Index(settings.ELASTICSEARCH_INDEX)
@@ -51,7 +60,12 @@ def _keywords_analyzer(keywords):
 
 
 def _get_keywords():
-    return [kw.name.strip().lower() for kw in DKeyword.objects.all()]
+    try:
+        return [kw.name.strip().lower() for kw in DKeyword.objects.all()]
+    except ProgrammingError:
+        warn("Could not get keywords to build synonyms - table missing. "
+             "Migrate, import metadata, then (re)build the index.")
+        return []
 
 
 keywords_analyzer = _keywords_analyzer(_get_keywords())
