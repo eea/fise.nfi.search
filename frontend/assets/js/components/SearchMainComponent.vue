@@ -3,23 +3,16 @@
 
     <!-- Search term input -->
     <div class="row flex-xl-nowrap2 search-input-wrapper">
-      <b-input-group class="slinput">
+      <div class="slinput">
           <!-- search input -->
           <div id="keywords-multiselect">
             <search
               v-if='keywords.length > 0'
               :allKeywords="keywords"
-              @madeKeywords="handleSearch"
+              @searchForKeywords="handleClickedSearchTerm"
             ></search>
           </div>
-          <!-- search button -->
-          <b-input-group-append>
-            <b-btn
-              variant="primary"
-              v-on:click="handleClickedSearchTerm"
-            >Go</b-btn>
-          </b-input-group-append>
-      </b-input-group>
+      </div>
     </div>
 
     <button id="sidebarTrigger" ref="sidebarTrigger" class="btn btn-default">Open Filters</button>
@@ -159,10 +152,6 @@ export default {
   },
 
   methods: {
-    handleSearch(result) {
-      this.searchTerm = result.freeText.length > 0 ? 'search=' + result.freeText + '&' : '';
-      this.selectedKeywords = result.selectedKeywords.slice();
-    },
     initiateKeywords() {
       const promises = [];
       let result = [];
@@ -186,12 +175,6 @@ export default {
       return `${option.name}`;
     },
 
-    handleClickedSearchTerm() {
-      this.currentPage = 1;
-
-      this.handleUpdatedSearchTerm();
-    },
-
     handleMobileSidebar(){
       let triggers = [this.$refs.sidebarTrigger, this.$refs.backdrop];
       let body = document.querySelector('body');
@@ -201,6 +184,18 @@ export default {
           body.classList.toggle('sidebaropen');
         })
       });
+    },
+
+    handleClickedSearchTerm(result) {
+      this.currentPage = 1;
+      this.handleSearch(result)
+
+      this.handleUpdatedSearchTerm();
+    },
+
+    handleSearch(result) {
+      this.searchTerm = result.freeText.length > 0 ? 'search=' + result.freeText + '&' : '';
+      this.selectedKeywords = result.selectedKeywords.slice();
     },
 
     /**
@@ -322,52 +317,52 @@ a {
   z-index: 89;
 }
 
-.slinput {
-  position: relative;
-  border: 1px solid #fff;
-  background-color: #fff;
+// .slinput {
+//   position: relative;
+//   border: 1px solid #fff;
+//   background-color: #fff;
 
-  .input-group-append {
-    margin-left: 0;
-    order: 2;
-  }
+//   .input-group-append {
+//     margin-left: 0;
+//     order: 2;
+//   }
 
-  input {
-    padding-left: 2rem;
-    box-shadow: none;
-    border: none;
-    border-radius: 0;
-  }
+//   input {
+//     padding-left: 2rem;
+//     box-shadow: none;
+//     border: none;
+//     border-radius: 0;
+//   }
 
-  button {
-    min-width: 150px;
-    background-color:#8DC84C;
-    color: #000;
-    font-weight: bold;
-    border-color: transparent;
-    z-index: 4;
-  }
+//   button {
+//     min-width: 150px;
+//     background-color:#8DC84C;
+//     color: #000;
+//     font-weight: bold;
+//     border-color: transparent;
+//     z-index: 4;
+//   }
 
-  .fa-search {
-    position: absolute;
-    left: 1rem;
-    z-index: 1;
-    top: 50%;
-    transform: translateY(-50%);
-    font-size: 2rem;
-    color:#666666;
-    z-index: 4;
-  }
+//   .fa-search {
+//     position: absolute;
+//     left: 1rem;
+//     z-index: 1;
+//     top: 50%;
+//     transform: translateY(-50%);
+//     font-size: 2rem;
+//     color:#666666;
+//     z-index: 4;
+//   }
 
-  .fa-close {
-    color:#666666;
-    z-index: 4;
-    order: 1;
-    display: flex;
-    align-items: center;
-    padding: 0 1em;
-  }
-}
+//   .fa-close {
+//     color:#666666;
+//     z-index: 4;
+//     order: 1;
+//     display: flex;
+//     align-items: center;
+//     padding: 0 1em;
+//   }
+// }
 
 .result-content {
   width: 100%;

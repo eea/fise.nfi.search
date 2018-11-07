@@ -1,5 +1,7 @@
 <template>
 <div class="custom-search">
+  <b-input-group>
+
   <input
     type="text"
     class="search-input"
@@ -20,6 +22,17 @@
   <div v-if="active && suggestedKeywords.length > 0" class="search-results">
     <div v-for="(item, index) in suggestedKeywords" @click="onKeywordClicked(index)">{{item}}</div>
   </div>
+
+
+  <!-- search button -->
+  <b-input-group-append>
+    <b-btn
+      variant="primary"
+      v-on:click="handleClickedSearch"
+    >Go</b-btn>
+  </b-input-group-append>
+
+  </b-input-group>
 
 </div>
 
@@ -129,13 +142,15 @@ export default {
 
       return result;
     },
+    handleClickedSearch() {
+      this.makeKeywordsAndFreeTexts();
+    },
     /**
      * handle for click on result
      */
     onKeywordClicked(index) {
       this.indexOfKeyword = index;
       this.updateWithSelected();
-      this.makeKeywordsAndFreeTexts();
       this.reset();
     },
     /**
@@ -194,7 +209,6 @@ export default {
      */
     onKeySpace() {
       this.intermSerchTerm = this.searchTerm.trim();
-      this.makeKeywordsAndFreeTexts();
       this.reset();
     },
     /**
@@ -231,7 +245,8 @@ export default {
       }
       freeText = freeText.trim();
 
-      this.$emit('madeKeywords', {selectedKeywords: selectedKeywords, freeText: freeText});
+      // TODO refactor method to be immutable, modular and single responsability
+      this.$emit('searchForKeywords', {selectedKeywords: selectedKeywords, freeText: freeText});
 
       function isKeyword(keyword) {
         let lengthOfKeyword = 0;
@@ -306,7 +321,6 @@ export default {
      * the dissable happens before the cick => the wait for 100 ms
      */
     deactivate() {
-      this.makeKeywordsAndFreeTexts();
       setTimeout(() => {
         this.active = false;
       }, 200);
@@ -315,7 +329,7 @@ export default {
 };
 </script>
 
-<style>
+<style  lang="scss">
 .custom-search {
   position: relative;
   height: 100%;
@@ -349,5 +363,57 @@ export default {
 .search-results div:hover {
   border: 1px solid #eee;
 }
+.slinput {
+  position: relative;
+  border: 1px solid #fff;
+  background-color: #fff;
+  width: 100%;
+      border-radius: 0.25em;
+  .input-group-append {
+    margin-left: 0;
+    order: 2;
+  }
 
+  #inputSearch {
+    width: initial!important;
+    height: initial;
+    flex-grow: 1;
+  }
+
+  input {
+    padding-left: 2rem;
+    box-shadow: none;
+    border: none;
+    border-radius: 0;
+  }
+
+  button {
+    min-width: 150px;
+    background-color:#8DC84C;
+    color: #000;
+    font-weight: bold;
+    border-color: transparent;
+    z-index: 4;
+  }
+
+  .fa-search {
+    position: absolute;
+    left: 1rem;
+    z-index: 1;
+    top: 50%;
+    transform: translateY(-50%);
+    font-size: 2rem;
+    color:#666666;
+    z-index: 4;
+  }
+
+  .fa-close {
+    color:#666666;
+    z-index: 4;
+    order: 1;
+    display: flex;
+    align-items: center;
+    padding: 0 1em;
+  }
+}
 </style>
