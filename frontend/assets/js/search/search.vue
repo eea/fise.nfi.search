@@ -55,7 +55,8 @@ export default {
       indexOfKeyword: -1,
       afterSelectedKeyword: false,
       suggestedKeywords: [],
-      active: false
+      active: false,
+      keywordsWithParts: {},
     };
   },
   mounted() {
@@ -65,8 +66,21 @@ export default {
     }
     this.keywords = this.allKeywords.sort().slice();
     this.suggestedKeywords = this.keywords.slice();
+    this.makeCorrelationsWithKeywords();
   },
   methods: {
+    makeCorrelationsWithKeywords() {
+      for (let i = 0; i < this.keywords.length; i++) {
+        const keywordBase = this.keywords[i];
+        for (let j = 0; j < this.keywords.length; j++) {
+          const keywordCompare = this.keywords[j];
+          if(keywordCompare.search(keywordBase + ' ') > -1 || keywordCompare.search(' ' + keywordBase) > -1) {
+            this.keywordsWithParts[keywordBase] = keywordCompare;
+          }
+        }
+      }
+      console.log(this.keywordsWithParts);
+    },
     onKeyUp: throttle(
       /**
        * search for suggestions only for words
@@ -226,8 +240,13 @@ export default {
         const keyword = this.keywords[i];
 
         if (isKeyword(keyword)) {
-          selectedKeywords.push(keyword);
-          tempSearchTerm = removeKeywordFromSearchTerm(keyword, tempSearchTerm);
+          if(this.keywordsWithParts[keyword] && isKeyword(this.keywordsWithParts[keyword])) {
+            selectedKeywords.push(this.keywordsWithParts[keyword]);
+            tempSearchTerm = removeKeywordFromSearchTerm(this.keywordsWithParts[keyword], tempSearchTerm);
+          } else {
+            selectedKeywords.push(keyword);
+            tempSearchTerm = removeKeywordFromSearchTerm(keyword, tempSearchTerm);
+          }
         }
       }
       const allFreeWords = tempSearchTerm.trim().toLowerCase().split(' ');
