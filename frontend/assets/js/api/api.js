@@ -77,9 +77,44 @@ export function fetchCollectionsRange() {
   return fetch(`collections_range/`);
 }
 
+export function getCollectionYearsFormatted() {
+  return new Promise((resolve, reject) => {
+    fetchCollectionsRange()
+      .then(response => {
+        let max = response.data.max;
+        let min = response.data.min;
+        let result = Array.from({ length: max + 1 - min }, (v, k) => { return { id: k + min, name: k + min + ''} });
+
+        resolve({ data: result });
+      })
+      .catch(error => {
+        reject(error);
+      });
+  });
+}
+
 export function fetchPublicationYears() {
   return fetch(`publication_years/`);
 }
+
+export function getPublicationYearsFormatted() {
+  return new Promise((resolve, reject) => {
+    fetchPublicationYears()
+      .then(response => {
+        let result = [];
+
+        response.data.map((item) => {
+          result.push({ id: item, name: item + '' })
+        })
+
+        resolve({ data: result });
+      })
+      .catch(error => {
+        reject(error);
+      });
+  });
+}
+
 
 export function search(term) {
   return fetchSearch(term);

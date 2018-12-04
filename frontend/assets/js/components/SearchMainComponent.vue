@@ -21,12 +21,12 @@
           <b-input-group-append>
             <b-btn
               variant="primary"
-              v-on:click="handleClickedSearchTerm"
+              @click="handleClickedSearchTerm"
             >Go</b-btn>
           </b-input-group-append>
           <i
             class="fa fa-close right-icon"
-            v-on:click="removeSearchTerm"
+            @click="removeSearchTerm"
           ></i>
       </b-input-group>
     </div>
@@ -34,12 +34,20 @@
     <button id="sidebarTrigger" ref="sidebarTrigger" class="btn btn-default">Open Filters</button>
 
     <div class="row flex-xl-nowrap2 mt-3">
-
       <!-- facets section -->
       <div class="bd-sidebar col-md-4 col-xl-3 col-12 order-md-12">
+
+        <button
+          class="btn btn-primary"
+          @click="onClearAllFilters"
+        >
+          Clear all filters
+        </button>
+
         <search-filters
-          v-on:updated-filters="handleUpdatedFilter"
+          @updated-filters="handleUpdatedFilter"
           :facets="facets"
+          :clearAllFilters="clearAllFilters"
         ></search-filters>
       </div>
 
@@ -58,7 +66,7 @@
                 target="_self" 
               >{{ showingResults }}
               </div>
-              
+
               <!-- select page size -->
               <b-input-group prepend="results per page">
                 <b-form-select 
@@ -82,7 +90,7 @@
               :results="results"
               :count="count"
               :currentPage="currentPage"
-              :pageSize="resultsPerPage"
+              :pageSize="pageSize"
             ></search-results>
 
             <!-- pagination -->
@@ -91,7 +99,7 @@
                 size="sm"
                 :total-rows="count"
                 v-model="currentPage"
-                :per-page="resultsPerPage"
+                :per-page="pageSize"
                 align="center"
                 @change="handlePageChange()"
               ></b-pagination>
@@ -111,7 +119,7 @@ import SearchFiltersComponent from './SearchFiltersComponent';
 import Multiselect from "vue-multiselect";
 import { search, searchFullUrl, fetchKeywords, fetchTopicCategories } from '../api';
 
-
+const defaultPageSize = 20;
 /**
  * TODO
  * - cache pages as long as searchQuery is same
@@ -132,14 +140,16 @@ export default {
       results: [],
       count: null,
       searchQuery: '',
-      resultsPerPage: 20,
+      clearAllFilters: false,
       currentPage: 1,
       keywords: [],
+      originalKeywords: [],
       selectedKeywords: [],
-      pageSize: 20,
+      pageSize: defaultPageSize,
       loadingResults: false,
+      filtersSelections: {},
       resultPerPage: [
-        { value: 20, text: '20' },
+        { value: defaultPageSize, text: defaultPageSize },
         { value: 50, text: '50' },
         { value: 100, text: '100' },
       ]
@@ -162,29 +172,28 @@ export default {
   },
 
   mounted(){
-    this.handleMobileSidebar();
     this.initiateKeywords();
+    this.handleMobileSidebar();
   },
 
   methods: {
+    onClearAllFilters() {
+      this.clearAllFilters = !this.clearAllFilters;
+      this.handleUpdatedFilter({});
+    },
+
     initiateKeywords() {
       const promises = [];
       let result = [];
 
-      fetchKeywords().then(response => {
-        // const keywords = response.data;
-        // const keywordsNames = [];
-        // for (let i = 0; i < keywords.length; i++) {
-        //   const element = keywords[i];
-        //   keywordsNames.push(element.name);
-        // }
-
-        // this.keywords = keywordsNames.sort();
-        this.keywords = response.data;
-      })
-      .catch(error => {
-        console.log(error);
-      });
+      fetchKeywords()
+        .then(response => {
+          this.keywords = response.data.slice();
+          this.originalKeywords = response.data.slice();
+        })
+        .catch(error => {
+          console.log(error);
+        });
     },
 
     customLabel(option) {
@@ -201,8 +210,11 @@ export default {
     },
 
     handleClickedSearchTerm() {
+      this.loadingResults = true;
       this.currentPage = 1;
-      this.handleUpdatedSearchTerm();
+      const resultSearchQuery = this.makeSearchQuery();
+
+      this.doSearch(resultSearchQuery);
     },
 
     handleMobileSidebar(){
@@ -212,7 +224,7 @@ export default {
       triggers.forEach( function(element, index) {
         element.addEventListener('click', () => {
           body.classList.toggle('sidebaropen');
-        })
+        });
       });
     },
 
@@ -220,65 +232,54 @@ export default {
       this.currentPage = 1;
       this.searchTerm = '';
       this.selectedKeywords = [];
-      this.handleUpdatedSearchTerm();
-    },
-
-    /**
-     * it is called by the result component by pressing the search button
-     */
-    handleUpdatedSearchTerm() {
-      this.loadingResults = true;
-      console.log(this.loadingResults)
-      const resultSearchQuery = this.makeSearchQuery();
-      this.doSearch(resultSearchQuery);
     },
 
     /**
      * it is called by the filter component (facets)
      */
-    handleUpdatedFilter(searchQuery) {
+    handleUpdatedFilter(filtersSelections) {
       this.loadingResults = true;
       this.currentPage = 1;
-      this.searchQuery = searchQuery;
+      this.filtersSelections = filtersSelections;
       const resultSearchQuery = this.makeSearchQuery();
 
       this.doSearch(resultSearchQuery);
-    },
-
-    /**
-     * used timeout because the change event precedes the model bind,
-     * this means that the values of the current page is not the new one0
-     * this way we move it at the end of the call stack, so that the value is correct
-     */
-    handlePageChange(ev) {
-      this.loadingResults = true;
-
-      setTimeout(() => {
-        const resultSearchQuery = this.makeSearchQuery();
-        this.doSearch(resultSearchQuery);
-      })
     },
 
     /**
      * composes the search query based on search term, search query from filters and pagination
      */
     makeSearchQuery() {
-      this.makeSearchTerm();
-      let pagination = '?page=' + this.currentPage;
-      let pageSizeQuery = this.pageSize !== 20 ? '&page_size=' + this.pageSize + '&' : '&';
-      let resultSearchQuery = this.searchTerm + this.searchQuery;
+      this.keywordsQuery = this.makeFiltersQuery();
+      this.searchTerm = this.makeSearchTerm();
+      let paginationQuery = '?page=' + this.currentPage;
+      let pageSizeQuery = this.pageSize !== defaultPageSize ? '&page_size=' + this.pageSize + '&' : '';
+      let searchQuery = this.searchTerm + this.keywordsQuery;
 
-      return pagination + pageSizeQuery + resultSearchQuery;
+      return paginationQuery + pageSizeQuery + searchQuery;
+    },
+
+    makeFiltersQuery() {
+      const reducer = (accumulator, currentValue) => {
+        return accumulator + this.filtersSelections[currentValue];
+      };
+      return Object.keys(this.filtersSelections).reduce(reducer, '');
     },
 
     makeSearchTerm() {
-      let result = this.selectedKeywords.length > 0 ? '&search=' : '';
+      let searchTerm = '';
+      let keywordsTerm = '';
+      let result = '';
 
-      this.selectedKeywords.map((keyword) => {
-        result += `${keyword.name}&`;
+      this.selectedKeywords.map((selectedKeyword) => {
+        const isMatch = this.originalKeywords.find(function(keyword) {
+          return keyword.id === selectedKeyword.id;
+        });
+        isMatch ? keywordsTerm += '&keyword=' + selectedKeyword.name : searchTerm += ' ' + selectedKeyword.name;
       });
+      result = searchTerm ? '&search=' + searchTerm.trim() + keywordsTerm : keywordsTerm;
 
-      this.searchTerm = result;
+      return result;
     },
 
     /**
@@ -296,6 +297,20 @@ export default {
           console.log(error);
           this.loadingResults = false;
         });
+    },
+
+    /**
+     * used timeout because the change event precedes the model bind,
+     * this means that the values of the current page is not the new one0
+     * this way we move it at the end of the call stack, so that the value is correct
+     */
+    handlePageChange(ev) {
+      this.loadingResults = true;
+
+      setTimeout(() => {
+        const resultSearchQuery = this.makeSearchQuery();
+        this.doSearch(resultSearchQuery);
+      })
     },
   },
 };

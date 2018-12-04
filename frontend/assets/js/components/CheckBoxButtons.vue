@@ -5,25 +5,25 @@
         {{title}}
         <span class="fa fa-angle-down"></span>
       </div>
-      <div class="preview-text">{{summary}}</div>
+      <div class="preview-text">{{listSummary}}</div>
     </a>
     <b-collapse :id="'collapse-' + componentName">
       <div role="group" class="filter-group">
         <label
           style="display:flex"
-          v-for="dataItem in myDataList"
+          v-for="dataItem in checkboxDataList"
           :key="componentName + dataItem.id"
         >
           <b-form-checkbox
             stacked
-            :id="componentName + dataItem.id"
+            :id="componentName + '' + dataItem.id"
             v-model="mySelectedList"
             :value="dataItem"
             v-on:change="handleClicked()"
             lazy
           ></b-form-checkbox>
           <span class="filter-item-name">
-            {{dataItem.name | renameLevel | nfiExplain}}
+            {{dataItem.displayName || dataItem.name}}
             <span class="badge badge-primary">{{dataItem.number}}</span>
           </span>
 
@@ -37,13 +37,16 @@
 <script>
 import filters from '../mixins/filters';
 
+const noOfResultsInSummary = 2;
+
 export default {
   name: 'CheckBoxButtons',
 
   props: {
-    dataList: {},
+    checkboxDataList: {},
     componentName: '',
     title: '',
+    clearAllFilters: false,
   },
 
   mixins: [filters],
@@ -51,23 +54,13 @@ export default {
   data() {
     return {
       mySelectedList: [],
-      myDataList: JSON.parse(JSON.stringify(this.dataList)),
     };
   },
 
   computed: {
-    summary() {
-      let result = '';
-      const noOfResultsInSummary = 2;
-      const myDataListItems = Object.keys(this.myDataList);
-      const remainingNumberOfResults = myDataListItems.length - noOfResultsInSummary;
-
-      myDataListItems.slice(0, noOfResultsInSummary).map((key) => {
-        let name = this.myDataList[key].name.replace('L','Level ');
-        result += name + ', ';
-      });
-      result += '.. + ' + remainingNumberOfResults + ' more';
-      return result;
+    // will display a string with the first few element from the list
+    listSummary: function makeListSummary() {
+      return this.summary(this.checkboxDataList, noOfResultsInSummary);
     }
   },
 
@@ -81,30 +74,9 @@ export default {
   },
 
   watch: {
-    /**
-     * on each change of dataList from prop, received from the parent
-     * it will update the facets (checkboxes) with the new count
-     * Object.assign is needed so that Vue knows that the model has been updated
-     * I tried creating a clone (JSON.parse(JSON.stringify(this.dataList))) and assigning it at the end,
-     * but it doesn't work (it keeps the previuos value in mySelectedList and doesn't update it)
-     * @param {Object} val - the object that contains the list to display as checkboxes
-     * @param {Object} val["corine land cover"] - example of a facet object OR val["1"]
-     * @param {number} val["corine land cover"].id OR val["1"].id
-     * @param {string} val["corine land cover"].name OR val["1"].name
-     * @param {number} val["corine land cover"].number - the new count OR val["1"].number
-     */
-    dataList: function updateFacetsCount(val) {
-      for (const key in val) {
-        if (val.hasOwnProperty(key)) {
-          const newFacetCount = val[key].number;
-          this.myDataList[key] = Object.assign(this.myDataList[key], { number: newFacetCount });
-
-          if(this.mySelectedList[key]) {
-            this.mySelectedList[key] = Object.assign(this.mySelectedList[key], { number: newFacetCount })
-          }
-        }
-      }
-    },
+    clearAllFilters: function() {
+      this.mySelectedList = [];
+    }
   }
 };
 </script>
