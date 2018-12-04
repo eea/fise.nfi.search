@@ -1,10 +1,13 @@
 <template>
   <div class="pad-top40">
+
     <range-slider
-      :dataList="dataset.labels" 
+      :dataList="dataset"
       :componentName="'range-collections'"
       v-on:selected-range-collections="handleSelectedRangeCollections"
-    ></range-slider>      
+      :clearAllFilters="clearAllFilters"
+    ></range-slider>
+
   </div>
 </template>
 
@@ -20,54 +23,29 @@ export default {
 
   props: {
     dataList: {},
-    componentName: "",
-    title: ""
+    clearAllFilters: false,
   },
 
   data() {
     return {
-      mySelectedList: [],
-      myDataList: JSON.parse(JSON.stringify(this.dataList)),
-      dataset: {},
+      dataset: Object.keys(this.dataList),
+      componentName: 'collections_range',
     };
   },
 
-  created() {
-    this.dataset = this.makeRange();
-  },
-
   methods: {
-    /**
-     * collection year comes as an object with a max and min
-     * we need an array of all the years included between min and max and one with labels
-     */
-    makeRange() {
-      let result = { data: new Array(this.myDataList.max - this.myDataList.min + 1).fill(0), labels: [] };
-      for (let i = this.myDataList.min; i <= this.myDataList.max; i++) {
-        result.labels.push(i);
-      };
-
-      return result;
-    },
 
     /**
      * the array will start on position 0 with the first year (ex 1920)
-     * the range-slider will send the indexes
+     * the range-slider will send the values
      */
     handleSelectedRangeCollections(ev) {
-      this.mySelectedList = [];
+      const searchQuery = `&data_collection_end_year__gte=${ev[0]}&data_collection_start_year__lte=${ev[1]}`;
 
-      // if(ev.length > 0) {
-      //   const firstElement = this.dataset.labels[ev[0]];
-      //   const secondElement = this.dataset.labels[ev[1]];
-
-        this.mySelectedList.push(ev[0]);
-        this.mySelectedList.push(ev[1]);        
-      // }
-
-      this.$emit("selected-" + this.componentName, this.mySelectedList);
+      this.$emit("selected-filter-" + this.componentName, searchQuery);
     },
-  }
+  },
+
 };
 </script>
 <style>

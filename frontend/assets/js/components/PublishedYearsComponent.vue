@@ -6,7 +6,8 @@
         :dataList="dataset.labels" 
         :componentName="'year-published'"
         :selected="mySelectedList"
-        v-on:selected-year-published="handleSelectedYearPublished"
+        @selected-year-published="handleSelectedYearPublished"
+        :clearAllFilters="clearAllFilters"
       ></range-slider>      
     </div>
 </div>
@@ -25,8 +26,7 @@ export default {
 
   props: {
     dataList: {},
-    componentName: '',
-    title: '',
+    clearAllFilters: false,
   },
 
   data() {
@@ -36,6 +36,7 @@ export default {
       dataset: {},
       xScale: null,
       yScale: null,
+      componentName: 'published_year',
     };
   },
 
@@ -224,8 +225,9 @@ export default {
 
     emitSelected() {
       setTimeout(() => {
+        const searchQuery = `&published_year__range=${this.mySelectedList[0]}__${this.mySelectedList[1]}`;
         // will emit after the render updates the model
-        this.$emit('selected-' + this.componentName, this.mySelectedList);
+        this.$emit(`selected-filter-${this.componentName}`, searchQuery);
       });
     }
   },

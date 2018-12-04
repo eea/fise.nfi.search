@@ -24,6 +24,7 @@ export default {
     componentName: '',
     selected: '',
     title: '',
+    clearAllFilters: false,
   },
 
   components: {
@@ -77,9 +78,9 @@ export default {
       this.$emit('selected-' + this.componentName, result);
     },
 
-    setIndex(index) {
+    resetIndex() {
       let slider = this.$refs['slider4'];
-      return slider.setIndex([0, 10]);
+      return slider.setIndex([0, this.dataList.length-1]);
     }
   },
 
@@ -90,6 +91,9 @@ export default {
      */
     selected: function updateFacetsCount(val) {
       this.setValue(this.selected);
+    },
+    clearAllFilters: function() {
+      this.resetIndex();
     }
   }
 };
