@@ -23,6 +23,10 @@
     <div v-for="(item, index) in suggestedKeywords" @click="onKeywordClicked(index)">{{item}}</div>
   </div>
 
+  <i
+    class="fa fa-close right-icon"
+    @click="removeSearchTerm"
+  ></i>
 
   <!-- search button -->
   <b-input-group-append>
@@ -40,15 +44,17 @@
 
 <script>
 import throttle from "lodash/throttle";
+let keywords = [];
+let keywordsWithParts = {};
 
 export default {
   name: "vue-search",
   props: {
-    allKeywords: Array
+    allKeywords: {}
   },
   data() {
     return {
-      keywords: [],
+      // keywords: [],
       searchTerm: "",
       intermSerchTerm: "",
       whatToLookFor: "",
@@ -56,30 +62,32 @@ export default {
       afterSelectedKeyword: false,
       suggestedKeywords: [],
       active: false,
-      keywordsWithParts: {},
+      // keywordsWithParts: {},
     };
   },
   mounted() {
+
     for (let i = 0; i < this.allKeywords.length; i++) {
       const element = this.allKeywords[i];
-      this.keywords.push(element.name);
+      keywords.push(element.name);
     }
-    this.keywords = this.allKeywords.sort().slice();
-    this.suggestedKeywords = this.keywords.slice();
+    keywords = this.allKeywords.sort().slice();
+    this.suggestedKeywords = keywords.slice();
     this.makeCorrelationsWithKeywords();
+    console.log('keywords', keywords);
   },
   methods: {
     makeCorrelationsWithKeywords() {
-      for (let i = 0; i < this.keywords.length; i++) {
-        const keywordBase = this.keywords[i];
-        for (let j = 0; j < this.keywords.length; j++) {
-          const keywordCompare = this.keywords[j];
+      for (let i = 0; i < keywords.length; i++) {
+        const keywordBase = keywords[i];
+        for (let j = 0; j < keywords.length; j++) {
+          const keywordCompare = keywords[j];
+
           if(keywordCompare.search(keywordBase + ' ') > -1 || keywordCompare.search(' ' + keywordBase) > -1) {
-            this.keywordsWithParts[keywordBase] = keywordCompare;
+            keywordsWithParts[keywordBase] = keywordCompare;
           }
         }
       }
-      console.log(this.keywordsWithParts);
     },
     onKeyUp: throttle(
       /**
@@ -139,8 +147,8 @@ export default {
       let result = [];
       const compareWordLowerCase = this.whatToLookFor.toLowerCase();
       if (this.whatToLookFor) {
-        for (let index = 0; index < this.keywords.length; index++) {
-          const keywordItem = this.keywords[index];
+        for (let index = 0; index < keywords.length; index++) {
+          const keywordItem = keywords[index];
           const desiredLength = compareWordLowerCase.length;
           const keywordLowerCaseToMatch = keywordItem
             .substring(0, desiredLength)
@@ -151,13 +159,10 @@ export default {
           }
         }
       } else {
-        result = this.keywords.slice();
+        result = keywords.slice();
       }
 
       return result;
-    },
-    handleClickedSearch() {
-      this.makeKeywordsAndFreeTexts();
     },
     /**
      * handle for click on result
@@ -211,11 +216,6 @@ export default {
         this.updateWithSelected();
       }
     },
-    onKeyEnter() {
-      this.intermSerchTerm = this.searchTerm.trim();
-      this.makeKeywordsAndFreeTexts();
-      this.reset();
-    },
     /**
      * handle for space key
      * reset and make list of keywords
@@ -225,6 +225,14 @@ export default {
       this.intermSerchTerm = this.searchTerm.trim();
       this.reset();
     },
+    onKeyEnter() {
+      this.intermSerchTerm = this.searchTerm.trim();
+      this.makeKeywordsAndFreeTexts();
+      this.reset();
+    },
+    handleClickedSearch() {
+      this.makeKeywordsAndFreeTexts();
+    },
     /**
      * will make the lists of unique keywords used and unique free text words
      * emit
@@ -232,17 +240,17 @@ export default {
     makeKeywordsAndFreeTexts() {
       let selectedKeywords = [];
       let freeTextWords = [];
-      let freeText = "";
+      let freeText = '';
       let tempSearchTerm = this.searchTerm;
       let index = 0;
 
-      for (let i = 0; i < this.keywords.length; i++) {
-        const keyword = this.keywords[i];
+      for (let i = 0; i < keywords.length; i++) {
+        const keyword = keywords[i];
 
         if (isKeyword(keyword)) {
-          if(this.keywordsWithParts[keyword] && isKeyword(this.keywordsWithParts[keyword])) {
-            selectedKeywords.push(this.keywordsWithParts[keyword]);
-            tempSearchTerm = removeKeywordFromSearchTerm(this.keywordsWithParts[keyword], tempSearchTerm);
+          if(keywordsWithParts[keyword] && isKeyword(keywordsWithParts[keyword])) {
+            selectedKeywords.push(keywordsWithParts[keyword]);
+            tempSearchTerm = removeKeywordFromSearchTerm(keywordsWithParts[keyword], tempSearchTerm);
           } else {
             selectedKeywords.push(keyword);
             tempSearchTerm = removeKeywordFromSearchTerm(keyword, tempSearchTerm);
@@ -257,15 +265,22 @@ export default {
           freeTextWords.push(freeWord);
         }
       }
-      freeText = '';
+
       for (let i = 0; i < freeTextWords.length; i++) {
         const element = freeTextWords[i];
         freeText += element + ' ';
       }
-      freeText = freeText.trim();
 
-      // TODO refactor method to be immutable, modular and single responsability
-      this.$emit('searchForKeywords', {selectedKeywords: selectedKeywords, freeText: freeText});
+      freeText = freeText.trim() !== '' ? '&search=' + freeText.trim() : '';
+
+      this.$emit('searchForKeywords', makeQuery() + freeText);
+
+      function makeQuery() {
+        const reducer = (accumulator, currentValue) => {
+          return accumulator + '&keyword=' + currentValue;
+        };
+        return selectedKeywords.reduce(reducer, '');
+      }
 
       function isKeyword(keyword) {
         let lengthOfKeyword = 0;
@@ -325,12 +340,20 @@ export default {
     },
 
     reset() {
-      this.suggestedKeywords = this.keywords.slice();
+      this.suggestedKeywords = keywords.slice();
       this.indexOfKeyword = -1;
-      this.whatToLookFor = "";
+      this.whatToLookFor = '';
       this.intermSerchTerm = this.searchTerm.trim();
       this.afterSelectedKeyword = false;
     },
+
+    removeSearchTerm() {
+      this.searchTerm = '';
+      this.reset();
+
+      this.$emit('searchForKeywords', '');
+    },
+
     /**
      * will show the dropdown of suggestions
      */

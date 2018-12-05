@@ -15,6 +15,17 @@
 
     <hr>
 
+    <!-- Select Topic Category -->
+    <div v-if="facetsData.topic_category">
+      <topic-category
+        :dataList="facetsData.topic_category"
+        :clearAllFilters="clearAllFilters"
+        @selected-filter-topic_category="handleSelectedTopicCategory"
+      ></topic-category>
+    </div>
+
+    <hr>
+
     <!-- Select NUTS Level -->
     <div v-if="facetsData.nuts_level">
       <nuts-level
@@ -57,17 +68,6 @@
         @selected-filter-data_set="handleSelectedDataSets"
       ></data-type-component>
     </div>
-
-    <!-- Select Topic Category -->
-    <div v-if="facetsData.topic_category">
-      <topic-category
-        :dataList="facetsData.topic_category"
-        :clearAllFilters="clearAllFilters"
-        @selected-filter-topic_category="handleSelectedTopicCategory"
-      ></topic-category>
-    </div>
-
-    <hr>
 
     <!-- Select Result Formats -->
     <div v-if="facetsData.resource_type">

@@ -7,21 +7,11 @@
         <!-- search input -->
         <div id="keywords-multiselect">
           <search
-            v-if='keywords.length > 0'
+            v-if="keywords.length > 0"
             :allKeywords="keywords"
             @searchForKeywords="handleClickedSearchTerm"
           ></search>
         </div>
-        <b-input-group-append>
-          <b-btn
-            variant="primary"
-            @click="handleClickedSearchTerm"
-          >Go</b-btn>
-        </b-input-group-append>
-        <i
-          class="fa fa-close right-icon"
-          @click="removeSearchTerm"
-        ></i>
       </b-input-group>
     </div>
 
@@ -136,10 +126,10 @@ export default {
       results: [],
       count: null,
       searchQuery: '',
+      keywordsQuery: '',
       clearAllFilters: false,
       currentPage: 1,
       keywords: [],
-      originalKeywords: [],
       selectedKeywords: [],
       pageSize: defaultPageSize,
       loadingResults: false,
@@ -184,8 +174,11 @@ export default {
 
       fetchKeywords()
         .then(response => {
-          this.keywords = response.data.slice();
-          this.originalKeywords = response.data.slice();
+          const allNamesKeywords = [];
+          response.data.map((element) => {
+            allNamesKeywords.push(element.name);
+          })
+          this.keywords = allNamesKeywords;
         })
         .catch(error => {
           console.log(error);
@@ -196,38 +189,13 @@ export default {
       return `${option.name}`;
     },
 
-    addTag (newTag) {
-      const tag = {
-        name: newTag,
-        code: newTag.substring(0, 2) + Math.floor((Math.random() * 10000000))
-      }
-      this.keywords.push(tag)
-      this.selectedKeywords.push(tag)
-    },
-
-    handleClickedSearchTerm() {
+    handleClickedSearchTerm(searchQuery) {
       this.loadingResults = true;
       this.currentPage = 1;
+      this.searchTerm = searchQuery;
       const resultSearchQuery = this.makeSearchQuery();
 
       this.doSearch(resultSearchQuery);
-    },
-
-    handleMobileSidebar(){
-      let triggers = [this.$refs.sidebarTrigger, this.$refs.backdrop];
-      let body = document.querySelector('body');
-
-      triggers.forEach( function(element, index) {
-        element.addEventListener('click', () => {
-          body.classList.toggle('sidebaropen');
-        });
-      });
-    },
-
-    handleClickedSearchTerm(result) {
-      this.currentPage = 1;
-      this.searchTerm = '';
-      this.selectedKeywords = [];
     },
 
     /**
@@ -247,7 +215,6 @@ export default {
      */
     makeSearchQuery() {
       this.keywordsQuery = this.makeFiltersQuery();
-      this.searchTerm = this.makeSearchTerm();
       let paginationQuery = '?page=' + this.currentPage;
       let pageSizeQuery = this.pageSize !== defaultPageSize ? '&page_size=' + this.pageSize + '&' : '';
       let searchQuery = this.searchTerm + this.keywordsQuery;
@@ -260,22 +227,6 @@ export default {
         return accumulator + this.filtersSelections[currentValue];
       };
       return Object.keys(this.filtersSelections).reduce(reducer, '');
-    },
-
-    makeSearchTerm() {
-      let searchTerm = '';
-      let keywordsTerm = '';
-      let result = '';
-
-      this.selectedKeywords.map((selectedKeyword) => {
-        const isMatch = this.originalKeywords.find(function(keyword) {
-          return keyword.id === selectedKeyword.id;
-        });
-        isMatch ? keywordsTerm += '&keyword=' + selectedKeyword.name : searchTerm += ' ' + selectedKeyword.name;
-      });
-      result = searchTerm ? '&search=' + searchTerm.trim() + keywordsTerm : keywordsTerm;
-
-      return result;
     },
 
     /**
@@ -307,6 +258,17 @@ export default {
         const resultSearchQuery = this.makeSearchQuery();
         this.doSearch(resultSearchQuery);
       })
+    },
+
+    handleMobileSidebar(){
+      let triggers = [this.$refs.sidebarTrigger, this.$refs.backdrop];
+      let body = document.querySelector('body');
+
+      triggers.forEach( function(element, index) {
+        element.addEventListener('click', () => {
+          body.classList.toggle('sidebaropen');
+        });
+      });
     },
   },
 };
