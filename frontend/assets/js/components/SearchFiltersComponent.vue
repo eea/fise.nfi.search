@@ -13,6 +13,17 @@
 
     <hr>
 
+    <!-- Select Topic Category -->
+    <div v-if="facetsData.topic_category">
+      <topic-category
+        :dataList="facetsData.topic_category"
+        :clearAllFilters="clearAllFilters"
+        @selected-filter-topic_category="handleSelectedTopicCategory"
+      ></topic-category>
+    </div>
+
+    <hr>
+
     <!-- Select Country-->
     <h4 class="filter-heading">Countries and regions</h4>
     <div v-if="facetsData.country">
@@ -67,17 +78,6 @@
         @selected-filter-data_set="handleSelectedDataSets"
       ></data-type-component>
     </div>
-
-    <!-- Select Topic Category -->
-    <div v-if="facetsData.topic_category">
-      <topic-category
-        :dataList="facetsData.topic_category"
-        :clearAllFilters="clearAllFilters"
-        @selected-filter-topic_category="handleSelectedTopicCategory"
-      ></topic-category>
-    </div>
-
-    <hr>
 
     <!-- Select Result Formats -->
     <div v-if="facetsData.resource_type">
@@ -347,9 +347,6 @@ export default {
         this.updateFacetsCount();
       })
     },
-    // clearAllFilters: function() {
-    //   this.initSelectedFilterOptions();
-    // }
   }
 };
 </script>
