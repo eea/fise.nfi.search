@@ -1,6 +1,18 @@
 <template>
   <div class="">
     <h4 class="filters-title">Filters</h4>
+    
+    <hr>
+
+    <!-- Select Topic Category -->
+    <div v-if="facetsData.topic_category">
+      <topic-category
+        :dataList="facetsData.topic_category"
+        :clearAllFilters="clearAllFilters"
+        @selected-filter-topic_category="handleSelectedTopicCategory"
+      ></topic-category>
+    </div>
+
     <hr>
 
     <!-- Select Country-->
@@ -13,16 +25,6 @@
       ></country-component>
     </div>
 
-    <hr>
-
-    <!-- Select Topic Category -->
-    <div v-if="facetsData.topic_category">
-      <topic-category
-        :dataList="facetsData.topic_category"
-        :clearAllFilters="clearAllFilters"
-        @selected-filter-topic_category="handleSelectedTopicCategory"
-      ></topic-category>
-    </div>
 
     <hr>
 
