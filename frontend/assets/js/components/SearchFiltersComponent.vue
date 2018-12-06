@@ -1,6 +1,16 @@
 <template>
   <div class="">
-    <h4 class="filters-title">Filters</h4>
+    <h4 class="filters-title">Filters
+      <a
+        v-show="showClearAll"
+        role="button"
+        class="clear-all"
+        @click="onClearAllFilters"
+      >
+        Clear all <i class="fa fa-close"></i>
+      </a>
+    </h4>
+
     <hr>
 
     <!-- Select Country-->
@@ -150,14 +160,15 @@ export default {
 
   props: {
     facets: {},
-    clearAllFilters: false,
   },
 
   data() {
     return {
+      clearAllFilters: false,
       facetsData: {},
       facetEntities: [],
       selectedFilterOptions: {},
+      showClearAll: false
     };
   },
 
@@ -167,6 +178,12 @@ export default {
   },
 
   methods: {
+    onClearAllFilters() {
+      this.showClearAll = false;
+      this.clearAllFilters = !this.clearAllFilters;
+      this.initSelectedFilterOptions();
+      this.$emit('updated-filters', this.selectedFilterOptions);
+    },
     /**
      * this.selectedFilterOptions will contain the names of all the facets names
      * here all the selected values from the facets will be available
@@ -315,6 +332,7 @@ export default {
     },
 
     emitSelectedFilter() {
+      this.showClearAll = true;
       this.$emit('updated-filters', this.selectedFilterOptions);
     },
 
@@ -329,9 +347,9 @@ export default {
         this.updateFacetsCount();
       })
     },
-    clearAllFilters: function() {
-      this.initSelectedFilterOptions();
-    }
+    // clearAllFilters: function() {
+    //   this.initSelectedFilterOptions();
+    // }
   }
 };
 </script>
@@ -374,6 +392,17 @@ export default {
 
 .filter-heading--date {
   color: var(--fise-dark-green)
+}
+
+.clear-all {
+  font-size: .8rem;
+  position: absolute;
+  top: 0;
+  right: 0;
+  cursor: pointer;
+}
+.clear-all >i {
+  color: red;
 }
 </style>
 

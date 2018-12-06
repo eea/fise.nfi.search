@@ -37,18 +37,11 @@
       <!-- facets section -->
       <div class="bd-sidebar col-md-4 col-xl-3 col-12 order-md-12">
 
-        <button
-          class="btn btn-primary"
-          @click="onClearAllFilters"
-        >
-          Clear all filters
-        </button>
-
         <search-filters
           @updated-filters="handleUpdatedFilter"
           :facets="facets"
-          :clearAllFilters="clearAllFilters"
         ></search-filters>
+
       </div>
 
       <!-- result section -->
@@ -140,7 +133,6 @@ export default {
       results: [],
       count: null,
       searchQuery: '',
-      clearAllFilters: false,
       currentPage: 1,
       keywords: [],
       originalKeywords: [],
@@ -178,7 +170,6 @@ export default {
 
   methods: {
     onClearAllFilters() {
-      this.clearAllFilters = !this.clearAllFilters;
       this.handleUpdatedFilter({});
     },
 
