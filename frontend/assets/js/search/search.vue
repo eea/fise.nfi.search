@@ -54,7 +54,6 @@ export default {
   },
   data() {
     return {
-      // keywords: [],
       searchTerm: "",
       intermSerchTerm: "",
       whatToLookFor: "",
@@ -62,7 +61,6 @@ export default {
       afterSelectedKeyword: false,
       suggestedKeywords: [],
       active: false,
-      // keywordsWithParts: {},
     };
   },
   mounted() {
@@ -74,7 +72,6 @@ export default {
     keywords = this.allKeywords.sort().slice();
     this.suggestedKeywords = keywords.slice();
     this.makeCorrelationsWithKeywords();
-    console.log('keywords', keywords);
   },
   methods: {
     makeCorrelationsWithKeywords() {
