@@ -148,9 +148,9 @@ export default {
     };
   },
   created(){
-    console.log(this.url)
-    this.addTag(this.url)
-    this.handleClickedSearchTerm()
+    // console.log(this.url)
+    // this.addTag(this.url)
+    // this.handleClickedSearchTerm()
     // this.selectedKeywords = this.url
   },
 
@@ -176,19 +176,25 @@ export default {
     this.initiateKeywords();
     this.handleMobileSidebar();
      window.addEventListener('hashchange', (e) => {
-      this.addTagAndSearch(e)
+      this.addTagAndSearch(e, true)
     }, false);
   },
 
   methods: {
 
-    addTagAndSearch(url) {
-      console.log('addTagAndSearch', url)
-      console.log(url.newURL.split('#'))
-      const newHashArr = url.newURL.split('#')
-      const newHash = newHashArr[newHashArr.length - 1]
-      this.selectedKeywords = []
-      this.addTag(newHash)
+    addTagAndSearch(url, event) {
+      console.log('addTagAndSearch', event)
+      if(event) {
+        const newHashArr = url.newURL.split('#')
+        const newHash = newHashArr[newHashArr.length - 1]
+        this.selectedKeywords = []
+        this.addTag(newHash)
+        this.handleClickedSearchTerm()
+        return
+      }
+      if(!url.length) return 
+      this.addTag(url.substring(1, url.length))
+      this.handleClickedSearchTerm()
     },
     onClearAllFilters() {
       this.handleUpdatedFilter({});
@@ -202,6 +208,7 @@ export default {
         .then(response => {
           this.keywords = response.data.slice();
           this.originalKeywords = response.data.slice();
+          this.addTagAndSearch(this.url, false)
         })
         .catch(error => {
           console.log(error);
@@ -222,6 +229,7 @@ export default {
     },
 
     handleClickedSearchTerm() {
+      console.log('handling click search term')
       this.loadingResults = true;
       this.currentPage = 1;
       const resultSearchQuery = this.makeSearchQuery();
