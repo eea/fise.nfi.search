@@ -147,8 +147,17 @@ export default {
       ]
     };
   },
+  created(){
+    console.log(this.url)
+    this.addTag(this.url)
+    this.handleClickedSearchTerm()
+    // this.selectedKeywords = this.url
+  },
 
   computed: {
+    url() {
+      return window.location.hash
+    },
     showingResults() {
       const startCount = (this.currentPage - 1) * this.pageSize;
       const tempEndCount = this.currentPage * this.pageSize;
@@ -166,9 +175,21 @@ export default {
   mounted(){
     this.initiateKeywords();
     this.handleMobileSidebar();
+     window.addEventListener('hashchange', (e) => {
+      this.addTagAndSearch(e)
+    }, false);
   },
 
   methods: {
+
+    addTagAndSearch(url) {
+      console.log('addTagAndSearch', url)
+      console.log(url.newURL.split('#'))
+      const newHashArr = url.newURL.split('#')
+      const newHash = newHashArr[newHashArr.length - 1]
+      this.selectedKeywords = []
+      this.addTag(newHash)
+    },
     onClearAllFilters() {
       this.handleUpdatedFilter({});
     },
@@ -304,6 +325,14 @@ export default {
       })
     },
   },
+  // watch: {
+  //   url: {
+  //     handler(currentVal, nextVal) {
+  //       console.log('current',currentVal)
+  //       console.log('nextVal',nextVal)
+  //     }
+  //   }
+  // }
 };
 </script>
 

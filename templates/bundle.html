@@ -21,15 +21,11 @@
 </head>
 <body>
   {% csrf_token %}
-  <div class="fise-search-header-wrapper navbar-expand-md">
-    {% include 'header.html' %}
-  </div>
+
 	<div id="app"></div>
   {% render_bundle 'app' %}
-  <div class="fise-search-footer-wrapper">
-    {% include 'footer.html' %}
-  </div>
-  <script type="text/javascript" src="https://demo-forests.eea.europa.eu/bs-collapse.js"></script>
+
+  <!-- <script type="text/javascript" src="https://demo-forests.eea.europa.eu/bs-collapse.js"></script> -->
 </body>
 </html>
 
