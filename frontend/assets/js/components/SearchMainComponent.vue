@@ -1,5 +1,5 @@
 <template>
-  <div class="container">
+  <div>
 
     <!-- Search term input -->
     <div class="row flex-xl-nowrap2 search-input-wrapper">
