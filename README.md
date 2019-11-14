@@ -58,3 +58,27 @@ The documents are provided in standardized format like spreadsheets, in differen
 
         sudo vim /proc/sys/vm/max_map_count
   Change the value from the file with 262144 and save
+
+
+## Importing data
+
+Data import is based on Excel files containing metadata records and paths to associated data files.  
+
+Data files must be placed in the directory specified by the `IMPORT_FILES_DIR` environment variable. 
+  
+The `load_metadata` management command is used to perform the import , e.g.:
+
+    ./manage.py load_metadata --original-path-root=Z:\\FISEAPPS\\FISEPRO\\New_Content <Excel file path>
+
+This will:
+- Create any new metadata cetagories found in the Excel file.
+- Import document metadata records as part of a new `DocumentImportBatch`.
+- Copy document files referenced by metadata records from the directory indicated by `$IMPORT_FILES_DIR`, 
+to the data files directory `$FILES_DIR`.   
+ 
+Note that the path specified by option `original-path-root` must be the common base directory for _all_ data files 
+paths in the Excel file (data staging is currently being done on Windows machines, thus the base path above). 
+
+After each new import, run the following command to rebuild the ElasticSearch index:
+      
+    ./manage.py search_index --rebuild
