@@ -1,7 +1,7 @@
 FROM python:3.6-slim as npm_builder
 
-ARG BACKEND_HOST=demo-forests.eea.europa.eu
-ARG SCRIPT_NAME=/nfi_search
+ARG BACKEND_HOST
+ARG SCRIPT_NAME
 
 # Overriden in compose as needed
 ENV BACKEND_HOST=$BACKEND_HOST
@@ -13,7 +13,7 @@ RUN apt-get update -y \
     && curl -sL https://deb.nodesource.com/setup_8.x | bash - \
     && curl -sS https://dl.yarnpkg.com/debian/pubkey.gpg | apt-key add - \
     && echo "deb https://dl.yarnpkg.com/debian/ stable main" | tee /etc/apt/sources.list.d/yarn.list
-RUN runDeps="nodejs yarn" \
+RUN runDeps="nodejs yarn npm" \
     && apt-get update -y \
     && apt-get install -y --no-install-recommends $runDeps
 RUN mkdir -p $APP_HOME/frontend
