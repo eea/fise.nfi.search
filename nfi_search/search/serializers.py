@@ -76,8 +76,16 @@ class DocSerializer(ModelSerializer):
 
     class Meta:
         model = Document
-        # fields = "__all__"
-        fields = ("id", "title", "download_url")
+        fields = (
+            "id",
+            "title",
+            "download_url",
+            "higher_level_docs",
+            "same_level_docs",
+            "lower_level_docs",
+            "import_batch",
+            "metadata_id",
+        )
 
     @staticmethod
     def get_download_url(obj):
@@ -122,6 +130,9 @@ class DocumentDocSerializer(DocumentSerializer):
             "external_link",
             "organization_name",
             "organization_email",
+            "higher_level_docs",
+            "same_level_docs",
+            "lower_level_docs",
         )
 
     @staticmethod
@@ -139,46 +150,46 @@ class DocumentDocSerializer(DocumentSerializer):
             return []
 
     def get_download_url(self, obj):
-        doc = self.Meta.document._doc_type.model.objects.get(pk=obj.id)
+        doc = self.Meta.document.Django.model.objects.get(pk=obj.id)
         if not doc.file or not doc.file.file:
             return None
 
         return doc.fq_download_url
 
     def get_file_name(self, obj):
-        doc = self.Meta.document._doc_type.model.objects.get(pk=obj.id)
+        doc = self.Meta.document.Django.model.objects.get(pk=obj.id)
         if not doc.file or not doc.file.file:
             return None
 
         return doc.file.name
 
     def get_file_size(self, obj):
-        doc = self.Meta.document._doc_type.model.objects.get(pk=obj.id)
+        doc = self.Meta.document.Django.model.objects.get(pk=obj.id)
         if not doc.file or not doc.file.file:
             return None
 
         return doc.file.size
 
     def get_countries(self, obj):
-        doc = self.Meta.document._doc_type.model.objects.get(pk=obj.id)
+        doc = self.Meta.document.Django.model.objects.get(pk=obj.id)
         return sorted([c.name for c in doc.countries.all()])
 
     def get_external_link(self, obj):
-        doc = self.Meta.document._doc_type.model.objects.get(pk=obj.id)
+        doc = self.Meta.document.Django.model.objects.get(pk=obj.id)
         if not doc.file or not doc.file.external_link:
             return None
 
         return doc.file.external_link
 
     def get_organization_name(self, obj):
-        doc = self.Meta.document._doc_type.model.objects.get(pk=obj.id)
+        doc = self.Meta.document.Django.model.objects.get(pk=obj.id)
         if not doc.organization or not doc.organization.name:
             return None
 
         return doc.organization.name
 
     def get_organization_email(self, obj):
-        doc = self.Meta.document._doc_type.model.objects.get(pk=obj.id)
+        doc = self.Meta.document.Django.model.objects.get(pk=obj.id)
         if not doc.organization or not doc.organization.email:
             return None
 

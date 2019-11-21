@@ -153,10 +153,13 @@ ELASTICSEARCH_DSL = {
     }
 }
 
+ELASTICSEARCH_DSL_PARALLEL = True
+
 ELASTICSEARCH_INDEX = env("ELASTICSEARCH_INDEX", "nfi")
 
-MAX_RESULT_WINDOW = 10000  # This is ElasticSearch's default, but we define it
+# This is ElasticSearch's default, but we define it
 # here explicitly to minimize refactoring in case we ever change it.
+MAX_RESULT_WINDOW = 10000
 
 # If this is True, multiple "keyword" filters will be OR'ed, otherwise they'll be AND'ed
 KEYWORDS_DISJUNCTION = env("KEYWORDS_DISJUNCTION", True)

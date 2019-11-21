@@ -2,7 +2,6 @@ from itertools import count
 from enum import IntEnum
 import attr
 
-
 NULL_SUROGATES = ("", "N.A.", "n.a.")
 
 
@@ -40,6 +39,10 @@ def comma_string_to_list(value):
     return [e for e in data if e is not None]
 
 
+def comma_string_to_int_list(value):
+    return filter(lambda x: x is not None, [int_or_none(v) for v in comma_string_to_list(value)])
+
+
 @attr.s
 class MetadataRecord:
     id = attr.ib(converter=int_or_none, metadata={"mandatory": True})
@@ -73,9 +76,9 @@ class MetadataRecord:
         metadata={"dictionary_cls": "DDataSource", "relevant": True},
     )
     link_to_parent = attr.ib(converter=strip_or_none)
-    parent_id = attr.ib(converter=int_or_none)
-    sibling_ids = attr.ib(converter=int_or_none)
-    children_ids = attr.ib(converter=int_or_none)
+    higher_level_ids = attr.ib(converter=comma_string_to_int_list)
+    same_level_ids = attr.ib(converter=comma_string_to_int_list)
+    lower_level_ids = attr.ib(converter=comma_string_to_int_list)
     resource_locator_internal = attr.ib(converter=strip_or_none)
     resource_locator_internal2 = attr.ib(
         converter=strip_or_none, metadata={"relevant": True}
@@ -133,6 +136,8 @@ class MetadataRecord:
     file_size = attr.ib()
     to_transfer_set_no = attr.ib()
     added_until_date = attr.ib()
+
+    document = attr.ib()
 
     @classmethod
     def relevant_fields(cls):

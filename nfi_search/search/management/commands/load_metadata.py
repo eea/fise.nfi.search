@@ -9,12 +9,10 @@ from ...metadata import MetadataRecord, MetadataColumns
 
 from ...models import Document, DocumentImportBatch
 
-
 defusedxml.defuse_stdlib()
 
 
 class Command(BaseCommand):
-
     help = "Load NFI metadata"
 
     def add_arguments(self, parser):
@@ -64,9 +62,11 @@ class Command(BaseCommand):
                         break
 
                 self.update_dictionaries(records)
-                self.stdout.write("Importing metadata records ... ")
                 Document.save_metadata_records(
-                    records, import_batch=import_batch, import_files=import_files
+                    records,
+                    import_batch=import_batch,
+                    import_files=import_files,
+                    track_progress=True
                 )
                 self.stdout.write(
                     self.style.SUCCESS(

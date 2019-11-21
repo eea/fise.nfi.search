@@ -81,4 +81,4 @@ paths in the Excel file (data staging is currently being done on Windows machine
 
 After each new import, run the following command to rebuild the ElasticSearch index:
       
-    ./manage.py search_index --rebuild
+    ./manage.py search_index --rebuild --parallel

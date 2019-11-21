@@ -1,9 +1,10 @@
 import logging
 from django.conf import settings
 from django.db.utils import ProgrammingError
-from django_elasticsearch_dsl import DocType, Index, fields
+from django_elasticsearch_dsl import Document, fields, Index
+from django_elasticsearch_dsl.registries import registry
 from elasticsearch_dsl.analysis import analyzer, normalizer, char_filter, token_filter
-from .models import Document, DKeyword
+from .models import Document as DocumentModel, DKeyword
 
 
 log = logging.getLogger(__name__)
@@ -12,9 +13,6 @@ debug = log.debug
 warn = log.warning
 error = log.error
 
-
-nfi = Index(settings.ELASTICSEARCH_INDEX)
-nfi.settings(max_result_window=settings.MAX_RESULT_WINDOW)
 
 lowercase_normalizer = normalizer(
     type="custom",
@@ -30,7 +28,7 @@ no_digits_char_filter = char_filter(
 no_digits_analyzer = analyzer(
     name_or_instance="no_digits",
     tokenizer="standard",
-    filter=["standard", "lowercase", "stop"],
+    filter=["lowercase", "stop"],
     char_filter=[no_digits_char_filter],
 )
 
@@ -71,8 +69,8 @@ def _get_keywords():
 keywords_analyzer = _keywords_analyzer(_get_keywords())
 
 
-@nfi.doc_type
-class DocumentDoc(DocType):
+@registry.register_document
+class DocumentDoc(Document):
 
     title = fields.TextField(analyzer="standard", boost=5.0, fielddata=True)
 
@@ -135,6 +133,19 @@ class DocumentDoc(DocType):
         properties={"name": fields.KeywordField(normalizer=lowercase_normalizer)}
     )
 
+    higher_level_docs = fields.NestedField(
+        properties={"id": fields.IntegerField()}
+    )
+
+    same_level_docs = fields.NestedField(
+        properties={"id": fields.IntegerField()}
+    )
+
+    lower_level_docs = fields.NestedField(
+        properties={"id": fields.IntegerField()}
+    )
+
+
     fk_relation_fields = [
         "data_type",
         "data_set",
@@ -149,8 +160,8 @@ class DocumentDoc(DocType):
     def get_queryset(self):
         return super().get_queryset().select_related(*self.fk_relation_fields)
 
-    class Meta:
-        model = Document
+    class Django:
+        model = DocumentModel
         fields = [
             "id",
             "published_year",
@@ -158,3 +169,16 @@ class DocumentDoc(DocType):
             "data_collection_end_year",
             "next_update_year",
         ]
+
+        # Ignore auto updating of Elasticsearch when a model is saved
+        # or deleted:
+        ignore_signals = True
+
+        # Don't perform an index refresh after every update:
+        auto_refresh = False
+
+    class Index:
+        name = settings.ELASTICSEARCH_INDEX
+        settings = {
+            "max_result_window":settings.MAX_RESULT_WINDOW,
+        }

@@ -2,7 +2,7 @@ import os
 from pathlib import Path, PureWindowsPath, PurePosixPath
 import logging
 from datetime import datetime as dt
-from copy import deepcopy
+
 import pytz
 from django.db import models
 from django.core.files.storage import FileSystemStorage
@@ -10,11 +10,12 @@ from django.core.files import File
 from django.conf import settings
 from django.urls import reverse
 import attr
+from tqdm import tqdm
+
 from elasticsearch.exceptions import ConnectionTimeout as ESConnectionTimeout
 from .metadata import prepare_data, update_data
 from .text import extract_text, TextExtractionTimeout, TextExtractionError
 from .utils import id_to_alpha, fully_qualify_url
-
 
 log = logging.getLogger(__name__)
 info = log.info
@@ -285,10 +286,17 @@ class Document(models.Model):
     import_batch = models.ForeignKey(
         DocumentImportBatch, blank=True, null=True, on_delete=models.CASCADE
     )
+    metadata_id = models.IntegerField(blank=True, null=True)
     title = models.CharField(max_length=256)
     description = models.TextField(blank=True, null=True)
     text = models.TextField(blank=True, null=True)
-    parent = models.ForeignKey("self", blank=True, null=True, on_delete=models.CASCADE)
+
+    higher_level_docs = models.ManyToManyField(
+        "self", related_name="lower_level_backrefs", symmetrical=False)
+    same_level_docs = models.ManyToManyField(
+        "self", related_name="same_level_backrefs", symmetrical=False)
+    lower_level_docs = models.ManyToManyField(
+        "self", related_name="higher_level_backrefs", symmetrical=False)
 
     countries = models.ManyToManyField(
         DCountry, related_name="documents", db_table="document_country"
@@ -346,19 +354,7 @@ class Document(models.Model):
         return fully_qualify_url(self.download_url)
 
     @classmethod
-    def save_metadata_record(
-        cls, rec_id, records, processed_ids=None, import_batch=None, import_file=True
-    ):
-        processed_ids = processed_ids or []
-        if rec_id in processed_ids:
-            return None, processed_ids
-
-        rec = records[rec_id]
-        parent = None
-        if rec.parent_id is not None and rec.parent_id not in processed_ids:
-            parent, processed_ids = cls.save_metadata_record(
-                rec.parent_id, records, processed_ids, import_batch, import_file
-            )
+    def save_metadata_record(cls, rec, import_batch=None, import_file=True):
 
         doc_data = attr.asdict(rec)
         doc_data = {
@@ -368,8 +364,6 @@ class Document(models.Model):
         }
 
         # Prepare FK relations
-        doc_data["parent"] = parent
-
         # Map dictionary relation name to a tuple of:
         # <related model>, (<related model field 1>, <corresponding metadata field 1>, ...)
         # The specified related model fields must be able to uniquely identify the related instance.
@@ -394,9 +388,9 @@ class Document(models.Model):
                     doc_data[relation] = model.objects.get(**relation_filter)
                 except model.DoesNotExist:
                     print(
-                        f"row={rec_id} {relation_filter} not found in {model.__name__}"
+                        f"row={rec.id} {relation_filter} not found in {model.__name__}"
                     )
-                    return None, processed_ids
+                    return None
 
             else:
                 doc_data.pop(relation, None)
@@ -436,6 +430,7 @@ class Document(models.Model):
         geo_bounds = {field: doc_data.pop(field, None) for field in geo_fields}
 
         doc_data["import_batch"] = import_batch
+        doc_data["metadata_id"] = rec.id
 
         try:
             doc = Document.objects.create(**doc_data)
@@ -467,22 +462,47 @@ class Document(models.Model):
             if import_file and location is not None:
                 file.import_file()
 
-        processed_ids.append(rec_id)
-        return doc, processed_ids
+        return doc
 
     @classmethod
-    def save_metadata_records(cls, records, import_batch=None, import_files=True):
+    def associate_records(cls, records, track_progress=False):
+        """Set inter-document associations"""
+        for rec in tqdm(records, desc="Associating records", disable=not track_progress):
+            if rec.document is None:
+                continue
+            if rec.higher_level_ids:
+                log.debug(f"Associating doc {rec.id} with higher level docs {rec.higher_level_ids}")
+                higher_level_docs = Document.objects.filter(
+                    import_batch=rec.document.import_batch,
+                    metadata_id__in=rec.higher_level_ids
+                )
+                rec.document.higher_level_docs.set(higher_level_docs)
+            if rec.same_level_ids:
+                log.debug(f"Associating doc {rec.id} with same level docs {rec.same_level_ids}")
+                same_level_docs = Document.objects.filter(
+                    import_batch=rec.document.import_batch,
+                    metadata_id__in=rec.same_level_ids
+                )
+                rec.document.same_level_docs.set(same_level_docs)
+            if rec.lower_level_ids:
+                log.debug(f"Associating doc {rec.id} with lower level docs {rec.lower_level_ids}")
+                lower_level_docs = Document.objects.filter(
+                    import_batch=rec.document.import_batch,
+                    metadata_id__in=rec.lower_level_ids
+                )
+                rec.document.lower_level_docs.set(lower_level_docs)
+            rec.document.save()
+
+    @classmethod
+    def save_metadata_records(cls, records, import_batch=None, import_files=True, track_progress=False):
         """Creates `Document`s from a list of `MetadataRecord`s"""
-        records = {r.id: r for r in records}
-        processed_ids = []
-        for rec_id, rec in records.items():
-            _, processed_ids = cls.save_metadata_record(
-                rec_id,
-                records,
-                processed_ids,
+        for rec in tqdm(records, desc="Importing documents metadata", disable=not track_progress):
+            rec.document = cls.save_metadata_record(
+                rec,
                 import_batch=import_batch,
                 import_file=import_files,
             )
+        cls.associate_records(records, track_progress)
 
     def populate_text(self, force=False):
         if self.text is None or force:

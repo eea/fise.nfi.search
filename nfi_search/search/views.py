@@ -2,7 +2,7 @@ from django.conf import settings
 from django.views import static
 from rest_framework import status
 from rest_framework.viewsets import ReadOnlyModelViewSet, ViewSet
-from rest_framework.decorators import detail_route
+from rest_framework.decorators import action
 from rest_framework.renderers import StaticHTMLRenderer
 from rest_framework.response import Response
 from elasticsearch_dsl import TermsFacet
@@ -248,7 +248,8 @@ class DocumentViewSet(ReadOnlyModelViewSet):
     def get_queryset(self):
         return Document.objects.order_by("id").all()
 
-    @detail_route(methods=["get", "head"], renderer_classes=(StaticHTMLRenderer,))
+    # @detail_route(methods=["get", "head"], renderer_classes=(StaticHTMLRenderer,))
+    @action(methods=["get", "head"], renderer_classes=(StaticHTMLRenderer,), detail=True)
     def download(self, request, pk):
         doc_file = self.get_object().file
         if doc_file is None:
