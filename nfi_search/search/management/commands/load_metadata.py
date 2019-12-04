@@ -49,12 +49,12 @@ class Command(BaseCommand):
         original_path_root = options["original_path_root"]
         posix_original_path = options["posix_original_path"]
         progress_bar = options["progress_bar"]
-        country = options["country"].upper()
-        data_type = options["data_type"].upper()
-        data_set = options["data_set"].upper()
-        resource_type = options["resource_type"].upper()
-        info_level = options["info_level"].upper()
-        topic_category = options["topic_category"].upper()
+        country = options["country"]
+        data_type = options["data_type"]
+        data_set = options["data_set"]
+        resource_type = options["resource_type"]
+        info_level = options["info_level"]
+        topic_category = options["topic_category"]
 
         import_batch = DocumentImportBatch.objects.create(
             original_path_root=original_path_root,
@@ -71,17 +71,17 @@ class Command(BaseCommand):
                     }
                     rec = MetadataRecord(**data)
                     if rec.is_valid():
-                        if country and country not in [c.upper() for c in rec.countries]:
+                        if country and country.upper() not in [c.upper() for c in rec.countries]:
                             continue
-                        elif data_type and rec.data_type.upper() != data_type:
+                        elif data_type and rec.data_type.upper() != data_type.upper():
                             continue
-                        elif data_set and rec.data_set.upper() != data_set:
+                        elif data_set and rec.data_set.upper() != data_set.upper():
                             continue
-                        elif resource_type and rec.resource_type.upper() != resource_type:
+                        elif resource_type and rec.resource_type.upper() != resource_type.upper():
                             continue
-                        elif info_level and rec.info_level.upper() != info_level:
+                        elif info_level and rec.info_level.upper() != info_level.upper():
                             continue
-                        elif topic_category and rec.topic_category.upper != topic_category:
+                        elif topic_category and rec.topic_category.upper() != topic_category.upper():
                             continue
 
                         records.append(rec)
