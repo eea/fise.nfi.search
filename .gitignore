@@ -92,9 +92,6 @@ docker/*.env
 #Node
 /node_modules/
 
-#Database
-*.sql
-
 data/gemet
 .DS_Store
 .vscode/
