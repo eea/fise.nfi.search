@@ -22,6 +22,7 @@ services:
     environment:
       - cluster.name=es-cluster-nfi
       - bootstrap.memory_lock=true
+      - discovery.type=single-node
       - "ES_JAVA_OPTS=-Xms512m -Xmx512m"
       - TAKE_FILE_OWNERSHIP=true
     ulimits:
