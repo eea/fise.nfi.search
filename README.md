@@ -82,3 +82,14 @@ paths in the Excel file (data staging is currently being done on Windows machine
 After each new import, run the following command to rebuild the ElasticSearch index:
       
     ./manage.py search_index --rebuild --parallel
+
+### Partial imports
+
+Partial imports can be performed by providing filter parameters. e.g.:
+
+    ./manage.py load_metadata --original-path-root=Z:\\FISEAPPS\\FISEPRO\\New_Content --data-type="raster based" --data-set="corine land cover" <Excel file path>
+
+See all supported parameters with:
+    
+    ./manage.py load_metadata --help
+
