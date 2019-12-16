@@ -81,7 +81,7 @@ export default {
         var found = tempCountries.find(function(country) {
           return country.name.toUpperCase() === region.toUpperCase();
         });
-        regionsList.push(found);
+        found && regionsList.push(found);
       }
       // remove all regions from countries
       for (let i = tempCountries.length - 1; i >= 0; i--) {
