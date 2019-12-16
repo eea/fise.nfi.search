@@ -113,14 +113,20 @@ export default {
   text-align: center;
   color: #fff;
   border-radius: 5px;
-  border: 1px solid var(--fise-dark-green);
-  background-color: var(--fise-dark-green);
+  // border: 1px solid var(--fise-orange);
+  // background-color: var(--fise-orange);
+  background: transparent;
+  color: #333;
+  border: none;
 }
 .vue-slider-component .vue-slider-process {
   position: absolute;
   border-radius: 15px;
-  background-color: var(--fise-dark-green);
+  background-color: var(--fise-orange);
   transition: all 0s;
   z-index: 1;
+}
+.vue-slider-component .vue-slider-tooltip-top .vue-merged-tooltip .vue-slider-tooltip:before, .vue-slider-component .vue-slider-tooltip-wrap.vue-slider-tooltip-top .vue-slider-tooltip:before {
+  display: none;
 }
 </style>

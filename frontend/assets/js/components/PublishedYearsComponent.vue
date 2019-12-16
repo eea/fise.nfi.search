@@ -293,12 +293,12 @@ line {
 .path-area {
   stroke: none;
   &.path-area1 {
-    fill: var(--fise-dark-green);
-    stroke: var(--fise-dark-green);
+    fill: var(--fise-light);
+    stroke: var(--fise-light);
   }
   &.path-area2 {
-    fill: var(--fise-dark-green);
-    stroke: var(--fise-dark-green);
+    fill: var(--fise-light);
+    stroke: var(--fise-light);
   }
 }
 .tick {

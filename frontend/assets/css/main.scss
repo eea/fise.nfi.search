@@ -2,10 +2,12 @@
 
 :root {
   --search-vertical-offset: 50px;
-  --fise-dark-green: #078548;
+  --fise-dark-green: #005555;
   --fise-light-green: #8DC84C;
   --fise-yellow: #FFD42E;
-  --fise-orange: #ff8100;
+  --fise-orange: #CC4400;
+  --fise-light: #EEEEEE;
+  --fise-dark: #444;
 }
 
 * {
@@ -206,7 +208,7 @@ body {
 }
 
 .result-header h5 {
-  font-size: 1.1rem;
+  font-size: 1.3rem;
 }
 
 #modal1 .form-group {
@@ -231,5 +233,11 @@ hr {
   }
   .multiselect__select {
     display: none;
+  }
+}
+
+.input-group {
+  .input-group-prepend {
+    height: 100%;
   }
 }

@@ -2,7 +2,7 @@
   <div>
 
     <!-- Search term input -->
-    <div class="row flex-xl-nowrap2 search-input-wrapper">
+    <div style="margin-left: 0;margin-right: 0;" class="row flex-xl-nowrap2 search-input-wrapper">
       <b-input-group class="slinput">
           <div id="keywords-multiselect">
             <multiselect
@@ -59,20 +59,21 @@
                 target="_self" 
               >{{ showingResults }}
               </div>
-
+               &nbsp;|&nbsp;results per page&nbsp;&nbsp;
               <!-- select page size -->
-              <b-input-group prepend="results per page">
                 <b-form-select 
                   v-model="pageSize"
                   :options="resultPerPage"
                   class="mb-3"
                   size="sm"
+                  style="width: 60px; background-color: #F5F5F5;"
                   @change="handlePageChange()"
                 />
-              </b-input-group>
 
             </div>
-            <hr style="width: 15rem;">
+            <hr style="margin: 0rem .5rem 2rem 1rem;
+    display: block;
+    position: relative;">
 
             <!-- loading result spinner -->
             <div v-if="loadingResults" class="spinner">
@@ -162,9 +163,10 @@ export default {
       const startCount = (this.currentPage - 1) * this.pageSize;
       const tempEndCount = this.currentPage * this.pageSize;
       const endCount = this.count > tempEndCount ? tempEndCount : this.count;
-      const result = this.count ? 
-        'Showing ' + startCount + ' - ' + endCount + ' of ' + this.count + ' results' :
-        '0 results';
+      // const result = this.count ? 
+      //   'Showing ' + startCount + ' - ' + endCount + ' of ' + this.count + ' results' :
+      //   '0 results';
+      const result = `Search produced ${this.count} results`
       return result;
     },
     showResultsCount() {
@@ -443,15 +445,14 @@ a {
 }
 
 .result-count {
-  font-size: .8rem;
-  color: #999;
-  line-height: 2rem;
-  display: flex;
-  justify-content: space-between;
-  .input-group {
-    max-width: 15rem;
-    max-height: 31px;
-  }
+    font-size: .8rem;
+    color: #999999;
+    line-height: 2rem;
+    display: flex;
+    font-weight: 300;
+    /* justify-content: space-between; */
+    align-items: flex-start;
+    justify-content: flex-end;
   .input-group-text {
     font-size: .7rem;
   }

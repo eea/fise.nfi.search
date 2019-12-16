@@ -1,13 +1,13 @@
 <template>
   <div class="">
-    <h4 class="filters-title">Filters
+    <h4 class="filters-title">FILTERS
       <a
         v-show="showClearAll"
         role="button"
         class="clear-all"
         @click="onClearAllFilters"
       >
-        Clear all <i class="fa fa-close"></i>
+        CLEAR
       </a>
     </h4>
 
@@ -358,29 +358,42 @@ export default {
 .nuts {
   label {
     display: inline-flex!important;
-    margin-right: 3rem;
+    margin-right: 1rem;
+    position: absolute;
+    width: calc(50% - 1rem);
     .custom-control {
       max-width: 0px;
     }
+  }
+  .filter-group > label {
+    position: relative;
   }
 }
 .bd-sidebar {
   height: 100%;
   top: 0;
   padding-right: 0;
+  font-size: 14px;
 }
 .filters-title {
   margin: 0;
   line-height: 2rem;
   font-weight: bold;
   color: #444;
+  font-size: 16px;
+  font-weight: bold;
+  a {
+    color: #CC4400!important;
+    font-size: 13px;
+    font-weight: 300;
+  }
 }
 
 .filter-heading {
   font-weight: bold;
-  margin-bottom: 1em;
-  color: #444;
-  font-size: 1rem;
+  margin-bottom: 1rem;
+  color: #225511;
+  font-size: 18px;
   .fa-angle-down {
     font-size: 1.6em;
     color: #999;

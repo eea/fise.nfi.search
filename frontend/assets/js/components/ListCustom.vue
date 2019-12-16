@@ -11,12 +11,6 @@
           v-on:click="handleClicked($event, data)"
         >
           <div class="result-wrapper">
-            <img
-              :title="data.resource_type"
-              class="result-img"
-              :src="getImageForResourceType(data.resource_type)"
-              alt=""
-            >
             <div class="result-content">
               <div class="result-header">
                 <h5 class="mb-1">
@@ -24,12 +18,13 @@
                     {{data.file_name | fileType}}
                   </sup> {{data.title}}</h5>
               </div>
-              <p
-                class="mb-1 result-body"
-              >
-                {{truncate(data.description,200)}}...
-              </p>
               <div class="result-information">
+                <img
+                  :title="data.resource_type"
+                  class="result-img"
+                  :src="getImageForResourceType(data.resource_type)"
+                  alt=""
+                >
                 <div class="result-information-item">
                   <span class="result-information-title">Topics: </span>
                   <span class="result-information-value">{{data.topic_category}}</span>
@@ -39,6 +34,11 @@
                   <span class="result-information-value">{{ data.resource_type }}</span>
                 </div>
               </div>
+              <p
+                class="mb-1 result-body"
+              >
+                {{truncate(data.description,200)}}...
+              </p>
             </div>
           </div>
 
@@ -116,7 +116,7 @@ export default {
   position: relative;
   display: block;
   padding: 0.75rem 1.25rem;
-  margin-bottom: 1rem;
+  margin-bottom: 1.5rem;
   border: none;
 }
 .list-group-item-action {
@@ -143,14 +143,18 @@ small {
   display: flex;
   justify-content: flex-start;
   align-items: center;
-  padding-left: 44px;
+  // padding-left: 44px;
 }
 .result-img {
-    position: absolute;
-    max-width: 67px;
-    height: auto;
-    top: 0;
-    left: 0;
+    // position: absolute;
+    // max-width: 67px;
+    // height: auto;
+    // top: 0;
+    // left: 0;
+    position: relative;
+    max-width: 26px;
+    background: #005555;
+    border-radius: 3px;
 }
 .result-wrapper {
   display: flex;
@@ -161,15 +165,19 @@ small {
   width: 100%;
 }
 .result-body {
-  font-size: .9em;
-  padding-left: 44px;
+  font-size: 14px;
+  margin-top:.5rem;
+  // padding-left: 44px;
 }
 .fise-search-list-link {
-  color: #333;
+  color: #005555;
   flex-grow: 1;
   &:hover,
   &:focus {
     text-decoration: none;
+    color: #333;
+  }
+  p {
     color: #333;
   }
 }
@@ -186,10 +194,10 @@ small {
   }
 }
 .result-information {
-  border-left: 3px solid #118443;
-  padding-left: .8em;
+  // border-left: 3px solid #118443;
+  // padding-left: .8em;
   color: #666;
-  margin-top: 1em;
+  margin-top: .5rem;
   font-size: smaller;
   &-item {
     display: inline-block;
