@@ -2,9 +2,6 @@ version: '2'
 
 services:
 
-  tika:
-    image: logicalspark/docker-tikaserver
-
   app:
     image: eeacms/fise.nfi.search:latest
     environment:
@@ -13,10 +10,8 @@ services:
       - docker/postgres.env
       - docker/app.env
     volumes:
-      - data-files:/var/local/fise.nfi.search/data_files
-      - import-files:/var/local/fise.nfi.search/import_files
-    depends_on:
-      - tika
+      - data-files:/var/local/fise.search/data_files
+      - import-files:/var/local/fise.search/import_files
 
   nginx:
     image: nginx:latest
@@ -27,8 +22,8 @@ services:
           server app:${DJANGO_PORT};
         }
         server {
-          listen 80;
-          server_name ${NFI_SEARCH_DOMAIN};
+          listen 80 default_server;
+          server_name _;
           client_max_body_size 50M;
           access_log /var/log/nginx/access.log main;
           location / {

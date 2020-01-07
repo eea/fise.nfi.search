@@ -9,3 +9,5 @@ docker
 node_modules
 static
 *.log
+data-files
+import-files

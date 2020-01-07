@@ -1,0 +1,46 @@
+version: '2'
+
+services:
+
+  elasticsearch:
+    image: docker.elastic.co/elasticsearch/elasticsearch:7.4.2
+    environment:
+      - cluster.name=nfi-cluster
+      - bootstrap.memory_lock=true
+      - discovery.type=single-node
+      - "ES_JAVA_OPTS=-Xms4g -Xmx4g"
+      - TAKE_FILE_OWNERSHIP=true
+    ulimits:
+      memlock:
+        soft: -1
+        hard: -1
+    volumes:
+      - es-data:/usr/share/elasticsearch/data
+    ports:
+      - 9200:9200
+
+  postgres:
+    image: postgres:11.6
+    container_name: nfi.db
+    environment:
+      - TZ=Europe/Copenhagen
+    env_file:
+      - docker/postgres.env
+    volumes:
+      - postgres-data:/var/lib/postgresql/data
+    ports:
+      - 5432:5432
+
+  app:
+    volumes:
+      - ./data-files:/var/local/fise.search/data_files
+      - ./import-files:/var/local/fise.search/import_files
+    depends_on:
+      - postgres
+      - elasticsearch
+
+volumes:
+  postgres-data:
+    driver: local
+  es-data:
+    driver: local

@@ -2,12 +2,8 @@ version: '2'
 
 services:
 
-  tika:
-    labels:
-      io.rancher.scheduler.affinity:host_label_ne: reserved=yes
-
   postgres:
-    image: postgres:10.4
+    image: postgres:11.6
     environment:
       - TZ=Europe/Copenhagen
     env_file:
@@ -36,12 +32,9 @@ services:
 
   app:
     environment:
-     - NFI_SEARCH_DOMAIN=demo-forests.eea.europa.eu
-     - BACKEND_HOST=demo-forests.eea.europa.eu
-     - SCRIPT_NAME=/nfi_search
+     - SCRIPT_NAME=/search
     depends_on:
       - postgres
-      - tika
       - elasticsearch
     labels:
       io.rancher.container.pull_image: always
@@ -56,12 +49,12 @@ services:
         }
         server {
           listen 80;
-          server_name ${NFI_SEARCH_DOMAIN};
+          server_name demo-forests-p5.eea.europa.eu;
           client_max_body_size 50M;
           access_log /var/log/nginx/access.log main;
           location / {
             uwsgi_pass app;
-            uwsgi_param SCRIPT_NAME /nfi_search;
+            uwsgi_param SCRIPT_NAME /search;
             include uwsgi_params;
           }
           location ~* \.(jpg|jpeg|png|gif|ico|css|js)$$ {

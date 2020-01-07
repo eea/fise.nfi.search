@@ -3,7 +3,7 @@ version: '2'
 services:
   app:
     volumes:
-    - .:/var/local/fise.nfi.search
+    - .:/var/local/fise.search
     entrypoint: ["/usr/bin/tail", "-f", "/dev/null"]
 
   elasticsearch:

@@ -95,3 +95,6 @@ docker/*.env
 data/gemet
 .DS_Store
 .vscode/
+
+data-files/
+import-files/
