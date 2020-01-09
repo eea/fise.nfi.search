@@ -26,6 +26,7 @@ MIDDLEWARE = [
 
 CORS_ORIGIN_WHITELIST += [
     'localhost:8000',
+    'localhost:5000',
 ]
 
 NFI_SEARCH_USE_TLS = False
