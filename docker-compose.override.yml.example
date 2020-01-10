@@ -1,0 +1,8 @@
+version: '2'
+
+services:
+  app:
+    environment:
+      - DEBUG=yes
+    ports:
+      - "8000:${DJANGO_PORT}"
