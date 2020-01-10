@@ -96,5 +96,7 @@ data/gemet
 .DS_Store
 .vscode/
 
+static/
+
 data-files/
 import-files/

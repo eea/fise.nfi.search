@@ -19,6 +19,10 @@ if [ "x$DJANGO_MIGRATE" = 'xyes' ]; then
     python manage.py migrate --noinput
 fi
 
+if [ "x$DJANGO_COLLECT_STATIC" = "xyes" ]; then
+  python manage.py collectstatic --noinput
+fi
+
 case "$1" in
     manage)
         exec python manage.py "$1"
