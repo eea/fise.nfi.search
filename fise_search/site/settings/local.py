@@ -24,9 +24,4 @@ MIDDLEWARE = [
     'debug_toolbar.middleware.DebugToolbarMiddleware',
 ] + MIDDLEWARE
 
-CORS_ORIGIN_WHITELIST += [
-    'localhost:8000',
-]
-
-# NFI_SEARCH_USE_TLS = False
-# NFI_SEARCH_DOMAIN = 'localhost:8000'
+CORS_ORIGIN_ALLOW_ALL = True
