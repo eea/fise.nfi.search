@@ -1,4 +1,4 @@
-FROM python:3.6-slim
+FROM python:3.7-slim
 
 ARG SCRIPT_NAME
 
@@ -6,7 +6,7 @@ ARG SCRIPT_NAME
 ENV SCRIPT_NAME=$SCRIPT_NAME
 
 ARG REQUIREMENTS_FILE=requirements.txt
-ENV APP_HOME=/var/local/fise.nfi.search
+ENV APP_HOME=/var/local/fise_search
 RUN runDeps="apt-utils netcat libpq-dev" \
     && apt-get update -y \
     && apt-get install -y --no-install-recommends $runDeps \
